@@ -1,0 +1,27 @@
+{
+  "name": "@eva-ics/framework",
+  "version": "0.0.1",
+  "description": "JavaScript Framework for EVA ICS",
+  "main": "eva.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alttch/eva-js-framework.git"
+  },
+  "keywords": [
+    "iot",
+    "iiot",
+    "browser",
+    "framework",
+    "evaics",
+    "eva-ics"
+  ],
+  "author": "Altertech",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/alttch/eva-js-framework/issues"
+  },
+  "homepage": "https://github.com/alttch/eva-js-framework#readme"
+}
