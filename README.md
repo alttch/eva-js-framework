@@ -31,7 +31,9 @@ Initialization
 Init (for Node.js):
 
 ```javascript
-$eva = new eva_sfa.EVA();
+eva_framework = require('@eva-ics/framework');
+
+$eva = new eva_framework.EVA();
 ```
 
 Init (for web browsers):

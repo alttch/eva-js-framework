@@ -8,6 +8,7 @@ build:
 
 pub-framework:
 	cp README.md ./packages/@eva-ics/framework/
+	cd packages/@eva-ics/framework && npm version patch
 	sed -i "s/\(const eva_sfa_framework_version\).*/\1 = '`jq < packages/@eva-ics/framework/package.json -r .version`';/g" \
 		./packages/@eva-ics/framework/index.js
-	#cd packages/@eva-ics/framework && npm publish --access public
+	cd packages/@eva-ics/framework && npm publish --access public
