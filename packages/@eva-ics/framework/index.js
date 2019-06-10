@@ -597,13 +597,9 @@ class EVA {
         if (me.ws_mode && me._log_first_load) {
           me._set_ws_log_level(me.log.level);
         }
-        data.map(function(l) {
-          eva_invoke_handler(me, 'log.record', l);
-        });
+        data.map(l => eva_invoke_handler(me, 'log.record', l));
         me._log_loaded = true;
-        me._lr2p.map(function(l) {
-          eva_invoke_handler(me, 'log.record', l);
-        });
+        me._lr2p.map(l => eva_invoke_handler(me, 'log.record', l));
         if (postprocess) {
           eva_invoke_handler(me, 'log.postprocess');
         }
@@ -670,9 +666,10 @@ class EVA {
 
   _set_token_cookie() {
     if (this.set_auth_cookies && !inProcess) {
-      ['/ui', '/pvt', '/rpvt'].map(function(uri) {
-        document.cookie = 'auth=' + this.api_token + '; path=' + uri;
-      }, this);
+      ['/ui', '/pvt', '/rpvt'].map(
+        uri => (document.cookie = `auth=${this.api_token}'; path=${uri}`),
+        this
+      );
     }
   }
 
@@ -695,9 +692,7 @@ class EVA {
         }
         me.call('state_all', params)
           .then(function(data) {
-            data.map(function(state) {
-              me._process_state(state);
-            });
+            data.map(s => me._process_state(s));
             resolve(true);
           })
           .catch(function(err) {
@@ -786,9 +781,7 @@ class EVA {
     if (data.s == 'state') {
       this._debug('ws', 'state');
       if (Array.isArray(data.d)) {
-        data.d.map(function(state) {
-          this._process_state(state);
-        }, this);
+        data.d.map(s => this._process_state(s), this);
       } else {
         this._process_state(data.d);
       }
@@ -796,9 +789,7 @@ class EVA {
     }
     if (data.s == 'log') {
       if (Array.isArray(data.d)) {
-        data.d.map(function(l) {
-          this._preprocess_log_record(l);
-        }, this);
+        data.d.map(l => this._preprocess_log_record(l), this);
       } else {
         this._preprocess_log_record(data.d);
       }
