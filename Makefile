@@ -1,4 +1,4 @@
-all: prepare build
+all: build
 
 prepare:
 	npm i @babel/core @babel/cli babel-plugin-transform-class-properties @babel/preset-env babel-preset-minify
