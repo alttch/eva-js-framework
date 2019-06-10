@@ -50,7 +50,7 @@ $eva.login = 'operator';
 $eva.password = '123';
 
 // not required for web browsers
-$eva.api_uri = 'http://localhost:8828'; 
+$eva.api_uri = 'http://localhost:8828';
 
 // turn on debug mode
 // $eva.debug = true;
