@@ -1,7 +1,7 @@
 JavaScript Framework for EVA ICS
 ================================
 
-Universal JavaScript Framework for [EVA ICS](https://www.eva-ics.com/) open
+Universal JavaScript Framework for [EVA ICS](https://www.eva-ics.com/) - open
 source platform for home and industrial IoT.
 
 The library works both in web browsers and Node.js.
