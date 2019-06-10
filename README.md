@@ -57,7 +57,7 @@ $eva.api_uri = 'http://localhost:8828';
 
 $eva.on('login.success', function() {
   // called when login is successful, states and server info are loaded
-}
+});
 
 $eva.on('login.failed', function(err) {
   // do some stuff
