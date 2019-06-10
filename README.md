@@ -123,6 +123,15 @@ Event handlers are fired on:
 Each event can have only one handler. Methods *call* and *stop* return
 *Promise* objects.
 
+Server custom variables
+-----------------------
+
+All defined CVARs are set as globals after successful log in. CVARs can be also
+read with method
+
+```javascript
+var myCVAR = $eva.cvar('myCVAR');
+
 Class variables
 ---------------
 
