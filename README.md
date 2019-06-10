@@ -95,8 +95,8 @@ document.getElementById('u').addEventListener('click', function() {
 Any [EVA ICS API method](https://www.eva-ics.com/doc) can be called. Methods
 are called with JSON RPC.
 
-Function return Promise object, on success = API call result, on error = object
-with props:
+Function *call* returns Promise object, on success = API call result, on error
+= object with props:
 
 * **code** error code
 * **message** error message
