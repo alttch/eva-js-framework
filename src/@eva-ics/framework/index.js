@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_sfa_framework_version = '0.1.7';
+const eva_sfa_framework_version = '0.1.8';
 
 const fetch = require('node-fetch');
 const WebSocket = require('ws');
