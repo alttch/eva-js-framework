@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_sfa_framework_version = '0.1.4';
+const eva_sfa_framework_version = '0.1.5';
 
 var inProcess = typeof process !== 'undefined' && process.title != 'browser';
 
