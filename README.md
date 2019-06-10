@@ -131,6 +131,7 @@ read with method
 
 ```javascript
 var myCVAR = $eva.cvar('myCVAR');
+```
 
 Class variables
 ---------------
