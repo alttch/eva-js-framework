@@ -1,6 +1,6 @@
 {
   "name": "@eva-ics/framework",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "JavaScript Framework for EVA ICS",
   "main": "eva.js",
   "scripts": {
@@ -23,5 +23,5 @@
   "bugs": {
     "url": "https://github.com/alttch/eva-js-framework/issues"
   },
-  "homepage": "https://github.com/alttch/eva-js-framework#readme"
+  "homepage": "https://www.eva-ics.com/"
 }
