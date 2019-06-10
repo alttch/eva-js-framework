@@ -1,12 +1,18 @@
 'use strict';
 
-const eva_sfa_framework_version = '0.1.6';
+const eva_sfa_framework_version = '0.1.7';
 
-var inProcess = typeof process !== 'undefined' && process.title != 'browser';
+const fetch = require('node-fetch');
+const WebSocket = require('ws');
+const jsaltt = require('@altertech/jsaltt');
+const $cookies = require('@altertech/cookies');
 
-if (inProcess) {
-  var fetch = require('node-fetch');
-  var WebSocket = require('ws');
+if (typeof logger === 'undefined' && typeof jsaltt !== 'undefined') {
+  var logger = jsaltt.logger;
+} else {
+  var logger = {}[('debug', 'info', 'warning', 'error', 'critical')].map(
+    f => (logger[f] = console.log)
+  );
 }
 
 class EVA {
@@ -85,7 +91,7 @@ class EVA {
       var f = null;
     }
     if (!f) {
-      eva_log_error(
+      logger.error(
         '"fetch" function is unavailable. Upgrade your web browser or ' +
           'connect polyfill (lib/polyfill/fetch.js)'
       );
@@ -105,7 +111,7 @@ class EVA {
       q = {u: this.login, p: this.password};
       this._debug('start', 'logging in with password');
     } else if (this.set_auth_cookies) {
-      var token = eva_read_cookie('auth');
+      var token = $cookies.read('auth');
       if (token) {
         q = {a: token};
         this._debug('start', 'logging in with auth token');
@@ -159,7 +165,7 @@ class EVA {
         me._debug('start', `login successful, user: ${user}`);
         me.logged_in = true;
         me.authorized_user = user;
-        eva_invoke_handler(me, 'login.success');
+        me._invoke_handler('login.success');
       })
       .catch(function(err) {
         me.logged_in = false;
@@ -167,10 +173,10 @@ class EVA {
           err.code = 4;
           err.message = 'Unknown error';
         }
-        me._debug('start', `login failed: ${err.code} ${err.message})`);
+        me._debug('start', `login failed: ${err.code} (${err.message})`);
         me._stop_engine();
         me.erase_token_cookie();
-        eva_invoke_handler(me, 'login.failed', err);
+        me._invoke_handler('login.failed', err);
       });
     return true;
   }
@@ -251,7 +257,7 @@ class EVA {
   call(func, p1, p2) {
     var params;
     if (typeof p1 === 'string' || Array.isArray(p1)) {
-      params = eva_extend({}, p2);
+      params = jsaltt.extend({}, p2);
       params['i'] = p1;
     } else {
       params = p1;
@@ -380,7 +386,7 @@ class EVA {
     }
     var result = [];
     Object.keys(this._states).map(function(k) {
-      if (eva_oid_match(k, oid)) {
+      if (this._oid_match(k, oid)) {
         result.push(this._states[k]);
       }
     }, this);
@@ -540,7 +546,7 @@ class EVA {
             me._last_ping - me._last_pong > me._intervals.heartbeat
           ) {
             me._debug('heartbeat', 'error: ws ping timeout');
-            eva_invoke_handler(me, 'heartbeat.error');
+            me._invoke_handler('heartbeat.error');
           }
         }
         if (!on_login && me.ws) {
@@ -550,7 +556,7 @@ class EVA {
             me.ws.send(JSON.stringify({s: 'ping'}));
           } catch (err) {
             me._debug('heartbeat', 'error: unable to send ws ping');
-            eva_invoke_handler(me, 'heartbeat_error', err);
+            me._invoke_handler('heartbeat_error', err);
             reject();
             return;
           }
@@ -575,12 +581,12 @@ class EVA {
               me._cvars = {};
             }
           }
-          eva_invoke_handler(me, 'heartbeat.success');
+          me._invoke_handler('heartbeat.success');
           resolve(true);
         })
         .catch(function(err) {
           me._debug('heartbeat', 'error: unable to send test API call');
-          eva_invoke_handler(me, 'heartbeat.error', err);
+          me._invoke_handler('heartbeat.error', err);
         });
       me._debug('heartbeat', 'ok');
     });
@@ -597,20 +603,16 @@ class EVA {
         if (me.ws_mode && me._log_first_load) {
           me._set_ws_log_level(me.log.level);
         }
-        data.map(function(l) {
-          eva_invoke_handler(me, 'log.record', l);
-        });
+        data.map(l => me._invoke_handler('log.record', l));
         me._log_loaded = true;
-        me._lr2p.map(function(l) {
-          eva_invoke_handler(me, 'log.record', l);
-        });
+        me._lr2p.map(l => me._invoke_handler('log.record', l));
         if (postprocess) {
-          eva_invoke_handler(me, 'log.postprocess');
+          me._invoke_handler('log.postprocess');
         }
         me._log_first_load = false;
       })
       .catch(function(err) {
-        eva_log_error('unable to load log entries');
+        logger.error('unable to load log entries');
       });
   }
 
@@ -669,10 +671,11 @@ class EVA {
   }
 
   _set_token_cookie() {
-    if (this.set_auth_cookies && !inProcess) {
-      ['/ui', '/pvt', '/rpvt'].map(function(uri) {
-        document.cookie = 'auth=' + this.api_token + '; path=' + uri;
-      }, this);
+    if (this.set_auth_cookies && typeof document !== 'undefined') {
+      ['/ui', '/pvt', '/rpvt'].map(
+        uri => (document.cookie = `auth=${this.api_token}'; path=${uri}`),
+        this
+      );
     }
   }
 
@@ -695,9 +698,7 @@ class EVA {
         }
         me.call('state_all', params)
           .then(function(data) {
-            data.map(function(state) {
-              me._process_state(state);
-            });
+            data.map(s => me._process_state(s));
             resolve(true);
           })
           .catch(function(err) {
@@ -776,19 +777,17 @@ class EVA {
     }
     if (data.s == 'reload') {
       this._debug('ws', 'reload');
-      return eva_invoke_handler(this, 'server.reload');
+      return this._invoke_handler('server.reload');
     }
     if (data.s == 'server' && data.d == 'restart') {
       this._debug('ws', 'server_restart');
-      return eva_invoke_handler(this, 'server.restart');
+      return this._invoke_handler('server.restart');
     }
-    if (eva_invoke_handler(this, 'ws.event', data) === false) return;
+    if (this._invoke_handler('ws.event', data) === false) return;
     if (data.s == 'state') {
       this._debug('ws', 'state');
       if (Array.isArray(data.d)) {
-        data.d.map(function(state) {
-          this._process_state(state);
-        }, this);
+        data.d.map(s => this._process_state(s), this);
       } else {
         this._process_state(data.d);
       }
@@ -796,23 +795,19 @@ class EVA {
     }
     if (data.s == 'log') {
       if (Array.isArray(data.d)) {
-        data.d.map(function(l) {
-          this._preprocess_log_record(l);
-        }, this);
+        data.d.map(l => this._preprocess_log_record(l), this);
       } else {
         this._preprocess_log_record(data.d);
       }
-      eva_invoke_handler(this, 'log.postprocess');
+      this._invoke_handler('log.postprocess');
       return;
     }
   }
 
   _preprocess_log_record(l) {
-    if (!this._log_loaded) {
-      this._lr2p.push(l);
-    } else {
-      eva_invoke_handler(this, 'log.record', l);
-    }
+    this._log_loaded
+      ? this._invoke_handler('log.record', l)
+      : this._lr2p.push(l);
   }
 
   _process_state(state) {
@@ -831,10 +826,11 @@ class EVA {
         });
       }
       this._states[oid] = state;
-      if (!eva_cmp(state, old_state)) {
+      if (!jsaltt.cmp(state, old_state)) {
         this._debug(
           'process_state',
-          `${oid} s: ${state.status} v: ${state.value}`
+          `${oid} s: ${state.status} v: "${state.value}"`,
+          `ns: ${state.nstatus} nv: "${state.nvalue}"`
         );
         if (oid in this._update_state_functions) {
           this._update_state_functions[oid].map(function(f) {
@@ -845,12 +841,12 @@ class EVA {
                 f(state);
               }
             } catch (err) {
-              eva_log_error(`state function processing for ${oid}:`, err);
+              logger.error(`state function processing for ${oid}:`, err);
             }
           });
         }
         Object.keys(this._update_state_mask_functions).map(function(k) {
-          if (eva_oid_match(oid, k)) {
+          if (this._oid_match(oid, k)) {
             this._update_state_mask_functions[k].map(function(f) {
               try {
                 if (typeof f === 'string' || f instanceof String) {
@@ -859,128 +855,45 @@ class EVA {
                   f(state);
                 }
               } catch (err) {
-                eva_log_error(`state function processing for ${oid}:`, err);
+                logger.error(`state function processing for ${oid}:`, err);
               }
             });
           }
         }, this);
       }
     } catch (err) {
-      eva_log_error('State processing error, invalid object received', err);
+      logger.error('State processing error, invalid object received', err);
     }
+  }
+
+  _invoke_handler(handler) {
+    var f = this._handlers[handler];
+    if (f) {
+      this._debug('invoke_handler', 'invoking for ' + handler);
+      try {
+        if (typeof f === 'string') {
+          return eval(f);
+        } else if (typeof f === 'function') {
+          return f.apply(this, Array.from(arguments));
+        }
+      } catch (err) {
+        logger.error(`handler for ${handler}:`, err);
+      }
+    }
+  }
+
+  _oid_match(oid, mask) {
+    return new RegExp('^' + mask.split('*').join('.*') + '$').test(oid);
   }
 
   _debug(method) {
     if (this.debug) {
-      eva_log_debug.apply(
-        null,
+      logger.debug.apply(
+        logger,
         ['EVA::' + method].concat([].slice.call(arguments, 1))
       );
     }
   }
-}
-
-function eva_invoke_handler(obj, handler) {
-  var f = obj._handlers[handler];
-  if (f) {
-    if (obj.debug) eva_log_debug('eva_sfa::invoking handler for ' + handler);
-    try {
-      if (typeof f === 'string') {
-        return eval(f);
-      } else if (typeof f === 'function') {
-        return f.apply(obj, [].slice.call(arguments, 2));
-      }
-    } catch (err) {
-      eva_log_error(`handler for ${handler}:`, err);
-    }
-  }
-}
-
-function eva_read_cookie(name) {
-  var nameEQ = name + '=';
-  var ca = document.cookie.split(';');
-  for (var i = 0; i < ca.length; i++) {
-    var c = ca[i];
-    while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-  }
-  return null;
-}
-
-function eva_extend() {
-  var extended = {};
-  var deep = false;
-  var i = 0;
-  var length = arguments.length;
-  if (Object.prototype.toString.call(arguments[0]) === '[object Boolean]') {
-    deep = arguments[0];
-    i++;
-  }
-  var merge = function(obj) {
-    for (var prop in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, prop)) {
-        if (
-          deep &&
-          Object.prototype.toString.call(obj[prop]) === '[object Object]'
-        ) {
-          extended[prop] = eva_extend(true, extended[prop], obj[prop]);
-        } else {
-          extended[prop] = obj[prop];
-        }
-      }
-    }
-  };
-  for (; i < length; i++) {
-    var obj = arguments[i];
-    merge(obj);
-  }
-  return extended;
-}
-
-function eva_cmp(a, b) {
-  if (a === undefined || b === undefined) {
-    return false;
-  }
-  var a_props = Object.getOwnPropertyNames(a);
-  var b_props = Object.getOwnPropertyNames(b);
-  if (a_props.length != b_props.length) {
-    return false;
-  }
-  for (var i = 0; i < a_props.length; i++) {
-    var prop_name = a_props[i];
-    if (!Array.isArray(a[prop_name]) && a[prop_name] !== b[prop_name]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function eva_oid_match(oid, mask) {
-  return new RegExp('^' + mask.split('*').join('.*') + '$').test(oid);
-}
-
-function eva_log_debug() {
-  console.log.apply(null, Array.from(arguments));
-}
-
-function eva_log_warning(msg) {
-  console.log.apply(
-    null,
-    [(inProcess ? '' : '%c') + 'WARNING: ' + msg].concat(
-      [inProcess ? '' : 'color: orange; font-weight: bold; font-size: 14px;'],
-      [].slice.call(arguments, 1)
-    )
-  );
-}
-
-function eva_log_error(msg) {
-  console.log.apply(
-    null,
-    [(inProcess ? '' : '%c') + 'ERROR: ' + msg].concat(
-      [inProcess ? '' : 'color: red; font-weight: bold; font-size: 14px;'],
-      [].slice.call(arguments, 1)
-    )
-  );
 }
 
 if (typeof exports !== 'undefined') {

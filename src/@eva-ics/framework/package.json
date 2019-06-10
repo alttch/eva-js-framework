@@ -1,6 +1,6 @@
 {
   "name": "@eva-ics/framework",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "JavaScript Framework for EVA ICS",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -24,7 +24,9 @@
   },
   "dependencies": {
     "node-fetch": "^2.6.0",
-    "ws": "^7.0.0"
+    "ws": "^7.0.0",
+    "@altertech/jsaltt": "^0.0.1",
+    "@altertech/cookies": "^0.0.1"
   },
   "homepage": "https://www.eva-ics.com/"
 }
