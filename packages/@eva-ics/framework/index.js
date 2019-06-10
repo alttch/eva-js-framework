@@ -1,7 +1,6 @@
 'use strict';
 
-const eva_sfa_framework_version = '3.2.3';
-const eva_sfa_framework_build = 2019060902;
+const eva_sfa_framework_version = '0.1.0';
 
 var inProcess = typeof process !== 'undefined' && process.title != 'browser';
 
@@ -13,7 +12,6 @@ if (inProcess) {
 class EVA {
   constructor() {
     this.version = eva_sfa_framework_version;
-    this.build = eva_sfa_framework_build;
     this.login = '';
     this.password = '';
     this.apikey = '';
@@ -95,6 +93,7 @@ class EVA {
   }
 
   start() {
+    this._debug('framework', `version: ${this.version}`);
     try {
       var f = fetch;
     } catch (err) {
@@ -363,15 +362,14 @@ class EVA {
               me._cvars = {};
             }
           }
+          eva_invoke_handler(me, 'heartbeat.success');
           resolve(true);
         })
         .catch(function(err) {
-          console.log(err);
           me._debug('heartbeat', 'error: unable to send test API call');
           eva_invoke_handler(me, 'heartbeat.error', err);
         });
       me._debug('heartbeat', 'ok');
-      eva_invoke_handler(me, 'heartbeat.success');
     });
   }
 
