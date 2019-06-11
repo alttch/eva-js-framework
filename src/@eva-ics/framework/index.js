@@ -216,7 +216,7 @@ class EVA {
     this._cancel_scheduled_restart();
     this._debug('restart', 'performing restart');
     var me = this;
-    this.stop()
+    this.stop(true)
       .then(function() {
         me._schedule_restart();
       })
@@ -415,20 +415,22 @@ class EVA {
    * After calling the function will close open WebSocket if available,
    * clear all the refresh intervals then try to close server session
    *
+   * @param keep_auth - keep authentication cookies (e.g. on restart)
+   *
    * @returns - Promise object
    */
-  stop() {
+  stop(keep_auth) {
     var me = this;
     return new Promise(function(resolve, reject) {
       me._stop_engine();
       me.logged_in = false;
       me.call('logout')
         .then(function() {
-          me.erase_token_cookie();
+          if (!keep_auth) me.erase_token_cookie();
           resolve();
         })
         .catch(function(err) {
-          me.erase_token_cookie();
+          if (!keep_auth) me.erase_token_cookie();
           reject(err);
         });
     });
