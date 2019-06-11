@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_sfa_framework_version = '0.1.9';
+const eva_sfa_framework_version = '0.1.10';
 
 const fetch = require('node-fetch');
 const WebSocket = require('ws');
@@ -872,7 +872,7 @@ class EVA {
         if (typeof f === 'string') {
           return eval(f);
         } else if (typeof f === 'function') {
-          return f.apply(this, Array.from(arguments));
+          return f.apply(this, [].slice.call(arguments, 1));
         }
       } catch (err) {
         jsaltt.logger.error(`handler for ${handler}:`, err);
