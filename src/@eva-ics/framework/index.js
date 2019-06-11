@@ -1,19 +1,11 @@
 'use strict';
 
-const eva_sfa_framework_version = '0.1.8';
+const eva_sfa_framework_version = '0.1.9';
 
 const fetch = require('node-fetch');
 const WebSocket = require('ws');
 const jsaltt = require('@altertech/jsaltt');
 const $cookies = require('@altertech/cookies');
-
-if (typeof logger === 'undefined' && typeof jsaltt !== 'undefined') {
-  var logger = jsaltt.logger;
-} else {
-  var logger = {}[('debug', 'info', 'warning', 'error', 'critical')].map(
-    f => (logger[f] = console.log)
-  );
-}
 
 class EVA {
   constructor() {
@@ -91,7 +83,7 @@ class EVA {
       var f = null;
     }
     if (!f) {
-      logger.error(
+      jsaltt.logger.error(
         '"fetch" function is unavailable. Upgrade your web browser or ' +
           'connect polyfill (lib/polyfill/fetch.js)'
       );
@@ -612,7 +604,7 @@ class EVA {
         me._log_first_load = false;
       })
       .catch(function(err) {
-        logger.error('unable to load log entries');
+        jsaltt.logger.error('unable to load log entries');
       });
   }
 
@@ -841,7 +833,7 @@ class EVA {
                 f(state);
               }
             } catch (err) {
-              logger.error(`state function processing for ${oid}:`, err);
+              jsaltt.logger.error(`state function processing for ${oid}:`, err);
             }
           });
         }
@@ -855,14 +847,20 @@ class EVA {
                   f(state);
                 }
               } catch (err) {
-                logger.error(`state function processing for ${oid}:`, err);
+                jsaltt.logger.error(
+                  `state function processing for ${oid}:`,
+                  err
+                );
               }
             });
           }
         }, this);
       }
     } catch (err) {
-      logger.error('State processing error, invalid object received', err);
+      jsaltt.logger.error(
+        'State processing error, invalid object received',
+        err
+      );
     }
   }
 
@@ -877,7 +875,7 @@ class EVA {
           return f.apply(this, Array.from(arguments));
         }
       } catch (err) {
-        logger.error(`handler for ${handler}:`, err);
+        jsaltt.logger.error(`handler for ${handler}:`, err);
       }
     }
   }
@@ -888,8 +886,8 @@ class EVA {
 
   _debug(method) {
     if (this.debug) {
-      logger.debug.apply(
-        logger,
+      jsaltt.logger.debug.apply(
+        jsaltt.logger,
         ['EVA::' + method].concat([].slice.call(arguments, 1))
       );
     }
