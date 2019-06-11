@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_sfa_framework_version = '0.1.10';
+const eva_sfa_framework_version = '0.1.11';
 
 const fetch = require('node-fetch');
 const WebSocket = require('ws');
@@ -665,7 +665,7 @@ class EVA {
   _set_token_cookie() {
     if (this.set_auth_cookies && typeof document !== 'undefined') {
       ['/ui', '/pvt', '/rpvt'].map(
-        uri => (document.cookie = `auth=${this.api_token}'; path=${uri}`),
+        uri => (document.cookie = `auth=${this.api_token}; path=${uri}`),
         this
       );
     }
