@@ -27,7 +27,7 @@ build:
 
 pub-framework:
 	cp README.md ./framework/
-	cd framework/src && npm version patch
+	cd framework && npm version patch
 	sed -i "s/\(const eva_framework_version\).*/\1 = '`jq < framework/package.json -r .version`';/g" \
 		./framework/src/index.js
-	cd framework && npm publish framework --access public
+	npm publish framework --access public

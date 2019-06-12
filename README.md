@@ -13,7 +13,7 @@ For web browsers
 ----------------
 
 Download
-https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.min.js
+https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.framework.min.js
 
 For Node.js
 -----------
@@ -39,7 +39,7 @@ $eva = new eva_framework.EVA();
 Init (for web browsers):
 
 ```html
-  <script src="eva.min.js"></script>
+  <script src="eva.framework.min.js"></script>
 ```
 
 Configuration

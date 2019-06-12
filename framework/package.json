@@ -1,6 +1,6 @@
 {
   "name": "@eva-ics/framework",
-  "version": "0.1.12",
+  "version": "0.1.17",
   "description": "JavaScript Framework for EVA ICS",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",
@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/alttch/eva-js-framework.git"
   },
-  "main": "src/index.json",
+  "main": "src/index.js",
   "keywords": [
     "iot",
     "iiot",
@@ -27,15 +27,15 @@
   "dependencies": {
     "@altertech/cookies": "^0.0.5",
     "@altertech/jsaltt": "0.0.8",
-    "@babel/cli": "^7.4.4",
-    "@babel/preset-env": "^7.4.5",
-    "babel-plugin-transform-class-properties": "^6.24.1",
     "node-fetch": "^2.6.0",
     "ws": "^7.0.0"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {
     "@babel/core": "^7.4.5",
+    "@babel/cli": "^7.4.4",
+    "@babel/preset-env": "^7.4.5",
+    "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-loader": "^8.0.6",
     "babel-register": "^6.26.0",
     "webpack": "^4.33.0",
