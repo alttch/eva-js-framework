@@ -12,6 +12,9 @@ module.exports = {
     filename: 'eva.framework.min.js'
   },
   externals: ['node-fetch', 'ws', 'chalk'],
+  //optimization: {
+  //minimize: false
+  //},
   module: {
     rules: [
       {
