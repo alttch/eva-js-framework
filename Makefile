@@ -1,8 +1,8 @@
 all: build
 
 prepare:
-	npm i @babel/core @babel/cli babel-plugin-transform-class-properties @babel/preset-env babel-preset-minify \
-		@altertech/jsaltt @altertech/cookies
+	npm i @babel/core @babel/cli babel-plugin-transform-class-properties \
+	 	@babel/preset-env babel-preset-minify @altertech/jsaltt @altertech/cookies
 
 build:
 	cat \
@@ -12,7 +12,14 @@ build:
 			grep -vE "=.*require\(" | \
 			grep -vE "^'use strict'" > dist/eva.js
 	echo "//`jq < src/@eva-ics/framework/package.json -r .version`" > dist/eva.min.js
-	./node_modules/.bin/babel dist/eva.js --config-file `pwd`/.babelrc --no-comments >> dist/eva.min.js
+	./node_modules/.bin/babel dist/eva.js \
+			--config-file `pwd`/.babelrc --no-comments >> dist/eva.min.js
+	cat ./src/@eva-ics/toolbox/index.js | \
+			grep -vE "=.*require\(" | \
+			grep -vE "^'use strict'" > dist/eva.toolbox.js
+	echo "//`jq < src/@eva-ics/toolbox/package.json -r .version`" > dist/eva.toolbox.min.js
+	./node_modules/.bin/babel dist/eva.toolbox.js \
+	 		--config-file `pwd`/.babelrc --no-comments >> dist/eva.toolbox.min.js
 
 pub-framework:
 	cp README.md ./src/@eva-ics/framework/
