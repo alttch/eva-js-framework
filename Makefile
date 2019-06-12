@@ -2,7 +2,7 @@ all: build
 
 prepare:
 	npm i @babel/core @babel/cli babel-plugin-transform-class-properties \
-	 	@babel/preset-env babel-preset-minify @altertech/jsaltt @altertech/cookies
+	 	@babel/preset-env babel-preset-minify cssmin-cli @altertech/jsaltt @altertech/cookies
 
 build:
 	cat \
@@ -20,6 +20,7 @@ build:
 	echo "//`jq < src/@eva-ics/toolbox/package.json -r .version`" > dist/eva.toolbox.min.js
 	./node_modules/.bin/babel dist/eva.toolbox.js \
 	 		--config-file `pwd`/.babelrc --no-comments >> dist/eva.toolbox.min.js
+	./node_modules/.bin/cssmin ./css/eva.toolbox.css > css/eva.toolbox.min.css
 
 pub-framework:
 	cp README.md ./src/@eva-ics/framework/
