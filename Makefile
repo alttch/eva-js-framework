@@ -31,3 +31,7 @@ pub-framework:
 	sed -i "s/\(const eva_framework_version\).*/\1 = '`jq < framework/package.json -r .version`';/g" \
 		./framework/src/index.js
 	npm publish framework --access public
+
+clean:
+	rm -rf framework/node_modules framework/dist framework/package-lock.json
+	rm -rf toolbox/node_modules toolbox/dist toolbox/package-lock.json
