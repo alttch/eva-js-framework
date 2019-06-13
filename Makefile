@@ -47,7 +47,7 @@ pub-toolbox:
 	npm publish toolbox --access public
 
 done:
-	which figlet > /dev/null && figlet -f slant "DONE" || echo "DONE"
+	@which figlet > /dev/null && figlet -f slant "DONE" || echo -e "-----------------\nDONE"
 
 clean:
 	rm -rf package-lock.json node_modules \
