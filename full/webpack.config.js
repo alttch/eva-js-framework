@@ -28,16 +28,20 @@ module.exports = {
     rules: [
       {
         test: /\.css$/,
-        use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-            options: {
-              hmr: process.env.NODE_ENV === 'development'
-            }
-          },
-          'css-loader'
-        ]
+        use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
       },
+      //{
+        //test: /\.css$/,
+        //use: [
+          //{
+            //loader: MiniCssExtractPlugin.loader,
+            //options: {
+              //hmr: process.env.NODE_ENV === 'development'
+            //}
+          //},
+          //'css-loader'
+        //]
+      //},
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,

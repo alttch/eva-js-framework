@@ -24,8 +24,6 @@ build-full:
 		./node_modules/.bin/webpack
 		echo "//`jq < ./framework/package.json -r .version`" > ./dist/eva.min.js
 		cat ./full/dist/eva.min.js >> ./dist/eva.min.js
-		mv -vf ./full/dist/main.css ./dist/eva.min.css
-
 
 pub-framework:
 	cp README.md ./framework/
