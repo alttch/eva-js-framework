@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.1.19';
+const eva_framework_version = '0.1.20';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -13,6 +13,8 @@ const eva_framework_version = '0.1.19';
 
   const jsaltt = require('@altertech/jsaltt');
   const cookies = require('@altertech/cookies');
+
+  const QRious = require('qrious');
 
   class EVA {
     constructor() {
@@ -898,6 +900,80 @@ const eva_framework_version = '0.1.19';
           ['EVA::' + method].concat([].slice.call(arguments, 1))
         );
       }
+    }
+
+    /**
+     * QR code for EvaHI
+     *
+     * Generates QR code for :doc:`EvaHI</evahi>`-compatible apps (e.g. for EVA
+     * ICS Control Center mobile app for Android). Current framework session must
+     * be authorized using user login. If $eva.password is defined, QR code also
+     * contains password value. Requires qrious js library.
+     *
+     * @param ctx - html <canvas /> element id to generate QR code in
+     * @param params - object with additional parameters:
+     *              @size - QR code size in px (default: 200)
+     *              @url - override UI url (default: document.location)
+     *              @user - override user (default: authorized_user)
+     *              @password - override password
+     *
+     * @returns Qrious QR object if QR code is generated
+     */
+    hiQR(ctx, params) {
+      if (typeof document !== 'object') {
+        jsaltt.logger.error('document object not found');
+        return;
+      }
+      var params = params;
+      if (!params) params = {};
+      var url = params['url'];
+      if (!url) {
+        url = document.location;
+      }
+      var user = params['user'];
+      if (user === undefined) {
+        user = this.authorized_user;
+      }
+      var password = params['password'];
+      if (password === undefined) {
+        password = this.password;
+      }
+      var size = params['size'];
+      if (!size) {
+        size = 200;
+      }
+      if (!url || !user) {
+        return false;
+      }
+      var l = document.createElement('a');
+      l.href = url;
+      var protocol = l.protocol.substring(0, l.protocol.length - 1);
+      var host = l.hostname;
+      var port = l.port;
+      if (!port) {
+        if (protocol == 'http') {
+          port = 80;
+        } else {
+          port = 443;
+        }
+      }
+      var value =
+        'scheme:' +
+        protocol +
+        '|address:' +
+        host +
+        '|port:' +
+        port +
+        '|user:' +
+        user;
+      if (password) {
+        value += '|password:' + password;
+      }
+      return new QRious({
+        element: typeof ctx === 'object' ? ctx : document.getElementById(ctx),
+        value: value,
+        size: size
+      });
     }
   }
 

@@ -4,8 +4,6 @@
   const eva_framework = require('@eva-ics/framework');
   const jsaltt = require('@altertech/jsaltt');
   var Chart = require('chart.js');
-  const QRious = require('qrious');
-
   const css = require('./style.css');
 
   var $eva = eva_framework.$eva;
@@ -49,7 +47,7 @@
       }
       var update = params['update'];
       var prop = params['prop'];
-      var cc = document.getElementById(ctx);
+      var cc = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
       var data_units = params['u'];
       var chart = null;
       if (_do_update) {
@@ -139,86 +137,17 @@
    *
    * Simple loading animation
    *
-   * @param el_id - html element id
+   * @param el - DOM element (or id)
    */
-  function eva_toolbox_animate(el_id) {
-    document.getElementById(el_id).innerHTML =
+  function eva_toolbox_animate(ctx) {
+    var el = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
+    el.innerHTML =
       '<div class="eva-toolbox-cssload-square"><div \
       class="eva-toolbox-cssload-square-part \
       eva-toolbox-cssload-square-green"></div><div \
       class="eva-toolbox-cssload-square-part \
       eva-toolbox-cssload-square-pink"></div><div \
       class="eva-toolbox-cssload-square-blend"></div></div>';
-  }
-
-  /**
-   * QR code for EvaHI
-   *
-   * Generates QR code for :doc:`EvaHI</evahi>`-compatible apps (e.g. for EVA
-   * ICS Control Center mobile app for Android). Current framework session must
-   * be authorized using user login. If $eva.password is defined, QR code also
-   * contains password value. Requires qrious js library.
-   *
-   * @param ctx - html <canvas /> element id to generate QR code in
-   * @param params - object with additional parameters:
-   *              @size - QR code size in px (default: 200)
-   *              @url - override UI url (default: document.location)
-   *              @user - override user (default: $eva.authorized_user)
-   *              @password - override password
-   *
-   * @returns Qrious QR object if QR code is generated
-   */
-  function eva_toolbox_hiQR(ctx, params) {
-    var params = params;
-    if (!params) params = {};
-    var url = params['url'];
-    if (!url) {
-      url = document.location;
-    }
-    var user = params['user'];
-    if (user === undefined) {
-      user = $eva.authorized_user;
-    }
-    var password = params['password'];
-    if (password === undefined) {
-      password = $eva.password;
-    }
-    var size = params['size'];
-    if (!size) {
-      size = 200;
-    }
-    if (!url || !user) {
-      return false;
-    }
-    var l = document.createElement('a');
-    l.href = url;
-    var protocol = l.protocol.substring(0, l.protocol.length - 1);
-    var host = l.hostname;
-    var port = l.port;
-    if (!port) {
-      if (protocol == 'http') {
-        port = 80;
-      } else {
-        port = 443;
-      }
-    }
-    var value =
-      'scheme:' +
-      protocol +
-      '|address:' +
-      host +
-      '|port:' +
-      port +
-      '|user:' +
-      user;
-    if (password) {
-      value += '|password:' + password;
-    }
-    return new QRious({
-      element: document.getElementById(ctx),
-      value: value,
-      size: size
-    });
   }
 
   /**
@@ -252,7 +181,7 @@
     if (!params) params = {};
     return new Promise(function(resolve, reject) {
       if (document === 'undfined') throw Error('DOM is required');
-      var popup = document.getElementById(ctx);
+      var popup = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
       if (popup === undefined || popup === null)
         throw Error(`DOM context ${ctx} not found`);
       var ct = params['ct'];
@@ -402,7 +331,6 @@
       }
       $eva.toolbox.chart = eva_toolbox_chart;
       $eva.toolbox.animate = eva_toolbox_animate;
-      $eva.toolbox.hiQR = eva_toolbox_hiQR;
       $eva.toolbox.popup = eva_toolbox_popup;
     }
   }
@@ -412,7 +340,6 @@
   if (typeof exports === 'object') {
     exports.chart = eva_toolbox_chart;
     exports.animate = eva_toolbox_animate;
-    exports.hiQR = eva_toolbox_hiQR;
     exports.popup = eva_toolbox_popup;
   }
 })();
