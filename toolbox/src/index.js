@@ -3,6 +3,10 @@
 (() => {
   const eva_framework = require('@eva-ics/framework');
   const jsaltt = require('@altertech/jsaltt');
+  var Chart = require('chart.js');
+  const QRious = require('qrious');
+
+  const css = require('./style.css');
 
   var $eva = eva_framework.$eva;
   /**
