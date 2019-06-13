@@ -16,11 +16,11 @@ Download
 
 Framework only:
 
-    https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.framework.min.js
+https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.framework.min.js
 
 Framework with chart and other utility functions:
 
-    https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.min.js
+https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.min.js
 
 For Node.js
 -----------
