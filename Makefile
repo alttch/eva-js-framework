@@ -4,52 +4,33 @@ prepare:
 	npm i @babel/core @babel/cli babel-plugin-transform-class-properties \
 	 	@babel/preset-env babel-preset-minify cssmin-cli @altertech/jsaltt @altertech/cookies
 
-#build:
-	#cat \
-		#./node_modules/@altertech/jsaltt/index.js \
-		#./node_modules/@altertech/cookies/index.js \
-		#./src/@eva-ics/framework/index.js | \
-			#grep -vE "=.*require\(" | \
-			#grep -vE "^'use strict'" > dist/eva.js
-	#echo "//`jq < src/@eva-ics/framework/package.json -r .version`" > dist/eva.min.js
-	#./node_modules/.bin/babel dist/eva.js \
-			#--config-file `pwd`/.babelrc --no-comments >> dist/eva.min.js
-	#cat ./src/@eva-ics/toolbox/index.js | \
-			#grep -vE "=.*require\(" | \
-			#grep -vE "^'use strict'" > dist/eva.toolbox.js
-	#echo "//`jq < src/@eva-ics/toolbox/package.json -r .version`" > dist/eva.toolbox.min.js
-	#./node_modules/.bin/babel dist/eva.toolbox.js \
-			 #--config-file `pwd`/.babelrc --no-comments >> dist/eva.toolbox.min.js
-	#./node_modules/.bin/cssmin ./css/eva.toolbox.css > css/eva.toolbox.min.css
+build: clean-dist build-framework build-full build-css done
 
-build: framework full css
+clean-dist:
+	rm -f dist/*
 
-framework:
-	mkdir -p node_modules
+build-framework:
 	cd framework && \
-		rm -rf node_modules && \
-		ln -sf ../node_modules && \
 	 	npm install && \
 	 	./node_modules/.bin/webpack && \
 		echo "//`jq < package.json -r .version`" > ../dist/eva.framework.min.js && \
-	 	cat dist/eva.framework.min.js >> ../dist/eva.framework.min.js && \
-	rm -rf ./node_modules/@eva-ics/framework && \
-	mkdir -p ./node_modules/@eva-ics/framework
-	cd ./node_modules/@eva-ics/framework && \
-		ln -sf ../../../framework/package.json && \
-		ln -sf ../../../framework/src
-	rm -rf ./node_modules/@eva-ics/toolbox && \
-	mkdir -p ./node_modules/@eva-ics/toolbox
-	cd ./node_modules/@eva-ics/toolbox && \
-		ln -sf ../../../toolbox/package.json && \
-		ln -sf ../../../toolbox/src
+	 	cat dist/eva.framework.min.js >> ../dist/eva.framework.min.js
 
-full:
-	webpack --config webpack.full.js
+build-full:
+	npm install webpack webpack-cli babel-register babel-loader \
+		 @babel/core babel-plugin-transform-class-properties @babel/preset-env
+	npm link framework
+	npm link toolbox
+	./node_modules/.bin/webpack --config webpack.full.js
+	mv ./dist/eva.min.js ./dist/eva.min.js.tmp
+	echo "//`jq < ./framework/package.json -r .version`" > ./dist/eva.min.js
+	cat ./dist/eva.min.js.tmp >> ./dist/eva.min.js
+	rm -f ./dist/eva.min.js.tmp
 
-css:
-	npm install cssmin-cli
-	./node_modules/.bin/cssmin ./toolbox/css/eva.toolbox.css > dist/eva.min.css
+build-css:
+	cd toolbox && \
+	 	npm install cssmin-cli && \
+		./node_modules/.bin/cssmin ./css/eva.toolbox.css > ../dist/eva.min.css
 
 pub-framework:
 	cp README.md ./framework/
@@ -58,6 +39,14 @@ pub-framework:
 		./framework/src/index.js
 	npm publish framework --access public
 
+pub-toolbox:
+	cd toolbox && npm version patch
+	npm publish toolbox --access public
+
+done:
+	which figlet > /dev/null && figlet -f slant "DONE" || echo "DONE"
+
 clean:
-	rm -rf node_modules \
-	 	framework/node_modules framework/dist framework/package-lock.json framework/README.md
+	rm -rf package-lock.json node_modules \
+	 	framework/node_modules framework/dist framework/package-lock.json framework/README.md \
+		toolbox/node_modules
