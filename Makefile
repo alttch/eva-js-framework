@@ -22,8 +22,34 @@ prepare:
 			 #--config-file `pwd`/.babelrc --no-comments >> dist/eva.toolbox.min.js
 	#./node_modules/.bin/cssmin ./css/eva.toolbox.css > css/eva.toolbox.min.css
 
-build:
-	cd framework && npm install && ./node_modules/.bin/webpack && mv -f dist/eva.framework.min.js ../dist/
+build: framework full css
+
+framework:
+	mkdir -p node_modules
+	cd framework && \
+		rm -rf node_modules && \
+		ln -sf ../node_modules && \
+	 	npm install && \
+	 	./node_modules/.bin/webpack && \
+		echo "//`jq < package.json -r .version`" > ../dist/eva.framework.min.js && \
+	 	cat dist/eva.framework.min.js >> ../dist/eva.framework.min.js && \
+	rm -rf ./node_modules/@eva-ics/framework && \
+	mkdir -p ./node_modules/@eva-ics/framework
+	cd ./node_modules/@eva-ics/framework && \
+		ln -sf ../../../framework/package.json && \
+		ln -sf ../../../framework/src
+	rm -rf ./node_modules/@eva-ics/toolbox && \
+	mkdir -p ./node_modules/@eva-ics/toolbox
+	cd ./node_modules/@eva-ics/toolbox && \
+		ln -sf ../../../toolbox/package.json && \
+		ln -sf ../../../toolbox/src
+
+full:
+	webpack --config webpack.full.js
+
+css:
+	npm install cssmin-cli
+	./node_modules/.bin/cssmin ./toolbox/css/eva.toolbox.css > dist/eva.min.css
 
 pub-framework:
 	cp README.md ./framework/
@@ -33,5 +59,5 @@ pub-framework:
 	npm publish framework --access public
 
 clean:
-	rm -rf framework/node_modules framework/dist framework/package-lock.json
-	rm -rf toolbox/node_modules toolbox/dist toolbox/package-lock.json
+	rm -rf node_modules \
+	 	framework/node_modules framework/dist framework/package-lock.json framework/README.md

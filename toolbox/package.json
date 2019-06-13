@@ -3,14 +3,13 @@
   "version": "0.1.1",
   "description": "UI Toolbox for EVA ICS",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "build-full": "webpack --env.full"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alttch/eva-js-framework.git"
   },
+  "main": "src/index.js",
   "keywords": [
     "iot",
     "iiot",

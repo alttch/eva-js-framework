@@ -1,6 +1,8 @@
 'use strict';
 
 (() => {
+  const eva_framework = require('@eva-ics/framework');
+  const jsaltt = require('@altertech/jsaltt');
   /**
    * display a chart
    *

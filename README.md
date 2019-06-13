@@ -33,7 +33,11 @@ Init (for Node.js):
 ```javascript
 eva_framework = require('@eva-ics/framework');
 
-$eva = new eva_framework.EVA();
+// default object
+$eva = eva_framework.$eva;
+
+// or for multiple targets
+// $eva = new eva_framework.EVA();
 ```
 
 Init (for web browsers):
