@@ -13,7 +13,14 @@ For web browsers
 ----------------
 
 Download
-https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.framework.min.js
+
+Framework only:
+
+    https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.framework.min.js
+
+Framework with chart and other utility functions:
+
+    https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.min.js
 
 For Node.js
 -----------
