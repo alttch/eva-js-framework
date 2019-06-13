@@ -12,7 +12,7 @@ const eva_framework_version = '0.1.17';
   }
 
   const jsaltt = require('@altertech/jsaltt');
-  const $cookies = require('@altertech/cookies');
+  const cookies = require('@altertech/cookies');
 
   class EVA {
     constructor() {
@@ -101,7 +101,7 @@ const eva_framework_version = '0.1.17';
         q = {u: this.login, p: this.password};
         this._debug('start', 'logging in with password');
       } else if (this.set_auth_cookies) {
-        var token = $cookies.read('auth');
+        var token = cookies.read('auth');
         if (token) {
           q = {a: token};
           this._debug('start', 'logging in with auth token');
@@ -901,12 +901,15 @@ const eva_framework_version = '0.1.17';
     }
   }
 
+  let $eva = new EVA();
+
   if (typeof exports === 'object') {
     exports.EVA = EVA;
+    exports.$eva = $eva;
   }
 
   if (typeof window === 'object') {
-    window.$eva = new EVA();
+    window.$eva = $eva;
     window.eva_framework_version = eva_framework_version;
   }
 })();
