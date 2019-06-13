@@ -1,0 +1,30 @@
+{
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Altertech",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/alttch/eva-js-framework/issues"
+  },
+  "dependencies": {
+    "@eva-ics/framework": "^0.1.11",
+    "@eva-ics/toolbox": "^0.1.2",
+    "chart.js": "^2.8.0",
+    "qrious": "^4.0.2"
+  },
+  "homepage": "https://www.eva-ics.com/",
+  "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "css-loader": "^3.0.0",
+    "mini-css-extract-plugin": "^0.7.0",
+    "optimize-css-assets-webpack-plugin": "^5.0.1",
+    "webpack": "^4.33.0",
+    "webpack-cli": "^3.3.4"
+  }
+}
