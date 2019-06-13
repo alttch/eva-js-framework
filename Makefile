@@ -52,4 +52,4 @@ done:
 clean:
 	rm -rf package-lock.json node_modules \
 	 	framework/node_modules framework/dist framework/package-lock.json framework/README.md \
-		toolbox/node_modules
+		toolbox/node_modules toolbox/package-lock.json
