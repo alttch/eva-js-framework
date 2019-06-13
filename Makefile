@@ -20,6 +20,8 @@ build-full:
 	npm install webpack webpack-cli babel-register babel-loader \
 		 @babel/core babel-plugin-transform-class-properties @babel/preset-env \
 		 @altertech/jsaltt @altertech/cookies
+	rm -rf node_modules/@eva-ics/framework
+	rm -rf node_modules/@eva-ics/toolbox
 	npm link framework
 	npm link toolbox
 	./node_modules/.bin/webpack --config webpack.full.js

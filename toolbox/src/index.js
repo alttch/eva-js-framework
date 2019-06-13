@@ -3,6 +3,8 @@
 (() => {
   const eva_framework = require('@eva-ics/framework');
   const jsaltt = require('@altertech/jsaltt');
+
+  var $eva = eva_framework.$eva;
   /**
    * display a chart
    *
@@ -388,15 +390,20 @@
     });
   }
 
-  if (typeof $eva === 'object') {
-    if (!$eva.toolbox) {
-      $eva.toolbox = {};
+  function inject_toolbox() {
+    var $eva = window.$eva;
+    if (typeof $eva === 'object') {
+      if (!$eva.toolbox) {
+        $eva.toolbox = {};
+      }
+      $eva.toolbox.chart = eva_toolbox_chart;
+      $eva.toolbox.animate = eva_toolbox_animate;
+      $eva.toolbox.hiQR = eva_toolbox_hiQR;
+      $eva.toolbox.popup = eva_toolbox_popup;
     }
-    $eva.toolbox.chart = eva_toolbox_chart;
-    $eva.toolbox.animate = eva_toolbox_animate;
-    $eva.toolbox.hiQR = eva_toolbox_hiQR;
-    $eva.toolbox.popup = eva_toolbox_popup;
   }
+
+  inject_toolbox();
 
   if (typeof exports === 'object') {
     exports.chart = eva_toolbox_chart;
