@@ -1,16 +1,13 @@
-JavaScript Framework for EVA ICS
-================================
+# JavaScript Framework for EVA ICS
 
 Universal JavaScript Framework for [EVA ICS](https://www.eva-ics.com/) - open
 source platform for home and industrial IoT.
 
 The library works both in web browsers and Node.js.
 
-Installation
-============
+## Installation
 
-For web browsers
-----------------
+### For web browsers
 
 Download
 
@@ -22,18 +19,15 @@ Framework with chart and other utility functions:
 
 https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.min.js
 
-For Node.js
------------
+### For Node.js
 
 ```bash
   npm i @eva-ics/framework
 ```
 
-Examples
-========
+## Examples
 
-Initialization
---------------
+### Initialization
 
 Init (for Node.js):
 
@@ -53,8 +47,7 @@ Init (for web browsers):
   <script src="eva.framework.min.js"></script>
 ```
 
-Configuration
--------------
+### Configuration
 
 ```javascript
 $eva.login = 'operator';
@@ -83,8 +76,7 @@ $eva.on('login.failed', function(err) {
 $eva.start();
 ```
 
-Watching states and performing API calls
-----------------------------------------
+## Watching states and performing API calls
 
 ```javascript
 // watch example. Each item can have multiple watchers, masks '*' are possible.
@@ -114,8 +106,7 @@ Function *call* returns Promise object, on success = API call result, on error
 * **message** error message
 * **data** full server response
 
-Calling API methods
--------------------
+## Calling API methods
 
 All API methods are called with *call* function:
 
@@ -128,8 +119,7 @@ All API methods are called with *call* function:
 If first parameter is a string, it's automatically set to "i" argument of API
 request.
 
-Setting intervals
------------------
+## Setting intervals
 
 Intervals are set by *interval* method, e.g. *$eva.interval("reload", 5)*,
 value means seconds. Available intervals:
@@ -140,8 +130,7 @@ value means seconds. Available intervals:
 * **reload** force reload items when working in web socket mode.
 * **restart** interval between automatic restart attempts.
 
-Handling events
----------------
+## Handling events
 
 Event handlers are set by *on(event, func)* and fired on:
 
@@ -159,13 +148,11 @@ Event handlers are set by *on(event, func)* and fired on:
 Each event can have only one handler. Methods *call* and *stop* return
 *Promise* objects.
 
-Class variables
----------------
+## Class variables
 
 Class variables are get and set directly, e.g. *$eva.login = "operator";*
 
-API and Authentication
-~~~~~~~~~~~~~~~~~~~~~~
+### API and Authentication
 
 Authentication variables should set before *start()* method is called - either
 login/password or apikey. If there is *auth* cookie set, API token variable is
@@ -178,8 +165,7 @@ filled by framework automatically.
 * **set_auth_cookies** if true (default), *auth* cookie is used to store API
   token.
 
-Item processing, special
-~~~~~~~~~~~~~~~~~~~~~~~~
+### Item processing, special
 
 * **debug** if true, Framework enters debug mode and everything's logged to
   console.
@@ -188,17 +174,15 @@ Item processing, special
 
 * **log.records** set max. log records to retrieve from the server.
 
-* **state_updates**
- * Possible values:
- *  true (default) - get states of all items API key has access to
- *  {'p': [types], 'g': [groups]} - subscribe to specified types and groups
- *  false - disable state updates
+* **state_updates** Possible values:
+  * true (default) - get states of all items API key has access to
+  * {'p': [types], 'g': [groups]} - subscribe to specified types and groups
+  * false - disable state updates
 
 * **ws_mode** use web sockets. Set automatically if WebSocket object is
   detected, can be set to "false" manually before framework start.
 
-Read-only
-~~~~~~~~~
+### Read-only
 
 * **version** Framework version (also available as *eva_framework_version* in
   browsers)
@@ -209,10 +193,9 @@ Read-only
 * **log.level** current log level of records to retrieve from the server.
 * **log_level_nwmes** dictionary of log level names (code: name)
 * **server_info** contains actual server info (output of API *test* method)
-* **tsdiff* time difference between client and server
+* **tsdiff** time difference between client and server
 
-Methods
--------
+## Framework functions
 
 * **start()** start Framework and log in
 * **restart()** restart Framework (default handler for heartbeat error)
@@ -225,8 +208,7 @@ Methods
 * **status**, **value**, **state** get item state by oid
 * **expires_in** get lvar expiration time in seconds
 
-Server custom variables
------------------------
+## Server custom variables
 
 All defined CVARs are set as globals after successful log in. CVARs can be also
 read with method
@@ -235,8 +217,7 @@ read with method
 var myCVAR = $eva.cvar('myCVAR');
 ```
 
-QR code for evaHI-based apps
-----------------------------
+## QR code for evaHI-based apps
 
 Method *hiQR* generates QR code for evaHI-compatible apps (e.g. for EVA ICS
 Control Center mobile app for Android). Current framework session must be
@@ -247,10 +228,10 @@ Parameters:
 
 * **ctx** html <canvas /> element or id to generate QR code in
 * **params** object with additional parameters:
- * size - QR code size in px (default: 200px)
- * url - override UI url (default: document.location)
- * user - override user (default: authorized_user)
- * password - override (or exclude) password
+  * size - QR code size in px (default: 200px)
+  * url - override UI url (default: document.location)
+  * user - override user (default: authorized_user)
+  * password - override (or exclude) password
 
 Example:
 
