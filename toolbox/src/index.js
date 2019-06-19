@@ -10,10 +10,9 @@
   /**
    * display a chart
    *
-   * To work with charts you should include Chart.js library, which is located
-   * in file lib/chart.min.js (ui folder).
+   * requires chart.js
    *
-   * @param ctx - html container element id to draw in (must have fixed
+   * @param ctx - html container element or id to draw in (must have fixed
    *              width/height)
    * @param cfg - Chart.js configuration
    * @param oid - item oid or oids, array or comma separated (type:full_id)
@@ -137,7 +136,7 @@
    *
    * Simple loading animation
    *
-   * @param el - DOM element (or id)
+   * @param ctx - DOM element (or id)
    */
   function eva_toolbox_animate(ctx) {
     var el = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
@@ -165,7 +164,7 @@
    * @param msg - popup window message
    * @param params - object with handlers and additional parameters:
    *              @ct - popup auto close time (sec), equal to pressing escape
-   *              @btn1 - button 1 name ('OK' if not specified)
+   *              @btn1 - button 1 name (default: 'OK')
    *              @btn2 - button 2 name
    *              @va - validate function which runs before Promise resolve
    *              function. If the function return true, the popup is closed and
