@@ -22,16 +22,16 @@ Params:
 * **oid** item oid or oids, array or comma separated (type:full_id)
 * *params* object with additional params:
 
-  * timeframe - timeframe to display (5T - 5 min, 2H - 2 hr, 2D
+  timeframe - timeframe to display (5T - 5 min, 2H - 2 hr, 2D
                 - 2 days etc.), default: 1D
 
-  *fill - precision[:np] (10T - 60T recommended, more accurate -
+  fill - precision[:np] (10T - 60T recommended, more accurate -
           more data), np - number precision, optional. default: 30T:2
-  *update - update interval in seconds. If the chart conteiner is no longer
+  update - update interval in seconds. If the chart conteiner is no longer
             visible, chart stops updating.
 
-  *prop - item property to use (default is value)
-  *u - data units (e.g. mm or °C)
+  prop - item property to use (default is value)
+  u - data units (e.g. mm or °C)
 
 ### $eva.toolbox.animate(ctx)
 
