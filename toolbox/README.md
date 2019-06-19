@@ -1,4 +1,4 @@
-# EVA ICS Toolbox
+# EVA JS Toolbox
 
 Additional functions for [EVA ICS
 Framework](https://www.npmjs.com/package/@eva-ics/framework)
