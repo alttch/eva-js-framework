@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.1.23';
+const eva_framework_version = '0.1.24';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -331,6 +331,25 @@ const eva_framework_version = '0.1.23';
         } else {
           func(v);
         }
+      }
+    }
+
+    /**
+     * Stop watching item state updates
+     *
+     * If item oid is not specified, all watching functions for all items are
+     * removed
+     *
+     * @param oid - item oid (e.g. sensor:env/temp1, or sensor:env/*)
+     */
+    unwatch(oid) {
+      if (!oid) {
+        this._update_state_functions = [];
+        this._update_state_mask_functions = [];
+      } else if (!oid.includes('*')) {
+        delete this._update_state_functions[oid];
+      } else {
+        delete this._update_state_mask_functions[oid];
       }
     }
 

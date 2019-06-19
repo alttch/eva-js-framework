@@ -204,15 +204,25 @@ filled by framework automatically.
 ## Framework functions
 
 * **start()** start Framework and log in
+
 * **restart()** restart Framework (default handler for heartbeat error)
+
 * **stop(keep_auth** stop Framework. If keep_auth is set to true, logout API
   method is not called.
+
 * **erase_token_cookies()** should be called when login window is displayed to
   make sure auth cookies are cleared.
+
 * **log_start(log_level)** start processing of server logs
+
 * **log_level(log_level)** change log level of records read from the server
-* **status**, **value**, **state** get item state by oid
+
+* **status(oid)**, **value(oid)**, **state(oid)** get item state by oid
+
 * **expires_in** get lvar expiration time in seconds
+
+* **unwatch(oid)** stop watching item. If oid is not specified, all watching
+  functions for all items are removed.
 
 ## Server custom variables
 
