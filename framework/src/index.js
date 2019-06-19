@@ -85,7 +85,7 @@ const eva_framework_version = '0.1.20';
       if (typeof fetch === 'undefined') {
         jsaltt.logger.error(
           '"fetch" function is unavailable. Upgrade your web browser or ' +
-            'connect polyfill (lib/polyfill/fetch.js)'
+            'connect polyfill'
         );
         return false;
       }
@@ -261,15 +261,15 @@ const eva_framework_version = '0.1.20';
     /**
      * Set event handler function. One event can have one handler only
      *
-     * @param handler - event handler, possible values:
+     * @param event - event, possible values:
      *           login.success, login.failed, ws.event, server.reload,
      *           server.restart, heartbeat.success, heartbeat.error, log.record,
      *           log.postprocess
      * @param func - function called on event
      */
-    on(handler, func) {
-      this._handlers[handler] = func;
-      this._debug('on', 'setting handler for ' + handler);
+    on(event, func) {
+      this._handlers[event] = func;
+      this._debug('on', 'setting handler for ' + event);
     }
 
     /**
@@ -908,9 +908,9 @@ const eva_framework_version = '0.1.20';
      * Generates QR code for :doc:`EvaHI</evahi>`-compatible apps (e.g. for EVA
      * ICS Control Center mobile app for Android). Current framework session must
      * be authorized using user login. If $eva.password is defined, QR code also
-     * contains password value. Requires qrious js library.
+     * contain password value. Requires qrious js library.
      *
-     * @param ctx - html <canvas /> element id to generate QR code in
+     * @param ctx - html <canvas /> element or id to generate QR code in
      * @param params - object with additional parameters:
      *              @size - QR code size in px (default: 200)
      *              @url - override UI url (default: document.location)
