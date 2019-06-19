@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.1.24';
+const eva_framework_version = '0.1.25';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -966,7 +966,7 @@ const eva_framework_version = '0.1.24';
         size = 200;
       }
       if (!url || !user) {
-        return false;
+        return;
       }
       var l = document.createElement('a');
       l.href = url;

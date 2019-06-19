@@ -25,7 +25,7 @@
    *              @update - update interval in seconds. If the chart container
    *              is no longer visible, chart stops updating.
    *              @prop - item property to use (default is value)
-   *              @u - data units (e.g. mm or °C)
+   *              @units - data units (e.g. mm or °C)
    *
    * @returns - chart object
    *
@@ -49,7 +49,7 @@
     var update = params['update'];
     var prop = params['prop'];
     var cc = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
-    var data_units = params['u'];
+    var data_units = params['units'];
     var chart;
     var nchart;
     var canvas;
@@ -329,7 +329,7 @@
     });
   }
 
-  const eva_toolbox_version = '0.1.9';
+  const eva_toolbox_version = '0.1.10';
 
   function inject_toolbox() {
     var $eva = window.$eva;

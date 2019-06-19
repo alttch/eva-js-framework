@@ -32,7 +32,7 @@ Params:
 
   * prop - item property to use (default is value)
 
-  * u - data units (e.g. mm or °C)
+  * units - data units (e.g. mm or °C)
 
 Returns Chart object.
 
