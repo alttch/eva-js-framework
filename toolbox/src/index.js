@@ -27,36 +27,33 @@
    *              @u - data units (e.g. mm or °C)
    *
    */
-  function eva_toolbox_chart(ctx, cfg, oid, params, _do_update) {
+  function eva_toolbox_chart(ctx, cfg, oid, params, _chart) {
+    var params = jsaltt.extend({}, params);
+    var _oid;
+    if (typeof oid === 'object') {
+      _oid = oid;
+    } else {
+      _oid = oid.split(',');
+    }
+    var timeframe = params['timeframe'];
+    if (!timeframe) {
+      timeframe = '1D';
+    }
+    var fill = params['fill'];
+    if (!fill) {
+      fill = '30T:2';
+    }
+    var update = params['update'];
+    var prop = params['prop'];
+    var cc = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
+    var data_units = params['u'];
+    var chart = null;
+    if (_chart) {
+      chart = _chart;
+    }
     var chartfunc = function() {
-      var params = jsaltt.extend({}, params);
-      var _oid;
-      if (typeof oid === 'object') {
-        _oid = oid;
-      } else {
-        _oid = oid.split(',');
-      }
-      var timeframe = params['timeframe'];
-      if (!timeframe) {
-        timeframe = '1D';
-      }
-      var fill = params['fill'];
-      if (!fill) {
-        fill = '30T:2';
-      }
-      var update = params['update'];
-      var prop = params['prop'];
-      var cc = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
-      var data_units = params['u'];
-      var chart = null;
-      if (_do_update) {
-        chart = _do_update;
-      }
-      if (
-        _do_update !== undefined &&
-        (cc.offsetWidth <= 0 || cc.offsetHeight <= 0)
-      ) {
-        if (chart) chart.destroy();
+      if (chart && (cc.offsetWidth <= 0 || cc.offsetHeight <= 0)) {
+        chart.destroy();
         return;
       }
       var d = new Date();
@@ -71,7 +68,7 @@
           d.getHours() - timeframe.substring(0, timeframe.length - 1) * 24
         );
       }
-      if (!_do_update) eva_toolbox_animate(ctx);
+      if (!chart) eva_toolbox_animate(ctx);
       var x = 'value';
       if (prop !== undefined && prop !== null) {
         x = prop;
@@ -123,9 +120,7 @@
           chart = null;
         });
       if (update) {
-        setTimeout(function() {
-          chartfunc(ctx, cfg, _oid, params, chart);
-        }, update * 1000);
+        setTimeout(chartfunc, update * 1000);
       }
     };
     chartfunc();
