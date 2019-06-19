@@ -1,6 +1,6 @@
 {
   "name": "@eva-ics/toolbox",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "UI Toolbox for EVA ICS",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
