@@ -243,3 +243,57 @@ Example:
 ```javascript
   $eva.hiQR('evaccqr', {password: null});
 ```
+
+## Multi-page interfaces, external authentication
+
+### Primary page
+
+If multi-page navigation contains links back to the main page, it should
+perform a single authentication attempt to re-use existing token:
+
+```javascript
+    var first_time_login = true;
+
+    $eva.on('login.failed', function(err) {
+      if (err.code == 2) {
+        // show login window
+        if (first_time_login) {
+          first_time_login = false;
+        } else {
+          // display err.message
+        }
+      } else {
+        // handle server error
+      }
+    });
+```
+
+The same method is used when client can authenticate itself with basic
+authentication on front-end sever or uses :doc:`EVA ICS Smartphone
+application</evahi>`.
+
+### Secondary pages
+
+By default, the interface should be programmed in a single HTML/J2 document
+*ui/index.html* or *ui/index.j2*, however sometimes it's useful to split parts
+of the interface to different html page files.
+
+Each HTML document should initialize/login SFA framework to access its
+functions. However if *eva_sfa_set_auth_cookies* is set to *true*, the
+secondary page can log in user with the existing token:
+
+```javascript
+    $eva.on('login.failed', function(err) {
+        // token is invalid or expired, redirect user to main page
+        document.location = '/ui/';
+    }
+```
+
+## Authentication with front-end server
+
+If you have front-end server installed before UI and it handles HTTP basic
+authentication, you can leave **$eva.login** and **$eva.password** variables
+empty and let framework log in without them.
+
+In this case authorization data will be parsed by SFA server from Authorization
+HTTP header (front-end server should pass it as-is to back-end SFA).
