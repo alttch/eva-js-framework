@@ -3,7 +3,8 @@
 (() => {
   const eva_framework = require('@eva-ics/framework');
   const jsaltt = require('@altertech/jsaltt');
-  var Chart = require('chart.js');
+  const Chart = require('chart.js');
+
   const css = require('./style.css');
 
   var $eva = eva_framework.$eva;
@@ -328,6 +329,8 @@
     });
   }
 
+  const eva_toolbox_version = '0.1.9';
+
   function inject_toolbox() {
     var $eva = window.$eva;
     if (typeof $eva === 'object') {
@@ -337,6 +340,7 @@
       $eva.toolbox.chart = eva_toolbox_chart;
       $eva.toolbox.animate = eva_toolbox_animate;
       $eva.toolbox.popup = eva_toolbox_popup;
+      $eva.toolbox.version = eva_toolbox_version;
     }
   }
 

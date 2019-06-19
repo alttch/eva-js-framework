@@ -34,6 +34,8 @@ pub-framework:
 
 pub-toolbox:
 	cd toolbox && npm version patch
+	sed -i "s/\(const eva_toolbox_version\).*/\1 = '`jq < toolbox/package.json -r .version`';/g" \
+		./toolbox/src/index.js
 	npm publish toolbox --access public
 
 done:
