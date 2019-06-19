@@ -221,8 +221,9 @@ filled by framework automatically.
 
 * **expires_in** get lvar expiration time in seconds
 
-* **unwatch(oid)** stop watching item. If oid is not specified, all watching
-  functions for all items are removed.
+* **unwatch(oid, func)** stop watching item. If item oid or function is not
+  specified, all watching functions are removed for a single oid (mask) or for
+  all
 
 ## Server custom variables
 

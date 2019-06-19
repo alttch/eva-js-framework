@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.1.25';
+const eva_framework_version = '0.3.1';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -337,19 +337,38 @@ const eva_framework_version = '0.1.25';
     /**
      * Stop watching item state updates
      *
-     * If item oid is not specified, all watching functions for all items are
-     * removed
+     * If item oid or function is not specified, all watching functions are
+     * removed for a single oid (mask) or for all.
      *
      * @param oid - item oid (e.g. sensor:env/temp1, or sensor:env/*)
+     * @param func - function to be removed
      */
-    unwatch(oid) {
+    unwatch(oid, func) {
       if (!oid) {
         this._update_state_functions = [];
         this._update_state_mask_functions = [];
       } else if (!oid.includes('*')) {
-        delete this._update_state_functions[oid];
+        if (oid in this._update_state_functions) {
+          if (func) {
+            this._update_state_functions[oid] = this._update_state_functions[
+              oid
+            ].filter(el => el !== func);
+          } else {
+            delete this._update_state_functions[oid];
+          }
+        }
       } else {
-        delete this._update_state_mask_functions[oid];
+        if (oid in this._update_state_mask_functions) {
+          if (func) {
+            this._update_state_mask_functions[
+              oid
+            ] = this._update_state_mask_functions[oid].filter(
+              el => el !== func
+            );
+          } else {
+            delete this._update_state_mask_functions[oid];
+          }
+        }
       }
     }
 

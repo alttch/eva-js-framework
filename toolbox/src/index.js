@@ -329,7 +329,7 @@
     });
   }
 
-  const eva_toolbox_version = '0.1.10';
+  const eva_toolbox_version = '0.3.1';
 
   function inject_toolbox() {
     var $eva = window.$eva;
