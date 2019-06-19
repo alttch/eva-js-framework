@@ -21,10 +21,12 @@
    *              - 2 days etc.), default: 1D
    *              @fill - precision[:np] (10T - 60T recommended, more accurate -
    *              more data), np - number precision, optional. default: 30T:2
-   *              @update - update interval in seconds. If the chart conteiner
+   *              @update - update interval in seconds. If the chart container
    *              is no longer visible, chart stops updating.
    *              @prop - item property to use (default is value)
    *              @u - data units (e.g. mm or °C)
+   *
+   * @returns - chart object
    *
    */
   function eva_toolbox_chart(ctx, cfg, oid, params, _chart) {
@@ -47,9 +49,21 @@
     var prop = params['prop'];
     var cc = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
     var data_units = params['u'];
-    var chart = null;
+    var chart;
+    var nchart;
+    var canvas;
+    var work_cfg;
     if (_chart) {
       chart = _chart;
+    } else {
+      canvas = document.createElement('canvas');
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.className = 'eva_toolbox_chart';
+      cc.innerHTML = '';
+      cc.appendChild(canvas);
+      work_cfg = jsaltt.extend({}, cfg);
+      nchart = new Chart(canvas, work_cfg);
     }
     var chartfunc = function() {
       if (chart && (cc.offsetWidth <= 0 || cc.offsetHeight <= 0)) {
@@ -88,18 +102,14 @@
             }
             chart.update();
           } else {
-            var canvas = document.createElement('canvas');
-            canvas.style.width = '100%';
-            canvas.style.height = '100%';
-            canvas.className = 'eva_toolbox_chart';
-            var work_cfg = jsaltt.extend({}, cfg);
             work_cfg.data.labels = data.t;
             for (var i = 0; i < _oid.length; i++) {
               work_cfg.data.datasets[i].data = data[_oid[i] + '/' + x];
             }
             cc.innerHTML = '';
             cc.appendChild(canvas);
-            chart = new Chart(canvas, work_cfg);
+            chart = nchart;
+            chart.update();
             if (data_units) {
               work_cfg.options.tooltips.callbacks.label = function(tti) {
                 return tti.yLabel + data_units;
@@ -124,6 +134,7 @@
       }
     };
     chartfunc();
+    return nchart;
   }
 
   /**
@@ -167,7 +178,7 @@
    *              validate an input, if popup contains any input fields.
    *
    * @returns - Promise object. Resolve and reject functions are called with
-   * "true" parameter if button is pressed by user.
+   *            "true" parameter if button is pressed by user.
    *
    */
   function eva_toolbox_popup(ctx, pclass, title, msg, params) {
