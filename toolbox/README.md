@@ -1,6 +1,6 @@
 # EVA JS Toolbox
 
-Additional functions for [EVA ICS
+Additional functions for [EVA JS
 Framework](https://www.npmjs.com/package/@eva-ics/framework)
 
 ## Initialization
