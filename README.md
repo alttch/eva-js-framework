@@ -23,7 +23,12 @@ https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.min.js
 
 ```bash
   npm i @eva-ics/framework
+  // additional utility functions
+  npm i @eva-ics/toolbox
 ```
+
+Description of utility functions can be found in
+[EVA ICS toolbox](https://www.npmjs.com/package/@eva-ics/toolbox) help.
 
 ## Examples
 
