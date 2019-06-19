@@ -195,8 +195,9 @@ filled by framework automatically.
 * **authorized_user** current authorized user
 * **logged_in** boolean, set to true when user is logged in
 * **ws** Framework web socket object
-* **log.level** current log level of records to retrieve from the server.
+* **log.level** current log level of records to retrieve from the server
 * **log_level_nwmes** dictionary of log level names (code: name)
+* **in_evaHI** true if framework runs in evaHI-based web client
 * **server_info** contains actual server info (output of API *test* method)
 * **tsdiff** time difference between client and server
 

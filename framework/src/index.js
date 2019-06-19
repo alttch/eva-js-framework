@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.1.21';
+const eva_framework_version = '0.1.22';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -32,6 +32,10 @@ const eva_framework_version = '0.1.21';
       this.state_updates = true;
       this.ws_mode = typeof WebSocket !== 'undefined';
       this.ws = null;
+      this.in_evaHI =
+        typeof navigator !== 'undefined' &&
+        navigator.userAgent &&
+        navigator.userAgent.startsWith('evaHI ');
       this.log = {
         level: 20,
         records: 200
