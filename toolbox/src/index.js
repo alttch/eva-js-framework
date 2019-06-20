@@ -54,6 +54,8 @@
     var nchart;
     var canvas;
     var work_cfg;
+    var animate = params['animate'];
+    if (!animate) animate = animate_el;
     if (_chart) {
       chart = _chart;
     } else {
@@ -83,7 +85,7 @@
           d.getHours() - timeframe.substring(0, timeframe.length - 1) * 24
         );
       }
-      if (!chart) eva_toolbox_animate(ctx);
+      if (!chart) animate(ctx);
       var x = 'value';
       if (prop !== undefined && prop !== null) {
         x = prop;
@@ -107,10 +109,10 @@
             for (var i = 0; i < _oid.length; i++) {
               work_cfg.data.datasets[i].data = data[_oid[i] + '/' + x];
             }
-            cc.innerHTML = '';
-            cc.appendChild(canvas);
             chart = nchart;
             chart.update();
+            cc.innerHTML = '';
+            cc.appendChild(canvas);
             if (data_units) {
               work_cfg.options.tooltips.callbacks.label = function(tti) {
                 return tti.yLabel + data_units;
@@ -329,7 +331,13 @@
     });
   }
 
-  const eva_toolbox_version = '0.3.1';
+  function animate_el(el) {
+    typeof $eva === 'object' && typeof $eva.toolbox === 'object'
+      ? $eva.toolbox.animate(el)
+      : eva_toolbox_animate(el);
+  }
+
+  const eva_toolbox_version = '0.3.2';
 
   function inject_toolbox() {
     var $eva = window.$eva;
