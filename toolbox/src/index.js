@@ -26,6 +26,7 @@
    *              is no longer visible, chart stops updating.
    *              @prop - item property to use (default is value)
    *              @units - data units (e.g. mm or °C)
+   *              @args - additional API options (state_history)
    *
    * @returns - chart object
    *
@@ -55,6 +56,8 @@
     var canvas;
     var work_cfg;
     var animate = params['animate'];
+    var api_opts = params['args'];
+    if (!api_opts) api_opts = {};
     if (!animate) animate = animate_el;
     if (_chart) {
       chart = _chart;
@@ -90,13 +93,14 @@
       if (prop !== undefined && prop !== null) {
         x = prop;
       }
+      let _api_opts = jsaltt.extend(api_opts, {
+        t: 'iso',
+        s: d.toISOString(),
+        x: x,
+        w: fill
+      });
       $eva
-        .call('state_history', _oid, {
-          t: 'iso',
-          s: d.toISOString(),
-          x: x,
-          w: fill
-        })
+        .call('state_history', _oid, _api_opts)
         .then(function(data) {
           if (chart) {
             chart.data.labels = data.t;
@@ -337,7 +341,7 @@
       : eva_toolbox_animate(el);
   }
 
-  const eva_toolbox_version = '0.3.3';
+  const eva_toolbox_version = '0.3.4';
 
   function inject_toolbox() {
     var $eva = window.$eva;

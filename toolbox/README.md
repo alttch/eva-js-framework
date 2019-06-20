@@ -36,6 +36,8 @@ Params:
 
   * animate - custom animation function
 
+  * args - additional API options (state_history)
+
 Returns Chart object.
 
 ### $eva.toolbox.animate(ctx)

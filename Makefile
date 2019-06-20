@@ -13,7 +13,7 @@ build-framework:
 	cd framework && \
 	 	npm install && \
 	 	./node_modules/.bin/webpack && \
-		echo "//`jq < package.json -r .version`" > ../dist/eva.framework.min.js && \
+		echo "// `jq < package.json -r .version`" > ../dist/eva.framework.min.js && \
 	 	cat dist/eva.framework.min.js >> ../dist/eva.framework.min.js
 
 build-full:
