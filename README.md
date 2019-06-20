@@ -1,7 +1,7 @@
 # JavaScript Framework for EVA ICS
 
-Universal JavaScript Framework for [EVA ICS](https://www.eva-ics.com/) - open
-source platform for home and industrial IoT.
+JavaScript Framework for [EVA ICS](https://www.eva-ics.com/) - open source
+platform for home and industrial IoT.
 
 The library works both in web browsers and Node.js.
 
@@ -116,9 +116,9 @@ Function *call* returns Promise object, on success = API call result, on error
 All API methods are called with *call* function:
 
 ```javascript
-    *$eva.call('action', 'unit:tests/lamp1', { s: 1 })
+    $eva.call('action', 'unit:tests/lamp1', { s: 1 })
     // or 
-    *$eva.call('action', { i: 'unit:tests/lamp1', s: 1 })
+    $eva.call('action', { i: 'unit:tests/lamp1', s: 1 })
 ```
 
 If first parameter is a string, it's automatically set to "i" argument of API

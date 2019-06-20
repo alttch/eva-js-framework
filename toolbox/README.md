@@ -5,8 +5,8 @@ Framework](https://www.npmjs.com/package/@eva-ics/framework)
 
 ## Initialization
 
-Toolbox is automatically injected in EVA ICS Framework when working in web
-browser as *$eva.toolbox*.
+Toolbox is automatically injected in EVA JS Framework as *$eva.toolbox* when
+loaded in a web browser.
 
 ## Toolbox functions
 
