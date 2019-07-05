@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.3.3';
+const eva_framework_version = '0.3.4';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -44,6 +44,7 @@ const eva_framework_version = '0.3.3';
       this._intervals = {
         ajax_reload: 2,
         ajax_log_reload: 2,
+        action_watch: 0.5,
         heartbeat: 5,
         reload: 5,
         restart: 1
@@ -61,6 +62,8 @@ const eva_framework_version = '0.3.3';
       this._scheduled_restarter = null;
       this._update_state_functions = [];
       this._update_state_mask_functions = [];
+      this._action_watch_functions = [];
+      this._action_states = {};
       this._clear();
     }
 
@@ -331,6 +334,60 @@ const eva_framework_version = '0.3.3';
         } else {
           func(v);
         }
+      }
+    }
+
+    /**
+     * watch action state by uuid
+     *
+     * Registers the function to be called in case of action status change
+     * event (or at first state load).
+     *
+     * If status is already loaded, function will be called immediately.
+     * Otherwise status is polled from the server with "action_watch" interval
+     * (default: 500ms).
+     *
+     * There's no unwatch function as watching is stopped as soon as action is
+     * completed (or server error is occurred)
+     *
+     * @param uuid - action uuid
+     * @param func - function to be called
+     *
+     */
+    watch_action(uuid, func) {
+      if (uuid in this._action_watch_functions) {
+        this._action_watch_functions[uuid].push(func);
+        if (uuid in this._action_states) {
+          func(this._action_states[uuid]);
+        }
+      } else {
+        this._action_watch_functions[uuid] = [];
+        this._action_watch_functions[uuid].push(func);
+        var me = this;
+        var watcher = function() {
+          me.call('result', {u: uuid})
+            .then(function(result) {
+              if (
+                !me._action_states[uuid] ||
+                me._action_states[uuid].status != result.status
+              ) {
+                me._action_states[uuid] = result;
+                me._action_watch_functions[uuid].map(f => f(result));
+              }
+              if (result.finished) {
+                delete me._action_watch_functions[uuid];
+                delete me._action_states[uuid];
+              } else {
+                setTimeout(watcher, me._intervals.action_watch);
+              }
+            })
+            .catch(function(err) {
+              me._action_watch_functions[uuid].map(f => f(err));
+              delete me._action_watch_functions[uuid];
+              delete me._action_states[uuid];
+            });
+        };
+        setTimeout(watcher, this._intervals.action_watch);
       }
     }
 
@@ -948,9 +1005,9 @@ const eva_framework_version = '0.3.3';
      * QR code for EvaHI
      *
      * Generates QR code for :doc:`EvaHI</evahi>`-compatible apps (e.g. for EVA
-     * ICS Control Center mobile app for Android). Current framework session must
-     * be authorized using user login. If $eva.password is defined, QR code also
-     * contain password value. Requires qrious js library.
+     * ICS Control Center mobile app for Android). Current framework session
+     * must be authorized using user login. If $eva.password is defined, QR
+     * code also contain password value. Requires qrious js library.
      *
      * @param ctx - html <canvas /> element or id to generate QR code in
      * @param params - object with additional parameters:

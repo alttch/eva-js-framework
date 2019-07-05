@@ -91,11 +91,20 @@ $eva.watch('unit:tests/unit1', function(state) {
     });
 
 // action example
-
 document.getElementById('u').addEventListener('click', function() {
   $eva.call('action_toggle', 'unit:tests/unit1', { w: 30 })
     then(function(data) {
-      console.log('action completed, uuid: ' + data.uuid)
+      console.log('action sent to server, uuid: ' + data.uuid)
+      // watch action result
+      $eva.watch_action(data.uuid, function(action) {
+        if (action.uuid) {
+            if (action.is_finished) {
+                console.log('action is finished, status: ' + action.status);
+            }
+        } else {
+            console.log('server error');
+        }
+      });
     }).catch(function(err) {
       console.log('action failed, code: ' + err.code + ', ' + err.message);
     });
@@ -129,6 +138,7 @@ request.
 Intervals are set by *interval* method, e.g. *$eva.interval("reload", 5)*,
 value means seconds. Available intervals:
 
+* **action_watch** action result watcher interval
 * **ajax_reload** reload item states when working in AJAX mode
 * **ajax_log_reload** reload server log records when working in AJAX mode
 * **heartbeat** server heartbeat interval
