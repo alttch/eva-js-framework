@@ -28,13 +28,13 @@ build-full:
 
 pub-framework:
 	cp README.md ./framework/
-	cd framework && npm version patch
+	cd framework && npm version --no-git-tag-version patch
 	sed -i "s/\(const eva_framework_version\).*/\1 = '`jq < framework/package.json -r .version`';/g" \
 		./framework/src/index.js
 	npm publish framework --access public
 
 pub-toolbox:
-	cd toolbox && npm version patch
+	cd toolbox && npm version --no-git-tag-version patch
 	sed -i "s/\(const eva_toolbox_version\).*/\1 = '`jq < toolbox/package.json -r .version`';/g" \
 		./toolbox/src/index.js
 	npm publish toolbox --access public
@@ -47,3 +47,7 @@ clean:
 	 	framework/node_modules framework/dist framework/package-lock.json framework/README.md \
 		toolbox/node_modules toolbox/package-lock.json \
 		full/node_modules full/dist full/package-lock.json
+
+ver-pub:
+	git commit -a -m "version `jq < package.json -r .version`"; 
+	git push
