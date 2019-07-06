@@ -22,13 +22,17 @@ Params:
 * **oid** item oid or oids, array or comma separated (type:full_id)
 * **params** object with additional params:
 
-  * timeframe - time frame to display (5T - 5 min, 2H - 2 hr, 2D
-                - 2 days etc.), default: 1D
+  * timeframe - timeframe to display (5T - 5 min, 2H - 2 hr, 2D - 2 days etc.),
+    default: 1D. To display past timeframes, use two values, separated with
+    ":", e.g. 2D:1D - get data for yesterday. To display multiple timeframes, send
+    this param as array. Axis X is always formed from the last timeframe. If
+    you want to change this, put "t" before the necessary timeframe, e.g.:
+    t2D:1D
 
   * fill - precision[:np] (10T - 60T recommended, more accurate -
           more data), np - number precision, optional. default: 30T:2
   * update - update interval in seconds. If the chart container is no longer
-            visible, chart stops updating.
+            visible, chart stops updating
 
   * prop - item property to use (default is value)
 
@@ -39,6 +43,9 @@ Params:
   * args - additional API options (state_history)
 
 Returns Chart object.
+
+If multiple timeframes and multiple items are specified, chart data is filled
+as: first timeframe for all items, second timeframe for all items etc.
 
 ### $eva.toolbox.animate(ctx)
 

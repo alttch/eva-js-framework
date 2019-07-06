@@ -17,19 +17,34 @@
    *              width/height)
    * @param cfg - Chart.js configuration
    * @param oid - item oid or oids, array or comma separated (type:full_id)
+   *
    * @param params - object with props
+   *
    *              @timeframe - timeframe to display (5T - 5 min, 2H - 2 hr, 2D
-   *              - 2 days etc.), default: 1D
+   *              - 2 days etc.), default: 1D. To display past timeframes, use
+   *              two values, separated with ":", e.g. 2D:1D - get data for
+   *              yesterday. To display multiple timeframes, send this param as
+   *              array. Axis X is always formed from the last timeframe. If
+   *              you want to change this, put "t" before the necessary
+   *              timeframe, e.g.: t2D:1D
+   *
    *              @fill - precision[:np] (10T - 60T recommended, more accurate -
    *              more data), np - number precision, optional. default: 30T:2
+   *
    *              @update - update interval in seconds. If the chart container
-   *              is no longer visible, chart stops updating.
+   *              is no longer visible, chart stops updating
+   *
    *              @prop - item property to use (default is value)
+   *
    *              @units - data units (e.g. mm or °C)
+   *
    *              @args - additional API options (state_history)
    *
    * @returns - chart object
    *
+   * If multiple timeframes and multiple items are specified, chart data is
+   * filled as: first timeframe for all items, second timeframe for all
+   * items etc.
    */
   function eva_toolbox_chart(ctx, cfg, oid, params, _chart) {
     var params = jsaltt.extend({}, params);
@@ -76,53 +91,72 @@
         chart.destroy();
         return;
       }
-      var d = new Date();
-      if (timeframe[timeframe.length - 1] == 'T') {
-        d.setMinutes(
-          d.getMinutes() - timeframe.substring(0, timeframe.length - 1)
-        );
-      } else if (timeframe[timeframe.length - 1] == 'H') {
-        d.setHours(d.getHours() - timeframe.substring(0, timeframe.length - 1));
-      } else if (timeframe[timeframe.length - 1] == 'D') {
-        d.setHours(
-          d.getHours() - timeframe.substring(0, timeframe.length - 1) * 24
-        );
-      }
       if (!chart) animate(ctx);
       var x = 'value';
       if (prop !== undefined && prop !== null) {
         x = prop;
       }
-      let _api_opts = jsaltt.extend(api_opts, {
-        t: 'iso',
-        s: d.toISOString(),
-        x: x,
-        w: fill
+      let tframes = timeframe;
+      if (!Array.isArray(tframes)) {
+        tframes = [tframes];
+      }
+      let calls = [];
+      let primary_tf_idx = tframes.length - 1;
+      tframes.map((tf, idx) => {
+        let t = tf.split(':');
+        let t_start = t[0];
+        if (t_start.startsWith('t')) {
+          t_start = t_start.substr(1);
+          primary_tf_idx = idx;
+        }
+        let t_end = t[1];
+        if (!t_end) t_end = null;
+        let _api_opts = jsaltt.extend(
+          {
+            t: 'iso',
+            s: t_start,
+            e: t_end,
+            x: x,
+            w: fill
+          },
+          api_opts
+        );
+        calls.push($eva.call('state_history', _oid, _api_opts));
       });
-      $eva
-        .call('state_history', _oid, _api_opts)
-        .then(function(data) {
-          if (chart) {
-            chart.data.labels = data.t;
-            for (var i = 0; i < _oid.length; i++) {
-              chart.data.datasets[i].data = data[_oid[i] + '/' + x];
+      Promise.all(calls)
+        .then(function(result) {
+          let index = 0;
+          let wtf = 0;
+          result.map(data => {
+            if (chart) {
+              if (wtf == primary_tf_idx) {
+                chart.data.labels = data.t;
+              }
+              for (let i = 0; i < _oid.length; i++) {
+                chart.data.datasets[i + index].data = data[_oid[i] + '/' + x];
+              }
+              chart.update();
+            } else {
+              if (wtf == primary_tf_idx) {
+                work_cfg.data.labels = data.t;
+              }
+              for (let i = 0; i < _oid.length; i++) {
+                work_cfg.data.datasets[i + index].data =
+                  data[_oid[i] + '/' + x];
+              }
+              chart = nchart;
+              chart.update();
+              cc.innerHTML = '';
+              cc.appendChild(canvas);
+              if (data_units) {
+                work_cfg.options.tooltips.callbacks.label = function(tti) {
+                  return tti.yLabel + data_units;
+                };
+              }
+              index += _oid.length;
+              wtf++;
             }
-            chart.update();
-          } else {
-            work_cfg.data.labels = data.t;
-            for (var i = 0; i < _oid.length; i++) {
-              work_cfg.data.datasets[i].data = data[_oid[i] + '/' + x];
-            }
-            chart = nchart;
-            chart.update();
-            cc.innerHTML = '';
-            cc.appendChild(canvas);
-            if (data_units) {
-              work_cfg.options.tooltips.callbacks.label = function(tti) {
-                return tti.yLabel + data_units;
-              };
-            }
-          }
+          });
         })
         .catch(function(err) {
           var d_error = document.createElement('div');
