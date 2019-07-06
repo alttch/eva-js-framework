@@ -153,9 +153,9 @@
                   return tti.yLabel + data_units;
                 };
               }
-              index += _oid.length;
-              wtf++;
             }
+            index += _oid.length;
+            wtf++;
           });
         })
         .catch(function(err) {
