@@ -24,7 +24,7 @@
    *              - 2 days etc.), default: 1D. To display past timeframes, use
    *              two values, separated with ":", e.g. 2D:1D - get data for
    *              yesterday. To display multiple timeframes, send this param as
-   *              array. Axis X is always formed from the last timeframe. If
+   *              array. Axis X is always formed from the first timeframe. If
    *              you want to change this, put "t" before the necessary
    *              timeframe, e.g.: t2D:1D
    *
@@ -101,7 +101,7 @@
         tframes = [tframes];
       }
       let calls = [];
-      let primary_tf_idx = tframes.length - 1;
+      let primary_tf_idx = 0;
       tframes.map((tf, idx) => {
         let t = tf.split(':');
         let t_start = t[0];

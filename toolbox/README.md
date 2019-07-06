@@ -24,9 +24,9 @@ Params:
 
   * timeframe - timeframe to display (5T - 5 min, 2H - 2 hr, 2D - 2 days etc.),
     default: 1D. To display past timeframes, use two values, separated with
-    ":", e.g. 2D:1D - get data for yesterday. To display multiple timeframes, send
-    this param as array. Axis X is always formed from the last timeframe. If
-    you want to change this, put "t" before the necessary timeframe, e.g.:
+    ":", e.g. 2D:1D - get data for yesterday. To display multiple timeframes,
+    send this param as array. Axis X is always formed from the first timeframe.
+    If you want to change this, put "t" before the necessary timeframe, e.g.:
     t2D:1D
 
   * fill - precision[:np] (10T - 60T recommended, more accurate -
