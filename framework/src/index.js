@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.3.4';
+const eva_framework_version = '0.3.5';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -876,9 +876,10 @@ const eva_framework_version = '0.3.4';
         this._debug('ws', 'reload');
         return this._invoke_handler('server.reload');
       }
-      if (data.s == 'server' && data.d == 'restart') {
-        this._debug('ws', 'server_restart');
-        return this._invoke_handler('server.restart');
+      if (data.s == 'server') {
+        let ev = 'server.' + data.d;
+        this._debug('ws', ev);
+        return this._invoke_handler(ev);
       }
       if (this._invoke_handler('ws.event', data) === false) return;
       if (data.s == 'state') {
