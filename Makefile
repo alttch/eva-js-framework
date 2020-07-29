@@ -49,5 +49,5 @@ clean:
 		full/node_modules full/dist full/package-lock.json
 
 ver-pub:
-	git commit -a -m "version `jq < package.json -r .version`"; 
+	git commit -a -m "version `jq < ./framework/package.json -r .version`"; 
 	git push

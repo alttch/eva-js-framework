@@ -154,7 +154,8 @@ Event handlers are set by *on(event, func)* and fired on:
 * **ws.event** WebSocket event. If handler return false, event is skipped by
   framework.
 * **server.reload** server asked clients to reload UI
-* **server.<event>** server events (*restart* etc.)
+* **server.restart** server is being restarted
+* **server.EVENT** other server events (e.g. EVENT=*lockex*)
 * **heartbeat.success** successful heartbeat
 * **heartbeat.error** heartbeat error (default: *$eva.restart*)
 * **log.record** new log record to toss
