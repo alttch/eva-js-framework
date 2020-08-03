@@ -155,7 +155,8 @@ Event handlers are set by *on(event, func)* and fired on:
   framework.
 * **server.reload** server asked clients to reload UI
 * **server.restart** server is being restarted
-* **server.EVENT** other server events (e.g. EVENT=*lockex*)
+* **server.EVENT** other server events
+* **supervisor.EVENT** supervisor events(message, lock, unlock)
 * **heartbeat.success** successful heartbeat
 * **heartbeat.error** heartbeat error (default: *$eva.restart*)
 * **log.record** new log record to toss
