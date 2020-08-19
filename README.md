@@ -219,7 +219,7 @@ filled by framework automatically.
 
 * **restart()** restart Framework (default handler for heartbeat error)
 
-* **stop(keep_auth** stop Framework. If keep_auth is set to true, logout API
+* **stop(keep_auth)** stop Framework. If keep_auth is set to true, logout API
   method is not called.
 
 * **erase_token_cookies()** should be called when login window is displayed to
