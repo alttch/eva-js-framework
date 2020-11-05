@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.3.7';
+const eva_framework_version = '0.3.8';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -30,6 +30,7 @@ const eva_framework_version = '0.3.7';
       this.logged_in = false;
       this.debug = false;
       this.state_updates = true;
+      this.clear_unavailable = false;
       this.ws_mode = typeof WebSocket !== 'undefined';
       this.ws = null;
       this.in_evaHI =
@@ -795,7 +796,23 @@ const eva_framework_version = '0.3.7';
           }
           me.call('state_all', params)
             .then(function (data) {
+              let received_oids = [];
+              if (me.clear_unavailable) {
+                data.map(s => received_oids.push(s.oid));
+              }
               data.map(s => me._process_state(s));
+              if (me.clear_unavailable) {
+                for (let oid in me._states) {
+                  if (
+                    me._states[oid].status !== undefined &&
+                    me._states[oid].status !== null &&
+                    !received_oids.includes(oid)
+                  ) {
+                    me._debug('clearing unavailable item ' + oid);
+                    me._clear_state(oid);
+                  }
+                }
+              }
               resolve(true);
             })
             .catch(function (err) {
@@ -910,6 +927,14 @@ const eva_framework_version = '0.3.7';
       this._log_loaded
         ? this._invoke_handler('log.record', l)
         : this._lr2p.push(l);
+    }
+
+    _clear_state(oid) {
+      this._process_state({
+        oid: oid,
+        status: null,
+        value: null,
+      });
     }
 
     _process_state(state) {

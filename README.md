@@ -199,6 +199,9 @@ filled by framework automatically.
 * **ws_mode** use web sockets. Set automatically if WebSocket object is
   detected, can be set to "false" manually before framework start.
 
+* **clear_unavailable** if true, item state is set to null, if the one is no
+  longer available on the back-end (default: false).
+
 ### Read-only
 
 * **version** Framework version (also available as *eva_framework_version* in
