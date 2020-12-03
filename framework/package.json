@@ -1,6 +1,6 @@
 {
   "name": "@eva-ics/framework",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "JavaScript Framework for EVA ICS",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",
@@ -27,7 +27,7 @@
   "dependencies": {
     "@altertech/cookies": "^0.0.5",
     "@altertech/jsaltt": "0.0.11",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "qrious": "^4.0.2",
     "ws": "^7.0.0"
   },
