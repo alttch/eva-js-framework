@@ -267,6 +267,49 @@ const eva_framework_version = '0.3.9';
     }
 
     /**
+     * ask server to set the token read-only (e.g. after idle)
+     *
+     * (EVA ICS 3.3.2+)
+     *
+     * the current mode can be obtained from $eva.server_info.aci.token_mode
+     */
+    set_readonly() {
+      var me = this;
+      return new Promise(function (resolve, reject) {
+        me.call('set_token_readonly').then(function (data) {
+          me.server_info.aci.token_mode = 'readonly';
+          resolve(data);
+        }).catch(function (err) {
+          reject(err);
+        })
+      });
+    }
+
+    /**
+     * ask server to return the token to normal mode
+     *
+     * (EVA ICS 3.3.2+)
+     */
+    set_normal(u, p) {
+      var q = {};
+      if (p === undefined || p === null) {
+        q = {k: u}
+      } else {
+        q = {u: u, p: this.password }
+      }
+      q['a'] = this.api_token;
+      var me = this;
+      return new Promise(function (resolve, reject) {
+        me._api_call('login', q).then(function (data) {
+          me.server_info.aci.token_mode = 'normal';
+          resolve(data);
+        }).catch(function (err) {
+          reject(err);
+        })
+      });
+    }
+
+    /**
      * Set event handler function. One event can have one handler only
      *
      * @param event - event, possible values:

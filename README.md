@@ -181,6 +181,10 @@ filled by framework automatically.
 * **api_uri** API URI (don't need to be set if working in web browser)
 * **set_auth_cookies** if true (default), *auth* cookie is used to store API
   token.
+* **set_readonly** ask server to set the current API token to read-only (EVA
+  ICS 3.3.2+)
+* **set_normal** ask server to return the current API token to normal (EVA ICS
+  3.3.2+)
 
 ### Item processing, special
 
