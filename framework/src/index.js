@@ -292,10 +292,16 @@ const eva_framework_version = '0.3.10';
      */
     set_normal(u, p) {
       var q = {};
-      if (p === undefined || p === null) {
-        q = {k: u}
+      var user;
+      if (u === undefined) {
+        user = "";
       } else {
-        q = {u: u, p: this.password }
+        user = u;
+      }
+      if (p === undefined || p === null) {
+        q = {k: user}
+      } else {
+        q = {u: user, p: p }
       }
       q['a'] = this.api_token;
       var me = this;
