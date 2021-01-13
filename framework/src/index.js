@@ -276,12 +276,14 @@ const eva_framework_version = '0.3.11';
     set_readonly() {
       var me = this;
       return new Promise(function (resolve, reject) {
-        me.call('set_token_readonly').then(function (data) {
-          me.server_info.aci.token_mode = 'readonly';
-          resolve(data);
-        }).catch(function (err) {
-          reject(err);
-        })
+        me.call('set_token_readonly')
+          .then(function (data) {
+            me.server_info.aci.token_mode = 'readonly';
+            resolve(data);
+          })
+          .catch(function (err) {
+            reject(err);
+          });
       });
     }
 
@@ -294,24 +296,26 @@ const eva_framework_version = '0.3.11';
       var q = {};
       var user;
       if (u === undefined) {
-        user = "";
+        user = '';
       } else {
         user = u;
       }
       if (p === undefined || p === null) {
-        q = {k: user}
+        q = {k: user};
       } else {
-        q = {u: user, p: p }
+        q = {u: user, p: p};
       }
       q['a'] = this.api_token;
       var me = this;
       return new Promise(function (resolve, reject) {
-        me._api_call('login', q).then(function (data) {
-          me.server_info.aci.token_mode = 'normal';
-          resolve(data);
-        }).catch(function (err) {
-          reject(err);
-        })
+        me._api_call('login', q)
+          .then(function (data) {
+            me.server_info.aci.token_mode = 'normal';
+            resolve(data);
+          })
+          .catch(function (err) {
+            reject(err);
+          });
       });
     }
 
@@ -567,7 +571,8 @@ const eva_framework_version = '0.3.11';
      * After calling the function will close open WebSocket if available,
      * clear all the refresh intervals then try to close server session
      *
-     * @param keep_auth - keep authentication cookies (e.g. on restart)
+     * @param keep_auth - keep authentication cookies and token (e.g. on
+     * restart)
      *
      * @returns - Promise object
      */
@@ -576,15 +581,19 @@ const eva_framework_version = '0.3.11';
       return new Promise(function (resolve, reject) {
         me._stop_engine();
         me.logged_in = false;
-        me.call('logout')
-          .then(function () {
-            if (!keep_auth) me.erase_token_cookie();
-            resolve();
-          })
-          .catch(function (err) {
-            if (!keep_auth) me.erase_token_cookie();
-            reject(err);
-          });
+        if (keep_auth) {
+          resolve();
+        } else {
+          me.call('logout')
+            .then(function () {
+              me.erase_token_cookie();
+              resolve();
+            })
+            .catch(function (err) {
+              me.erase_token_cookie();
+              reject(err);
+            });
+        }
       });
     }
 
@@ -982,7 +991,7 @@ const eva_framework_version = '0.3.11';
       this._process_state({
         oid: oid,
         status: null,
-        value: null,
+        value: null
       });
     }
 
