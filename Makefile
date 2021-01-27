@@ -1,3 +1,5 @@
+VERSION=$(shell jq -r .version < framework/package.json)
+
 all: build
 
 prepare:
@@ -51,3 +53,13 @@ clean:
 ver-pub:
 	git commit -a -m "version `jq < ./framework/package.json -r .version`"; 
 	git push
+
+pkg:
+	rm -rf _build
+	mkdir -p _build/ui
+	cp dist/eva.min.js dist/eva.framework.min.js _build/ui
+	sed "s/^VERSION=.*/VERSION='$(VERSION)'/g" setup.py > _build/setup.py
+	cd _build && tar czf eva-js-framework-$(VERSION).evapkg ui setup.py
+
+pub-pkg:
+	echo "" | gh release create v$(VERSION) -t "v$(VERSION)" _build/eva-js-framework-$(VERSION).evapkg
