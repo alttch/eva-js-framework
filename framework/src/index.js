@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.3.12';
+const eva_framework_version = '0.3.14';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -29,6 +29,7 @@ const eva_framework_version = '0.3.12';
       this.authorized_user = null;
       this.logged_in = false;
       this.debug = false;
+      this.web_debug = false;
       this.state_updates = true;
       this.clear_unavailable = false;
       this.ws_mode = typeof WebSocket !== 'undefined';
@@ -617,6 +618,9 @@ const eva_framework_version = '0.3.12';
       var api_uri = this.api_uri + '/jrpc';
       var me = this;
       this._debug('_api_call', `${id}: ${api_uri}: ${func}`);
+      if (this.debug == 2) {
+        console.log(func, params)
+      }
       return new Promise(function (resolve, reject) {
         var payload = {
           jsonrpc: '2.0',

@@ -73,7 +73,7 @@ $eva.password = '123';
 $eva.api_uri = 'http://localhost:8828';
 
 // turn on debug mode
-// $eva.debug = true;
+// $eva.debug = 1;
 
 $eva.on('login.success', function() {
   // called when login is successful, states and server info are loaded
@@ -199,8 +199,7 @@ filled by framework automatically.
 
 ### Item processing, special
 
-* **debug** if true, Framework enters debug mode and everything's logged to
-  console.
+* **debug** enable debug mode (1), enable verbose debug mode (2)
 
 * **global_cvars** if true (default), all server cvars are set as globals.
 
