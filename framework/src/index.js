@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.3.14';
+const eva_framework_version = '0.3.15';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -619,7 +619,7 @@ const eva_framework_version = '0.3.14';
       var me = this;
       this._debug('_api_call', `${id}: ${api_uri}: ${func}`);
       if (this.debug == 2) {
-        console.log(func, params)
+        console.log(func, params);
       }
       return new Promise(function (resolve, reject) {
         var payload = {
@@ -663,6 +663,9 @@ const eva_framework_version = '0.3.14';
                       data: data
                     });
                   } else {
+                    if (me.debug == 2) {
+                      console.log(`API ${id} ${func} response`, data.result);
+                    }
                     resolve(data.result);
                   }
                 })
