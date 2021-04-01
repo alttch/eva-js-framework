@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.3.15';
+const eva_framework_version = '0.3.17';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -29,7 +29,6 @@ const eva_framework_version = '0.3.15';
       this.authorized_user = null;
       this.logged_in = false;
       this.debug = false;
-      this.web_debug = false;
       this.state_updates = true;
       this.clear_unavailable = false;
       this.ws_mode = typeof WebSocket !== 'undefined';
@@ -123,7 +122,7 @@ const eva_framework_version = '0.3.15';
       var me = this;
       var user;
       this._api_call('login', q)
-        .then(function (data) {
+        .then(function(data) {
           me.api_token = data.token;
           user = data.user;
           me._set_token_cookie();
@@ -133,42 +132,42 @@ const eva_framework_version = '0.3.15';
             me._start_ws()
           ]);
         })
-        .then(function () {
+        .then(function() {
           if (!me.ws_mode) {
             if (me._ajax_reloader) {
               clearInterval(me._ajax_reloader);
             }
-            me._ajax_reloader = setInterval(function () {
+            me._ajax_reloader = setInterval(function() {
               me._load_states(me)
-                .then(function () {})
-                .catch(function (err) {});
+                .then(function() {})
+                .catch(function(err) {});
             }, me._intervals.ajax_reload * 1000);
           } else {
             if (me._ajax_reloader) {
               clearInterval(me._ajax_reloader);
             }
             if (me._intervals.reload) {
-              me._ajax_reloader = setInterval(function () {
+              me._ajax_reloader = setInterval(function() {
                 me._load_states(me)
-                  .then(function () {})
-                  .catch(function (err) {});
+                  .then(function() {})
+                  .catch(function(err) {});
               }, me._intervals.reload * 1000);
             }
           }
           if (me._heartbeat_reloader) {
             clearInterval(me._heartbeat_reloader);
           }
-          me._heartbeat_reloader = setInterval(function () {
+          me._heartbeat_reloader = setInterval(function() {
             me._heartbeat(me)
-              .then(function () {})
-              .catch(function () {});
+              .then(function() {})
+              .catch(function() {});
           }, me._intervals.heartbeat * 1000);
           me._debug('start', `login successful, user: ${user}`);
           me.logged_in = true;
           me.authorized_user = user;
           me._invoke_handler('login.success');
         })
-        .catch(function (err) {
+        .catch(function(err) {
           me.logged_in = false;
           if (err.code === undefined) {
             err.code = 4;
@@ -199,7 +198,7 @@ const eva_framework_version = '0.3.15';
         this._load_log_entries(true);
         if (!this.ws_mode) {
           var me = this;
-          this._log_reloader = setInterval(function () {
+          this._log_reloader = setInterval(function() {
             me._load_log_entries(false, me);
           }, this._intervals.ajax_log_reload * 1000);
         }
@@ -226,10 +225,10 @@ const eva_framework_version = '0.3.15';
       this._debug('restart', 'performing restart');
       var me = this;
       this.stop(true)
-        .then(function () {
+        .then(function() {
           me._schedule_restart();
         })
-        .catch(function () {
+        .catch(function() {
           me._schedule_restart();
         });
     }
@@ -276,13 +275,13 @@ const eva_framework_version = '0.3.15';
      */
     set_readonly() {
       var me = this;
-      return new Promise(function (resolve, reject) {
+      return new Promise(function(resolve, reject) {
         me.call('set_token_readonly')
-          .then(function (data) {
+          .then(function(data) {
             me.server_info.aci.token_mode = 'readonly';
             resolve(data);
           })
-          .catch(function (err) {
+          .catch(function(err) {
             reject(err);
           });
       });
@@ -308,13 +307,13 @@ const eva_framework_version = '0.3.15';
       }
       q['a'] = this.api_token;
       var me = this;
-      return new Promise(function (resolve, reject) {
+      return new Promise(function(resolve, reject) {
         me._api_call('login', q)
-          .then(function (data) {
+          .then(function(data) {
             me.server_info.aci.token_mode = 'normal';
             resolve(data);
           })
-          .catch(function (err) {
+          .catch(function(err) {
             reject(err);
           });
       });
@@ -419,9 +418,9 @@ const eva_framework_version = '0.3.15';
         this._action_watch_functions[uuid] = [];
         this._action_watch_functions[uuid].push(func);
         var me = this;
-        var watcher = function () {
+        var watcher = function() {
           me.call('result', {u: uuid})
-            .then(function (result) {
+            .then(function(result) {
               if (
                 !me._action_states[uuid] ||
                 me._action_states[uuid].status != result.status
@@ -436,7 +435,7 @@ const eva_framework_version = '0.3.15';
                 setTimeout(watcher, me._intervals.action_watch);
               }
             })
-            .catch(function (err) {
+            .catch(function(err) {
               me._action_watch_functions[uuid].map(f => f(err));
               delete me._action_watch_functions[uuid];
               delete me._action_states[uuid];
@@ -531,7 +530,7 @@ const eva_framework_version = '0.3.15';
         }
       }
       var result = [];
-      Object.keys(this._states).map(function (k) {
+      Object.keys(this._states).map(function(k) {
         if (this._oid_match(k, oid)) {
           result.push(this._states[k]);
         }
@@ -579,18 +578,18 @@ const eva_framework_version = '0.3.15';
      */
     stop(keep_auth) {
       var me = this;
-      return new Promise(function (resolve, reject) {
+      return new Promise(function(resolve, reject) {
         me._stop_engine();
         me.logged_in = false;
         if (keep_auth) {
           resolve();
         } else {
           me.call('logout')
-            .then(function () {
+            .then(function() {
               me.erase_token_cookie();
               resolve();
             })
-            .catch(function (err) {
+            .catch(function(err) {
               me.erase_token_cookie();
               reject(err);
             });
@@ -604,7 +603,7 @@ const eva_framework_version = '0.3.15';
       var dt = new Date().getTime();
       var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
         /[xy]/g,
-        function (c) {
+        function(c) {
           var r = (dt + Math.random() * 16) % 16 | 0;
           dt = Math.floor(dt / 16);
           return (c == 'x' ? r : (r & 0x3) | 0x8).toString(16);
@@ -621,7 +620,7 @@ const eva_framework_version = '0.3.15';
       if (this.debug == 2) {
         console.log(func, params);
       }
-      return new Promise(function (resolve, reject) {
+      return new Promise(function(resolve, reject) {
         var payload = {
           jsonrpc: '2.0',
           method: func,
@@ -636,12 +635,12 @@ const eva_framework_version = '0.3.15';
           redirect: 'error',
           body: JSON.stringify(payload)
         })
-          .then(function (response) {
+          .then(function(response) {
             if (response.ok) {
               me._debug('_api_call', id + ' success');
               response
                 .json()
-                .then(function (data) {
+                .then(function(data) {
                   if (
                     !'id' in data ||
                     data.id != id ||
@@ -669,7 +668,7 @@ const eva_framework_version = '0.3.15';
                     resolve(data.result);
                   }
                 })
-                .catch(function (err) {
+                .catch(function(err) {
                   var code = 9;
                   var message = 'Invalid server response';
                   me._debug('_api_call', `${id} failed: ${code} (${message})`);
@@ -686,7 +685,7 @@ const eva_framework_version = '0.3.15';
               reject({code: code, message: message, data: data});
             }
           })
-          .catch(function (err) {
+          .catch(function(err) {
             var code = 7;
             var message = 'Server error';
             me._debug('_api_call', `${id} failed: ${code} (${message})`);
@@ -696,7 +695,7 @@ const eva_framework_version = '0.3.15';
     }
 
     _heartbeat(me, on_login) {
-      return new Promise(function (resolve, reject) {
+      return new Promise(function(resolve, reject) {
         if (on_login) me._last_ping = null;
         var q = {};
         if (on_login) {
@@ -726,14 +725,14 @@ const eva_framework_version = '0.3.15';
           }
         }
         me.call('test', q)
-          .then(function (data) {
+          .then(function(data) {
             me.server_info = data;
             me.tsdiff = new Date().getTime() / 1000 - data.time;
             if (on_login) {
               if (data['cvars']) {
                 me._cvars = data['cvars'];
                 if (me.global_cvars) {
-                  Object.keys(data['cvars']).map(function (k) {
+                  Object.keys(data['cvars']).map(function(k) {
                     if (typeof global !== 'undefined')
                       eval(`global.${k}="${data['cvars'][k]}"`);
                     if (typeof window !== 'undefined')
@@ -747,7 +746,7 @@ const eva_framework_version = '0.3.15';
             me._invoke_handler('heartbeat.success');
             resolve(true);
           })
-          .catch(function (err) {
+          .catch(function(err) {
             me._debug('heartbeat', 'error: unable to send test API call');
             me._invoke_handler('heartbeat.error', err);
           });
@@ -762,7 +761,7 @@ const eva_framework_version = '0.3.15';
         l: me.log.level,
         n: me.log.records
       })
-        .then(function (data) {
+        .then(function(data) {
           if (me.ws_mode && me._log_first_load) {
             me._set_ws_log_level(me.log.level);
           }
@@ -774,14 +773,14 @@ const eva_framework_version = '0.3.15';
           }
           me._log_first_load = false;
         })
-        .catch(function (err) {
+        .catch(function(err) {
           jsaltt.logger.error('unable to load log entries');
         });
     }
 
     _schedule_restart() {
       var me = this;
-      me._scheduled_restarter = setTimeout(function () {
+      me._scheduled_restarter = setTimeout(function() {
         me.start();
       }, me._intervals.restart * 1000);
     }
@@ -810,13 +809,13 @@ const eva_framework_version = '0.3.15';
       if (this.ws) {
         try {
           this.ws.onclose = null;
-          this.ws.onerror = function () {};
+          this.ws.onerror = function() {};
           //this.ws.send(JSON.stringify({s: 'bye'}));
           this.ws.close();
         } catch (err) {
           // web socket may be still open, will close later
           var ws = this.ws;
-          setTimeout(function () {
+          setTimeout(function() {
             try {
               ws.close();
             } catch (err) {}
@@ -844,7 +843,7 @@ const eva_framework_version = '0.3.15';
 
     _load_states(me) {
       if (!me) var me = this;
-      return new Promise(function (resolve, reject) {
+      return new Promise(function(resolve, reject) {
         if (!me.state_updates) {
           resolve(true);
         } else {
@@ -860,7 +859,7 @@ const eva_framework_version = '0.3.15';
             }
           }
           me.call('state_all', params)
-            .then(function (data) {
+            .then(function(data) {
               let received_oids = [];
               if (me.clear_unavailable) {
                 data.map(s => received_oids.push(s.oid));
@@ -880,7 +879,7 @@ const eva_framework_version = '0.3.15';
               }
               resolve(true);
             })
-            .catch(function (err) {
+            .catch(function(err) {
               reject(err);
             });
         }
@@ -889,7 +888,7 @@ const eva_framework_version = '0.3.15';
 
     _start_ws() {
       var me = this;
-      return new Promise(function (resolve, reject) {
+      return new Promise(function(resolve, reject) {
         if (me.ws_mode) {
           var uri;
           if (!me.api_uri) {
@@ -904,10 +903,10 @@ const eva_framework_version = '0.3.15';
             uri = me.api_uri;
           }
           me.ws = new WebSocket(`${uri}/ws?k=${me.api_token}`);
-          me.ws.onmessage = function (evt) {
+          me.ws.onmessage = function(evt) {
             me._process_ws(evt);
           };
-          me.ws.addEventListener('open', function (event) {
+          me.ws.addEventListener('open', function(event) {
             me._debug('_start_ws', 'ws connected');
             var st;
             if (me.state_updates) {
@@ -998,7 +997,8 @@ const eva_framework_version = '0.3.15';
       this._process_state({
         oid: oid,
         status: null,
-        value: null
+        value: null,
+        set_time: true
       });
     }
 
@@ -1011,7 +1011,7 @@ const eva_framework_version = '0.3.15';
         if (oid in this._states) {
           var old_state = this._states[oid];
           z = '';
-          Object.keys(old_state).map(function (k) {
+          Object.keys(old_state).map(function(k) {
             if (!(k in state)) {
               state[k] = old_state[k];
             }
@@ -1019,45 +1019,56 @@ const eva_framework_version = '0.3.15';
         }
         this._states[oid] = state;
         if (!jsaltt.cmp(state, old_state)) {
-          this._debug(
-            'process_state',
-            `${oid} s: ${state.status} v: "${state.value}"`,
-            `ns: ${state.nstatus} nv: "${state.nvalue}"`
-          );
-          if (oid in this._update_state_functions) {
-            this._update_state_functions[oid].map(function (f) {
-              try {
-                if (typeof f === 'string' || f instanceof String) {
-                  eval(f);
-                } else {
-                  f(state);
-                }
-              } catch (err) {
-                jsaltt.logger.error(
-                  `state function processing for ${oid}:`,
-                  err
-                );
-              }
-            });
-          }
-          Object.keys(this._update_state_mask_functions).map(function (k) {
-            if (this._oid_match(oid, k)) {
-              this._update_state_mask_functions[k].map(function (f) {
-                try {
-                  if (typeof f === 'string' || f instanceof String) {
-                    eval(f);
-                  } else {
-                    f(state);
+          if (state.set_time === true) {
+            state.set_time = 0;
+          } else {
+            if (
+              state.set_time === undefined ||
+              old_state === undefined ||
+              old_state.set_time === undefined ||
+              state.set_time >= old_state.set_time
+            ) {
+              this._debug(
+                'process_state',
+                `${oid} s: ${state.status} v: "${state.value}"`,
+                `ns: ${state.nstatus} nv: "${state.nvalue}"`
+              );
+              if (oid in this._update_state_functions) {
+                this._update_state_functions[oid].map(function(f) {
+                  try {
+                    if (typeof f === 'string' || f instanceof String) {
+                      eval(f);
+                    } else {
+                      f(state);
+                    }
+                  } catch (err) {
+                    jsaltt.logger.error(
+                      `state function processing for ${oid}:`,
+                      err
+                    );
                   }
-                } catch (err) {
-                  jsaltt.logger.error(
-                    `state function processing for ${oid}:`,
-                    err
-                  );
+                });
+              }
+              Object.keys(this._update_state_mask_functions).map(function(k) {
+                if (this._oid_match(oid, k)) {
+                  this._update_state_mask_functions[k].map(function(f) {
+                    try {
+                      if (typeof f === 'string' || f instanceof String) {
+                        eval(f);
+                      } else {
+                        f(state);
+                      }
+                    } catch (err) {
+                      jsaltt.logger.error(
+                        `state function processing for ${oid}:`,
+                        err
+                      );
+                    }
+                  });
                 }
-              });
+              }, this);
             }
-          }, this);
+          }
         }
       } catch (err) {
         jsaltt.logger.error(
