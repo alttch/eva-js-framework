@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.3.18';
+const eva_framework_version = '0.3.19';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -1031,7 +1031,8 @@ const eva_framework_version = '0.3.18';
               (state.ieid !== undefined &&
                 (old_state.ieid === undefined ||
                   old_state.ieid[0] < state.ieid[0] ||
-                  old_state.ieid[1] < state.ieid[1])) ||
+                  (old_state.ieid[0] == state.ieid[0] &&
+                    old_state.ieid[1] < state.ieid[1]))) ||
               // use set_time
               (state.ieid === undefined &&
                 (state.set_time === undefined ||

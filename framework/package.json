@@ -1,6 +1,6 @@
 {
   "name": "@eva-ics/framework",
-  "version": "0.3.18",
+  "version": "0.3.19",
   "description": "JavaScript Framework for EVA ICS",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",
