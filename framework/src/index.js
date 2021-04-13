@@ -1017,7 +1017,6 @@ const eva_framework_version = '0.3.21';
             }
           });
         }
-        this._states[oid] = state;
         if (!jsaltt.cmp(state, old_state)) {
           if (state.set_time === true) {
             old_state = undefined;
@@ -1045,6 +1044,7 @@ const eva_framework_version = '0.3.21';
               `${oid} s: ${state.status} v: "${state.value}"`,
               `ns: ${state.nstatus} nv: "${state.nvalue}"`
             );
+            this._states[oid] = state;
             if (oid in this._update_state_functions) {
               this._update_state_functions[oid].map(function(f) {
                 try {
