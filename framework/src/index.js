@@ -1,6 +1,6 @@
 'use strict';
 
-const eva_framework_version = '0.3.22';
+const eva_framework_version = '0.3.23';
 
 (() => {
   if (typeof window !== 'undefined') {
@@ -48,7 +48,8 @@ const eva_framework_version = '0.3.22';
         action_watch: 0.5,
         heartbeat: 5,
         reload: 5,
-        restart: 1
+        restart: 1,
+        ws_buf_ttl: 0
       };
       this.log_level_names = {
         10: 'DEBUG',
@@ -902,7 +903,11 @@ const eva_framework_version = '0.3.22';
           } else {
             uri = me.api_uri;
           }
-          me.ws = new WebSocket(`${uri}/ws?k=${me.api_token}`);
+          let ws_uri = `${uri}/ws?k=${me.api_token}`;
+          if (me._intervals.ws_buf_ttl > 0) {
+            ws_uri += `&buf_ttl=${me._intervals.ws_buf_ttl}`;
+          }
+          me.ws = new WebSocket(ws_uri);
           me.ws.onmessage = function(evt) {
             me._process_ws(evt);
           };

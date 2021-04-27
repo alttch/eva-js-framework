@@ -155,6 +155,7 @@ value means seconds. Available intervals:
 * **heartbeat** server heartbeat interval
 * **reload** force reload items when working in web socket mode.
 * **restart** interval between automatic restart attempts.
+* **ws_buf_ttl** group WebSocket events in buffers with the desired TTL (sec)
 
 ## Handling events
 
