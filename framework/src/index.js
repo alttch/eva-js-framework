@@ -33,6 +33,7 @@ const eva_framework_version = '0.3.23';
       this.clear_unavailable = false;
       this.ws_mode = typeof WebSocket !== 'undefined';
       this.ws = null;
+      this.client_id = null;
       this.in_evaHI =
         typeof navigator !== 'undefined' &&
         navigator.userAgent &&
@@ -906,6 +907,9 @@ const eva_framework_version = '0.3.23';
           let ws_uri = `${uri}/ws?k=${me.api_token}`;
           if (me._intervals.ws_buf_ttl > 0) {
             ws_uri += `&buf_ttl=${me._intervals.ws_buf_ttl}`;
+          }
+          if (me.client_id != null) {
+            ws_uri += `&client_id=${me.client_id}`
           }
           me.ws = new WebSocket(ws_uri);
           me.ws.onmessage = function(evt) {
