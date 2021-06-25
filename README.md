@@ -190,6 +190,8 @@ filled by framework automatically.
 * **login** user login
 * **password** user password
 * **apikey** API key
+* **client_id** Report custom client id to the server (e.g. a custom-defined ID
+  of the current UI page)
 * **api_uri** API URI (don't need to be set if working in web browser)
 * **set_auth_cookies** if true (default), *auth* cookie is used to store API
   token.
