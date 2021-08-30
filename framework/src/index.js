@@ -63,17 +63,26 @@ const eva_framework_version = '0.3.24';
       this._ajax_reloader = null;
       this._log_reloader = null;
       this._scheduled_restarter = null;
-      this._update_state_functions = [];
-      this._update_state_mask_functions = [];
       this._action_watch_functions = [];
       this._action_states = {};
       this._clear();
+      this.clear_watchers();
+    }
+
+    clear_watchers() {
+      this._update_state_functions = [];
+      this._update_state_mask_functions = [];
+    }
+
+    _clear_states() {
+      this._states = [];
     }
 
     _clear() {
+      this.clear_watchers();
+      this._clear_states();
       this.server_info = null;
       this.tsdiff = null;
-      this._states = [];
       this._cvars = {};
       this._log_subscribed = false;
       this._log_first_load = true;
