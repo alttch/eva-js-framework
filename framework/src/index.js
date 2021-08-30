@@ -995,16 +995,26 @@ const eva_framework_version = "0.3.24";
       }
     }
 
-    _process_ws_frame_ping() {
-      this._debug("ws", "pong");
+    _process_ws_frame_pong() {
       this._last_pong = Date.now() / 1000;
+    }
+
+    _process_ws_frame_log(d) {
+        if (Array.isArray(d)) {
+          d.map((l) => this._preprocess_log_record(l), this);
+        } else {
+          this._preprocess_log_record(d);
+        }
+        this._invoke_handler("log.postprocess");
+        return;
     }
 
     // WASM override TODO
     _process_ws(payload) {
       var data = JSON.parse(payload);
       if (data.s == "pong") {
-        this._process_ws_frame_ping();
+        this._debug("ws", "pong");
+        this._process_ws_frame_pong();
         return;
       }
       if (data.s == "reload") {
@@ -1023,6 +1033,7 @@ const eva_framework_version = "0.3.24";
         this._invoke_handler(data.s, data.d);
         return;
       }
+      // Not supported in WASM
       if (this._invoke_handler("ws.event", data) === false) return;
       if (data.s == "state") {
         this._debug("ws", "state");
@@ -1034,12 +1045,8 @@ const eva_framework_version = "0.3.24";
         return;
       }
       if (data.s == "log") {
-        if (Array.isArray(data.d)) {
-          data.d.map((l) => this._preprocess_log_record(l), this);
-        } else {
-          this._preprocess_log_record(data.d);
-        }
-        this._invoke_handler("log.postprocess");
+        this._debug("ws", "log");
+        this._process_ws_frame_log(data.d);
         return;
       }
     }
