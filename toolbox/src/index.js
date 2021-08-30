@@ -1,11 +1,11 @@
-'use strict';
+"use strict";
 
 (() => {
-  const eva_framework = require('@eva-ics/framework');
-  const jsaltt = require('@altertech/jsaltt');
-  const Chart = require('chart.js');
+  const eva_framework = require("@eva-ics/framework");
+  const jsaltt = require("@altertech/jsaltt");
+  const Chart = require("chart.js");
 
-  const css = require('./style.css');
+  const css = require("./style.css");
 
   var $eva = eva_framework.$eva;
   /**
@@ -49,39 +49,39 @@
   function eva_toolbox_chart(ctx, cfg, oid, params, _chart) {
     var params = jsaltt.extend({}, params);
     var _oid;
-    if (typeof oid === 'object') {
+    if (typeof oid === "object") {
       _oid = oid;
     } else {
-      _oid = oid.split(',');
+      _oid = oid.split(",");
     }
-    var timeframe = params['timeframe'];
+    var timeframe = params["timeframe"];
     if (!timeframe) {
-      timeframe = '1D';
+      timeframe = "1D";
     }
-    var fill = params['fill'];
+    var fill = params["fill"];
     if (!fill) {
-      fill = '30T:2';
+      fill = "30T:2";
     }
-    var update = params['update'];
-    var prop = params['prop'];
-    var cc = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
-    var data_units = params['units'];
+    var update = params["update"];
+    var prop = params["prop"];
+    var cc = typeof ctx === "object" ? ctx : document.getElementById(ctx);
+    var data_units = params["units"];
     var chart;
     var nchart;
     var canvas;
     var work_cfg;
-    var animate = params['animate'];
-    var api_opts = params['args'];
+    var animate = params["animate"];
+    var api_opts = params["args"];
     if (!api_opts) api_opts = {};
     if (!animate) animate = animate_el;
     if (_chart) {
       chart = _chart;
     } else {
-      canvas = document.createElement('canvas');
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
-      canvas.className = 'eva_toolbox_chart';
-      cc.innerHTML = '';
+      canvas = document.createElement("canvas");
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.className = "eva_toolbox_chart";
+      cc.innerHTML = "";
       cc.appendChild(canvas);
       work_cfg = jsaltt.extend({}, cfg);
       nchart = new Chart(canvas, work_cfg);
@@ -92,7 +92,7 @@
         return;
       }
       if (!chart) animate(ctx);
-      var x = 'value';
+      var x = "value";
       if (prop !== undefined && prop !== null) {
         x = prop;
       }
@@ -103,9 +103,9 @@
       let calls = [];
       let primary_tf_idx = 0;
       tframes.map((tf, idx) => {
-        let t = tf.split(':');
+        let t = tf.split(":");
         let t_start = t[0];
-        if (t_start.startsWith('t')) {
+        if (t_start.startsWith("t")) {
           t_start = t_start.substr(1);
           primary_tf_idx = idx;
         }
@@ -113,7 +113,7 @@
         if (!t_end) t_end = null;
         let _api_opts = jsaltt.extend(
           {
-            t: 'iso',
+            t: "iso",
             s: t_start,
             e: t_end,
             x: x,
@@ -121,19 +121,19 @@
           },
           api_opts
         );
-        calls.push($eva.call('state_history', _oid, _api_opts));
+        calls.push($eva.call("state_history", _oid, _api_opts));
       });
       Promise.all(calls)
         .then(function(result) {
           let index = 0;
           let wtf = 0;
-          result.map(data => {
+          result.map((data) => {
             if (chart) {
               if (wtf == primary_tf_idx) {
                 chart.data.labels = data.t;
               }
               for (let i = 0; i < _oid.length; i++) {
-                chart.data.datasets[i + index].data = data[_oid[i] + '/' + x];
+                chart.data.datasets[i + index].data = data[_oid[i] + "/" + x];
               }
               chart.update();
             } else {
@@ -142,11 +142,11 @@
               }
               for (let i = 0; i < _oid.length; i++) {
                 work_cfg.data.datasets[i + index].data =
-                  data[_oid[i] + '/' + x];
+                  data[_oid[i] + "/" + x];
               }
               chart = nchart;
               chart.update();
-              cc.innerHTML = '';
+              cc.innerHTML = "";
               cc.appendChild(canvas);
               if (data_units) {
                 work_cfg.options.tooltips.callbacks.label = function(tti) {
@@ -159,13 +159,13 @@
           });
         })
         .catch(function(err) {
-          var d_error = document.createElement('div');
-          d_error.className = 'eva_toolbox_chart';
+          var d_error = document.createElement("div");
+          d_error.className = "eva_toolbox_chart";
           d_error.style.cssText =
-            'width: 100%; height: 100%; ' +
-            'color: red; font-weight: bold; font-size: 14px';
-          d_error.innerHTML = 'Error loading chart data: ' + err.message;
-          cc.innerHTML = '';
+            "width: 100%; height: 100%; " +
+            "color: red; font-weight: bold; font-size: 14px";
+          d_error.innerHTML = "Error loading chart data: " + err.message;
+          cc.innerHTML = "";
           cc.appendChild(d_error);
           if (chart) chart.destroy();
           chart = null;
@@ -186,7 +186,7 @@
    * @param ctx - DOM element (or id)
    */
   function eva_toolbox_animate(ctx) {
-    var el = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
+    var el = typeof ctx === "object" ? ctx : document.getElementById(ctx);
     el.innerHTML =
       '<div class="eva-toolbox-cssload-square"><div \
       class="eva-toolbox-cssload-square-part \
@@ -226,44 +226,44 @@
     var params = params;
     if (!params) params = {};
     return new Promise(function(resolve, reject) {
-      if (document === 'undfined') throw Error('DOM is required');
-      var popup = typeof ctx === 'object' ? ctx : document.getElementById(ctx);
+      if (document === "undfined") throw Error("DOM is required");
+      var popup = typeof ctx === "object" ? ctx : document.getElementById(ctx);
       if (popup === undefined || popup === null)
         throw Error(`DOM context ${ctx} not found`);
-      var ct = params['ct'];
-      var btn1 = params['btn1'];
-      var btn2 = params['btn2'];
-      var va = params['va'];
+      var ct = params["ct"];
+      var btn1 = params["btn1"];
+      var btn2 = params["btn2"];
+      var va = params["va"];
       var _pclass = pclass;
-      if (pclass[0] == '!') {
+      if (pclass[0] == "!") {
         _pclass = pclass.substr(1);
       }
       var popup_priority = function(pclass) {
-        if (pclass == 'info') return 20;
-        if (pclass == 'warning') return 30;
-        if (pclass == 'error') return 40;
+        if (pclass == "info") return 20;
+        if (pclass == "warning") return 30;
+        if (pclass == "error") return 40;
         return 0;
       };
       if (popup && popup_priority(popup.priority) > popup_priority(_pclass)) {
-        throw Error('popup with higher priority is already active');
+        throw Error("popup with higher priority is already active");
       }
       if (popup) {
         clearInterval(popup.ticker);
-        document.removeEventListener('keydown', popup.key_listener);
+        document.removeEventListener("keydown", popup.key_listener);
       }
-      popup.innerHTML = '';
+      popup.innerHTML = "";
       popup.priority = _pclass;
-      popup.className = 'eva_toolbox_popup';
-      var popup_window = document.createElement('div');
+      popup.className = "eva_toolbox_popup";
+      var popup_window = document.createElement("div");
       popup.appendChild(popup_window);
-      if (pclass[0] == '!') {
-        popup_window.className = 'eva_toolbox_popup_window_big';
+      if (pclass[0] == "!") {
+        popup_window.className = "eva_toolbox_popup_window_big";
       } else {
-        popup_window.className = 'eva_toolbox_popup_window';
+        popup_window.className = "eva_toolbox_popup_window";
       }
-      var popup_header = document.createElement('div');
+      var popup_header = document.createElement("div");
       popup_header.className =
-        'eva_toolbox_popup_header eva_toolbox_popup_header_' + _pclass;
+        "eva_toolbox_popup_header eva_toolbox_popup_header_" + _pclass;
       if (title !== undefined && title !== null) {
         popup_header.innerHTML = title;
       } else {
@@ -271,39 +271,39 @@
           _pclass.charAt(0).toUpperCase() + _pclass.slice(1);
       }
       popup_window.append(popup_header);
-      var popup_content = document.createElement('div');
-      popup_content.className = 'eva_toolbox_popup_content';
+      var popup_content = document.createElement("div");
+      popup_content.className = "eva_toolbox_popup_content";
       popup_content.innerHTML = msg;
       popup_window.appendChild(popup_content);
-      var popup_footer = document.createElement('div');
-      popup_footer.className = 'eva_toolbox_popup_footer';
+      var popup_footer = document.createElement("div");
+      popup_footer.className = "eva_toolbox_popup_footer";
       popup_window.appendChild(popup_footer);
-      var popup_buttons = document.createElement('div');
-      popup_buttons.className = 'row';
+      var popup_buttons = document.createElement("div");
+      popup_buttons.className = "row";
       popup_window.appendChild(popup_buttons);
-      var popup_btn1 = document.createElement('div');
-      var popup_btn2 = document.createElement('div');
-      var spacer = document.createElement('div');
-      spacer.className = 'col-xs-1 col-sm-2';
+      var popup_btn1 = document.createElement("div");
+      var popup_btn2 = document.createElement("div");
+      var spacer = document.createElement("div");
+      spacer.className = "col-xs-1 col-sm-2";
       popup_buttons.appendChild(spacer);
       popup_buttons.appendChild(popup_btn1);
       popup_buttons.appendChild(popup_btn2);
-      spacer = document.createElement('div');
-      spacer.className = 'col-xs-1 col-sm-2';
+      spacer = document.createElement("div");
+      spacer.className = "col-xs-1 col-sm-2";
       popup_buttons.appendChild(spacer);
-      var btn1text = 'OK';
+      var btn1text = "OK";
       if (btn1) {
         btn1text = btn1;
       }
-      var btn1_o = document.createElement('div');
+      var btn1_o = document.createElement("div");
       btn1_o.className =
-        'eva_toolbox_popup_btn eva_toolbox_popup_btn_' + _pclass;
+        "eva_toolbox_popup_btn eva_toolbox_popup_btn_" + _pclass;
       btn1_o.innerHTML = btn1text;
       var close_popup = function() {
         clearInterval(popup.ticker);
-        document.getElementById(ctx).style.display = 'none';
-        document.getElementById(ctx).innerHTML = '';
-        document.removeEventListener('keydown', popup.key_listener);
+        document.getElementById(ctx).style.display = "none";
+        document.getElementById(ctx).innerHTML = "";
+        document.removeEventListener("keydown", popup.key_listener);
         popup.priority = null;
       };
       var f_validate_run_and_close = function() {
@@ -312,26 +312,26 @@
           resolve(true);
         }
       };
-      btn1_o.addEventListener('click', f_validate_run_and_close);
+      btn1_o.addEventListener("click", f_validate_run_and_close);
       popup_btn1.appendChild(btn1_o);
       var btn2_o;
       if (btn2) {
-        btn2_o = document.createElement('div');
+        btn2_o = document.createElement("div");
         btn2_o.className =
-          'eva_toolbox_popup_btn eva_toolbox_popup_btn_' + _pclass;
+          "eva_toolbox_popup_btn eva_toolbox_popup_btn_" + _pclass;
         btn2_o.innerHTML = btn2;
-        btn2_o.addEventListener('click', function() {
+        btn2_o.addEventListener("click", function() {
           close_popup();
           reject(true);
         });
         popup_btn2.appendChild(btn2_o);
-        popup_btn1.className += ' col-xs-5 col-sm-4';
-        popup_btn2.className += ' col-xs-5 col-sm-4';
+        popup_btn1.className += " col-xs-5 col-sm-4";
+        popup_btn2.className += " col-xs-5 col-sm-4";
       } else {
-        popup_btn1.className += ' col-xs-10 col-sm-8';
-        popup_btn2.style.display = 'none';
+        popup_btn1.className += " col-xs-10 col-sm-8";
+        popup_btn2.style.display = "none";
       }
-      popup.style.display = 'block';
+      popup.style.display = "block";
       popup.key_listener = function(e) {
         if (e.which == 27) {
           close_popup();
@@ -343,7 +343,7 @@
           e.preventDefault();
         }
       };
-      document.addEventListener('keydown', popup.key_listener);
+      document.addEventListener("keydown", popup.key_listener);
       if (ct && ct > 0) {
         popup.ct = ct;
         var ticker_func = function() {
@@ -352,7 +352,7 @@
             reject();
           }
           var obj;
-          var txt = '';
+          var txt = "";
           if (btn2_o) {
             obj = btn2_o;
             txt = btn2;
@@ -370,16 +370,16 @@
   }
 
   function animate_el(el) {
-    typeof $eva === 'object' && typeof $eva.toolbox === 'object'
+    typeof $eva === "object" && typeof $eva.toolbox === "object"
       ? $eva.toolbox.animate(el)
       : eva_toolbox_animate(el);
   }
 
-  const eva_toolbox_version = '0.3.8';
+  const eva_toolbox_version = "0.3.8";
 
   function inject_toolbox() {
     var $eva = window.$eva;
-    if (typeof $eva === 'object') {
+    if (typeof $eva === "object") {
       if (!$eva.toolbox) {
         $eva.toolbox = {};
       }
@@ -392,7 +392,7 @@
 
   inject_toolbox();
 
-  if (typeof exports === 'object') {
+  if (typeof exports === "object") {
     exports.chart = eva_toolbox_chart;
     exports.animate = eva_toolbox_animate;
     exports.popup = eva_toolbox_popup;
