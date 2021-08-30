@@ -383,7 +383,7 @@ const eva_framework_version = "0.3.24";
      * @param func - function to be called
      *
      */
-    // WASM override TODO
+    // WASM override
     watch(oid, func) {
       if (!oid.includes("*")) {
         if (!(oid in this._update_state_functions)) {
@@ -487,7 +487,7 @@ const eva_framework_version = "0.3.24";
       }
     }
 
-    // WASM override TODO
+    // WASM override (not supported)
     _unwatch_func(oid, func) {
       if (oid in this._update_state_functions) {
         this._update_state_functions[oid] = this._update_state_functions[
@@ -496,12 +496,12 @@ const eva_framework_version = "0.3.24";
       }
     }
 
-    // WASM override TODO
+    // WASM override
     _unwatch_all(oid) {
       delete this._update_state_functions[oid];
     }
 
-    // WASM override TODO
+    // WASM override (not supported)
     _unwatch_mask_func(oid, func) {
       if (oid in this._update_state_mask_functions) {
         this._update_state_mask_functions[
@@ -510,7 +510,7 @@ const eva_framework_version = "0.3.24";
       }
     }
 
-    // WASM override TODO
+    // WASM override
     _unwatch_mask_all(oid) {
       delete this._update_state_mask_functions[oid];
     }
@@ -522,7 +522,7 @@ const eva_framework_version = "0.3.24";
      *
      * @returns object status(int) or undefined if no object found
      */
-    // WASM override TODO
+    // WASM override
     status(oid) {
       var state = this.state(oid);
       if (state === undefined || state === null) return undefined;
@@ -537,7 +537,7 @@ const eva_framework_version = "0.3.24";
      * @returns object value (null, string or numeric if possible)
      * or undefined if no object found
      */
-    // WASM override TODO
+    // WASM override
     value(oid) {
       var state = this.state(oid);
       if (state === undefined || state === null) return undefined;
@@ -555,18 +555,28 @@ const eva_framework_version = "0.3.24";
      *
      * @returns object state or undefined if no object found
      */
-    // WASM override TODO
     state(oid) {
       if (!oid.includes("*")) {
-        if (oid in this._states) {
-          return this._states[oid];
-        } else {
-          return undefined;
-        }
+        return _state(oid);
+      } else {
+        return _states_by_mask(oid);
       }
+    }
+
+    // WASM override
+    _state(oid) {
+      if (oid in this._states) {
+        return this._states[oid];
+      } else {
+        return undefined;
+      }
+    }
+
+    // WASM override
+    _states_by_mask(oid_mask) {
       var result = [];
       Object.keys(this._states).map(function(k) {
-        if (this._oid_match(k, oid)) {
+        if (this._oid_match(k, oid_mask)) {
           result.push(this._states[k]);
         }
       }, this);
@@ -943,7 +953,7 @@ const eva_framework_version = "0.3.24";
           }
           me.ws = new WebSocket(ws_uri);
           me.ws.onmessage = function(evt) {
-            me._process_ws(evt);
+            me._process_ws(evt.data);
           };
           me.ws.addEventListener("open", function(event) {
             me._debug("_start_ws", "ws connected");
@@ -991,8 +1001,8 @@ const eva_framework_version = "0.3.24";
     }
 
     // WASM override TODO
-    _process_ws(evt) {
-      var data = JSON.parse(evt.data);
+    _process_ws(payload) {
+      var data = JSON.parse(payload);
       if (data.s == "pong") {
         this._process_ws_frame_ping();
         return;
@@ -1040,7 +1050,7 @@ const eva_framework_version = "0.3.24";
         : this._lr2p.push(l);
     }
 
-    // WASM override TODO
+    // WASM override
     _clear_state(oid) {
       delete this._states[oid];
       this._process_state({
@@ -1050,7 +1060,6 @@ const eva_framework_version = "0.3.24";
       });
     }
 
-    // WASM override TODO
     _process_state(state) {
       var z = [];
       var x = [];
