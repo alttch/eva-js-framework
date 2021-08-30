@@ -34,6 +34,7 @@ const eva_framework_version = "0.3.24";
       this.ws_mode = typeof WebSocket !== "undefined";
       this.ws = null;
       this.client_id = null;
+      this._api_call_id = 0;
       this.in_evaHI =
         typeof navigator !== "undefined" &&
         navigator.userAgent &&
@@ -69,11 +70,13 @@ const eva_framework_version = "0.3.24";
       this.clear_watchers();
     }
 
-    clear_watchers() {
+    // WASM override
+    _clear_watchers() {
       this._update_state_functions = [];
       this._update_state_mask_functions = [];
     }
 
+    // WASM override
     _clear_states() {
       this._states = [];
     }
@@ -380,6 +383,7 @@ const eva_framework_version = "0.3.24";
      * @param func - function to be called
      *
      */
+    // WASM override TODO
     watch(oid, func) {
       if (!oid.includes("*")) {
         if (!(oid in this._update_state_functions)) {
@@ -467,31 +471,48 @@ const eva_framework_version = "0.3.24";
      */
     unwatch(oid, func) {
       if (!oid) {
-        this._update_state_functions = [];
-        this._update_state_mask_functions = [];
+        this._clear_watchers();
       } else if (!oid.includes("*")) {
-        if (oid in this._update_state_functions) {
-          if (func) {
-            this._update_state_functions[oid] = this._update_state_functions[
-              oid
-            ].filter((el) => el !== func);
-          } else {
-            delete this._update_state_functions[oid];
-          }
+        if (func) {
+          this._unwatch_func(oid, func);
+        } else {
+          this._unwatch_all(oid);
         }
       } else {
-        if (oid in this._update_state_mask_functions) {
-          if (func) {
-            this._update_state_mask_functions[
-              oid
-            ] = this._update_state_mask_functions[oid].filter(
-              (el) => el !== func
-            );
-          } else {
-            delete this._update_state_mask_functions[oid];
-          }
+        if (func) {
+          this._unwatch_mask_func(oid, func);
+        } else {
+          this._unwatch_mask_all(oid);
         }
       }
+    }
+
+    // WASM override TODO
+    _unwatch_func(oid, func) {
+      if (oid in this._update_state_functions) {
+        this._update_state_functions[oid] = this._update_state_functions[
+          oid
+        ].filter((el) => el !== func);
+      }
+    }
+
+    // WASM override TODO
+    _unwatch_all(oid) {
+      delete this._update_state_functions[oid];
+    }
+
+    // WASM override TODO
+    _unwatch_mask_func(oid, func) {
+      if (oid in this._update_state_mask_functions) {
+        this._update_state_mask_functions[
+          oid
+        ] = this._update_state_mask_functions[oid].filter((el) => el !== func);
+      }
+    }
+
+    // WASM override TODO
+    _unwatch_mask_all(oid) {
+      delete this._update_state_mask_functions[oid];
     }
 
     /**
@@ -501,6 +522,7 @@ const eva_framework_version = "0.3.24";
      *
      * @returns object status(int) or undefined if no object found
      */
+    // WASM override TODO
     status(oid) {
       var state = this.state(oid);
       if (state === undefined || state === null) return undefined;
@@ -515,6 +537,7 @@ const eva_framework_version = "0.3.24";
      * @returns object value (null, string or numeric if possible)
      * or undefined if no object found
      */
+    // WASM override TODO
     value(oid) {
       var state = this.state(oid);
       if (state === undefined || state === null) return undefined;
@@ -532,6 +555,7 @@ const eva_framework_version = "0.3.24";
      *
      * @returns object state or undefined if no object found
      */
+    // WASM override TODO
     state(oid) {
       if (!oid.includes("*")) {
         if (oid in this._states) {
@@ -610,21 +634,12 @@ const eva_framework_version = "0.3.24";
 
     // ***** private functions *****
 
-    _uuidv4() {
-      var dt = new Date().getTime();
-      var uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-        /[xy]/g,
-        function(c) {
-          var r = (dt + Math.random() * 16) % 16 | 0;
-          dt = Math.floor(dt / 16);
-          return (c == "x" ? r : (r & 0x3) | 0x8).toString(16);
-        }
-      );
-      return uuid;
-    }
-
     _api_call(func, params) {
-      var id = this._uuidv4();
+      if (this._api_call_id == 0xffff_ffff) {
+        this._api_call_id = 0;
+      }
+      this._api_call_id += 1;
+      var id = this._api_call_id;
       var api_uri = this.api_uri + "/jrpc";
       var me = this;
       this._debug("_api_call", `${id}: ${api_uri}: ${func}`);
@@ -852,6 +867,28 @@ const eva_framework_version = "0.3.24";
       }
     }
 
+    // WASM override TODO
+    _process_loaded_states(data, clear_unavailable, me) {
+      if (!me) var me = this;
+      let received_oids = [];
+      if (clear_unavailable) {
+        data.map((s) => received_oids.push(s.oid));
+      }
+      data.map((s) => me._process_state(s));
+      if (clear_unavailable) {
+        for (let oid in me._states) {
+          if (
+            me._states[oid].status !== undefined &&
+            me._states[oid].status !== null &&
+            !received_oids.includes(oid)
+          ) {
+            me._debug("clearing unavailable item " + oid);
+            me._clear_state(oid);
+          }
+        }
+      }
+    }
+
     _load_states(me) {
       if (!me) var me = this;
       return new Promise(function(resolve, reject) {
@@ -871,23 +908,7 @@ const eva_framework_version = "0.3.24";
           }
           me.call("state_all", params)
             .then(function(data) {
-              let received_oids = [];
-              if (me.clear_unavailable) {
-                data.map((s) => received_oids.push(s.oid));
-              }
-              data.map((s) => me._process_state(s));
-              if (me.clear_unavailable) {
-                for (let oid in me._states) {
-                  if (
-                    me._states[oid].status !== undefined &&
-                    me._states[oid].status !== null &&
-                    !received_oids.includes(oid)
-                  ) {
-                    me._debug("clearing unavailable item " + oid);
-                    me._clear_state(oid);
-                  }
-                }
-              }
+              me._process_loaded_states(data, me.clear_unavailable, me);
               resolve(true);
             })
             .catch(function(err) {
@@ -964,25 +985,33 @@ const eva_framework_version = "0.3.24";
       }
     }
 
+    _process_ws_frame_ping() {
+      this._debug("ws", "pong");
+      this._last_pong = Date.now() / 1000;
+    }
+
+    // WASM override TODO
     _process_ws(evt) {
       var data = JSON.parse(evt.data);
       if (data.s == "pong") {
-        this._debug("ws", "pong");
-        this._last_pong = Date.now() / 1000;
+        this._process_ws_frame_ping();
         return;
       }
       if (data.s == "reload") {
         this._debug("ws", "reload");
-        return this._invoke_handler("server.reload");
+        this._invoke_handler("server.reload");
+        return;
       }
       if (data.s == "server") {
         let ev = "server." + data.d;
         this._debug("ws", ev);
-        return this._invoke_handler(ev);
+        this._invoke_handler(ev);
+        return;
       }
       if (data.s.substring(0, 11) == "supervisor.") {
         this._debug("ws", data.s);
-        return this._invoke_handler(data.s, data.d);
+        this._invoke_handler(data.s, data.d);
+        return;
       }
       if (this._invoke_handler("ws.event", data) === false) return;
       if (data.s == "state") {
@@ -1011,6 +1040,7 @@ const eva_framework_version = "0.3.24";
         : this._lr2p.push(l);
     }
 
+    // WASM override TODO
     _clear_state(oid) {
       delete this._states[oid];
       this._process_state({
@@ -1020,6 +1050,7 @@ const eva_framework_version = "0.3.24";
       });
     }
 
+    // WASM override TODO
     _process_state(state) {
       var z = [];
       var x = [];

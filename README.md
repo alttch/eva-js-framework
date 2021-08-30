@@ -257,8 +257,6 @@ filled by framework automatically.
   specified, all watching functions are removed for a single oid (mask) or for
   all
 
-* **clear_watchers** clears all state watchers
-
 ## Server custom variables
 
 All defined CVARs are set as globals after successful log in. CVARs can be also
