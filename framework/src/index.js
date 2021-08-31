@@ -78,6 +78,14 @@ const eva_framework_version = "0.3.25";
           window.evajw = mod;
           let build = mod.get_build();
           console.log("EVA ICS JavaScript WASM engine loaded. Build: " + build);
+          try {
+            mod.check_license();
+          } catch (err) {
+            jsaltt.logger.error("License check failed. WASM engine disabled");
+            window.$eva.wasm = false;
+            window.$eva.start();
+            return;
+          }
           window.$eva._clear_watchers = mod.clear_watchers;
           window.$eva._clear_states = mod.clear_states;
           window.$eva.watch = mod.watch;
@@ -105,9 +113,7 @@ const eva_framework_version = "0.3.25";
       eval(`
       import("./evajw/evajw.js")
         .catch(error => {
-          let err = "evajw WASM module not found";
-          jsaltt.logger.error(err)
-          document.write('<font color="red" size="30">' + err + '</font>');
+          window.$eva._critical("evajs WASM module not found", true)
         }
         )
         .then((mod) => {
@@ -149,6 +155,14 @@ const eva_framework_version = "0.3.25";
       this._lr2p = [];
       this._last_ping = null;
       this._last_pong = null;
+    }
+
+    _critical(message, write_on_screen) {
+      if (write_on_screen) {
+        document.write('<font color="red" size="30">' + message + "</font>");
+      }
+      jsaltt.logger.error(message);
+      throw("critical");
     }
 
     /**
