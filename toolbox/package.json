@@ -24,7 +24,7 @@
     "url": "https://github.com/alttch/eva-js-framework/issues"
   },
   "dependencies": {
-    "@eva-ics/framework": "^0.1.11",
+    "@eva-ics/framework": "^0.3.24",
     "chart.js": "^2.8.0"
   },
   "homepage": "https://www.eva-ics.com/",

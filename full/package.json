@@ -9,8 +9,10 @@
     "url": "https://github.com/alttch/eva-js-framework/issues"
   },
   "dependencies": {
-    "@eva-ics/framework": "^0.1.11",
-    "@eva-ics/toolbox": "^0.1.2",
+    "@eva-ics/framework": "file:../framework",
+    "@eva-ics/toolbox": "file:../toolbox",
+    "@altertech/cookies": "^0.0.5",
+    "@altertech/jsaltt": "0.0.11",
     "chart.js": "^2.8.0",
     "qrious": "^4.0.2"
   },
