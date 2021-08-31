@@ -1009,7 +1009,7 @@ const eva_framework_version = "0.3.24";
         return;
     }
 
-    // WASM override TODO
+    // WASM override
     _process_ws(payload) {
       var data = JSON.parse(payload);
       if (data.s == "pong") {
