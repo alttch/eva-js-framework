@@ -105,7 +105,7 @@ const eva_framework_version = "0.3.25";
       }
     }
 
-    start_evajw_hmi() {
+    start_w() {
       window.evajw = undefined;
       window.eva_framework = window.$eva;
       eval(`
