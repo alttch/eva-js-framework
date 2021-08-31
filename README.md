@@ -20,15 +20,11 @@ eva sfa server pkg-install -w 30 <URI_OF_EVAPKG>
 
 #### Manual
 
-Download
+Download from the [releases](https://github.com/alttch/eva-js-framework/releases):
 
-Framework only:
+Framework only: *eva.framework.min.js*
 
-https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.framework.min.js
-
-Framework with chart and other utility functions:
-
-https://raw.githubusercontent.com/alttch/eva-js-framework/master/dist/eva.min.js
+Framework with chart and other utility functions: *eva.min.js*
 
 ### For Node.js
 
