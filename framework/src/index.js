@@ -177,7 +177,6 @@ const eva_framework_version = "0.3.25";
       }
     }
     _start_engine() {
-      console.log(this);
       this._last_ping = null;
       this._last_pong = null;
       var q = {};
