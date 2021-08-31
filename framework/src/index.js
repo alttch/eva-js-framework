@@ -162,7 +162,7 @@ const eva_framework_version = "0.3.25";
         document.write('<font color="red" size="30">' + message + "</font>");
       }
       jsaltt.logger.error(message);
-      throw("critical");
+      throw "critical";
     }
 
     /**
@@ -1185,6 +1185,7 @@ const eva_framework_version = "0.3.25";
             // use ieid
             (state.ieid !== undefined &&
               (old_state.ieid === undefined ||
+                state.ieid[0] == 0 ||
                 old_state.ieid[0] < state.ieid[0] ||
                 (old_state.ieid[0] == state.ieid[0] &&
                   old_state.ieid[1] < state.ieid[1]))) ||
