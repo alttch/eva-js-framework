@@ -12,6 +12,7 @@ clean-dist:
 	rm -f dist/*
 
 build-framework:
+	mkdir -p dist
 	cd framework && \
 	 	npm install && \
 	 	./node_modules/.bin/webpack && \
@@ -19,6 +20,7 @@ build-framework:
 	 	cat dist/eva.framework.min.js >> ../dist/eva.framework.min.js
 
 build-full:
+	mkdir -p dist
 	cd full && \
 		npm install && \
 		npm link ../framework && \
