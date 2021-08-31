@@ -71,8 +71,59 @@ const eva_framework_version = "0.3.25";
       this._clear_watchers();
     }
 
+    _inject_evajw(mod) {
+      if (mod) {
+        mod.init().then(() => {
+          window.evajw = mod;
+          let build = mod.get_build();
+          console.log("EVA ICS JavaScript WASM engine loaded. Build: " + build);
+          window.$eva._clear_watchers = mod.clear_watchers;
+          window.$eva._clear_states = mod.clear_states;
+          window.$eva.watch = mod.watch;
+          window.$eva._unwatch_func = mod.unwatch_func;
+          window.$eva._unwatch_all = mod.unwatch_all;
+          window.$eva._unwatch_mask_func = mod.unwatch_mask_func;
+          window.$eva._unwatch_mask_all = mod.unwatch_mask_all;
+          window.$eva.status = mod.status;
+          window.$eva.value = mod.value;
+          window.$eva._state = mod.state;
+          window.$eva._states_by_mask = mod.states_by_mask;
+          window.$eva._process_loaded_states = mod.process_loaded_states;
+          window.$eva._process_ws = mod.process_ws;
+          window.$eva._clear_state = mod.clear_state;
+          if (window.start_hmi !== undefined) {
+            window.start_hmi();
+          } else if (
+            window.$eva.hmi !== undefined &&
+            window.$eva.hmi.start !== undefined
+          ) {
+            window.$eva.hmi.start();
+          } else {
+            jsaltt.logger.error("HMI start function not found");
+          }
+        });
+      }
+    }
+
+    start_evajw_hmi() {
+      window.evajw = undefined;
+      window.eva_framework = window.$eva;
+      eval(`
+      import("./evajw/evajw.js")
+        .catch(error => jsaltt.logger.error("WASM engine not found"))
+        .then((mod) => {
+          window.$eva._inject_evajw(mod);
+        });`);
+    }
+
     _is_ws_handler_registered() {
-      return this._ws_handler_registered;
+      let me;
+      if (this === undefined) {
+        me = window.$eva;
+      } else {
+        me = this;
+      }
+      return me._ws_handler_registered;
     }
 
     // WASM override
@@ -565,9 +616,9 @@ const eva_framework_version = "0.3.25";
      */
     state(oid) {
       if (!oid.includes("*")) {
-        return _state(oid);
+        return this._state(oid);
       } else {
-        return _states_by_mask(oid);
+        return this._states_by_mask(oid);
       }
     }
 
@@ -1004,16 +1055,28 @@ const eva_framework_version = "0.3.25";
     }
 
     _process_ws_frame_pong() {
-      this._last_pong = Date.now() / 1000;
+      let me;
+      if (this === undefined) {
+        me = window.$eva;
+      } else {
+        me = this;
+      }
+      me._last_pong = Date.now() / 1000;
     }
 
     _process_ws_frame_log(d) {
-      if (Array.isArray(d)) {
-        d.map((l) => this._preprocess_log_record(l), this);
+      let me;
+      if (this === undefined) {
+        me = window.$eva;
       } else {
-        this._preprocess_log_record(d);
+        me = this;
       }
-      this._invoke_handler("log.postprocess");
+      if (Array.isArray(d)) {
+        d.map((l) => me._preprocess_log_record(l), me);
+      } else {
+        me._preprocess_log_record(d);
+      }
+      me._invoke_handler("log.postprocess");
       return;
     }
 
@@ -1162,14 +1225,20 @@ const eva_framework_version = "0.3.25";
     }
 
     _invoke_handler(handler) {
-      var f = this._handlers[handler];
+      let me;
+      if (this === undefined) {
+        me = window.$eva;
+      } else {
+        me = this;
+      }
+      var f = me._handlers[handler];
       if (f) {
-        this._debug("invoke_handler", "invoking for " + handler);
+        me._debug("invoke_handler", "invoking for " + handler);
         try {
           if (typeof f === "string") {
             return eval(f);
           } else if (typeof f === "function") {
-            return f.apply(this, [].slice.call(arguments, 1));
+            return f.apply(me, [].slice.call(arguments, 1));
           }
         } catch (err) {
           jsaltt.logger.error(`handler for ${handler}:`, err);
@@ -1182,7 +1251,13 @@ const eva_framework_version = "0.3.25";
     }
 
     _debug(method) {
-      if (this.debug) {
+      let me;
+      if (this === undefined) {
+        me = window.$eva;
+      } else {
+        me = this;
+      }
+      if (me.debug) {
         jsaltt.logger.debug.apply(
           jsaltt.logger,
           ["EVA::" + method].concat([].slice.call(arguments, 1))
