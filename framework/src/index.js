@@ -72,6 +72,11 @@ const eva_framework_version = "0.3.25";
       this._clear_watchers();
     }
 
+    // WASM override
+    get_mode() {
+      return "js";
+    }
+
     _inject_evajw(mod) {
       if (mod) {
         mod.init().then(() => {
@@ -89,6 +94,7 @@ const eva_framework_version = "0.3.25";
           window.$eva._clear_watchers = mod.clear_watchers;
           window.$eva._clear_states = mod.clear_states;
           window.$eva.watch = mod.watch;
+          window.$eva.get_mode = mod.get_mode;
           window.$eva._unwatch_func = mod.unwatch_func;
           window.$eva._unwatch_all = mod.unwatch_all;
           window.$eva._unwatch_mask_func = mod.unwatch_mask_func;
