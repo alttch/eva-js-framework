@@ -106,6 +106,16 @@ const eva_framework_version = "0.3.25";
           window.$eva._process_loaded_states = mod.process_loaded_states;
           window.$eva._process_ws = mod.process_ws;
           window.$eva._clear_state = mod.clear_state;
+          // transfer registered watchers to WASM
+          function transfer_watchers(src, mod) {
+            Object.keys(src).map((oid) => {
+              src[oid].map((f) => {
+                mod.watch(oid, f);
+              });
+            });
+          }
+          transfer_watchers(window.$eva._update_state_functions, mod);
+          transfer_watchers(window.$eva._update_state_mask_functions, mod);
           window.$eva.start();
         });
       } else {
