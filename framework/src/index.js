@@ -200,7 +200,7 @@ const eva_framework_version = "0.3.25";
         this._debug("start", "already logged in");
         return true;
       }
-      if (this.wasm && !window.evajw) {
+      if (this.wasm && window.evajw === undefined) {
         this._start_evajw();
       } else {
         this._start_engine();
