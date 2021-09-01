@@ -88,7 +88,7 @@ const eva_framework_version = "0.3.25";
           } catch (err) {
             jsaltt.logger.error("License check failed. WASM engine disabled");
             window.$eva.wasm = false;
-            window.$eva.start();
+            window.$eva._start_engine();
             return;
           }
           window.$eva._clear_watchers = mod.clear_watchers;
@@ -116,7 +116,7 @@ const eva_framework_version = "0.3.25";
           }
           transfer_watchers(window.$eva._update_state_functions, mod);
           transfer_watchers(window.$eva._update_state_mask_functions, mod);
-          window.$eva.start();
+          window.$eva._start_engine();
         });
       } else {
         window.evajw = null;
