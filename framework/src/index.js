@@ -1165,11 +1165,6 @@ const eva_framework_version = "0.3.25";
         // copy missing fields from old state
         if (oid in this._states) {
           var old_state = this._states[oid];
-          if (state.ieid[0] == 0 && old_state !== undefined) {
-            old_state.connected = false;
-            old_state.ieid = [0,0];
-            return;
-          }
           z = "";
           Object.keys(old_state).map(function(k) {
             if (!(k in state)) {
@@ -1190,6 +1185,7 @@ const eva_framework_version = "0.3.25";
             // use ieid
             (state.ieid !== undefined &&
               (old_state.ieid === undefined ||
+                state.ieid[0] == 0 ||
                 old_state.ieid[0] < state.ieid[0] ||
                 (old_state.ieid[0] == state.ieid[0] &&
                   old_state.ieid[1] < state.ieid[1]))) ||
