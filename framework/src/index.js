@@ -127,7 +127,7 @@ const eva_framework_version = "0.3.25";
       window.evajw = undefined;
       window.eva_framework = window.$eva;
       eval(`
-      import("./evajw/evajw.js")
+      import("./evajw/evajw.js?" + new Date().getTime())
         .catch(error => {
           window.$eva._critical("evajs WASM module not found", true)
         }
