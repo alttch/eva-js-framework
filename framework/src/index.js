@@ -80,6 +80,7 @@ const eva_framework_version = "0.3.25";
     _inject_evajw(mod) {
       if (mod) {
         mod.init().then(() => {
+          mod.init_engine();
           window.evajw = mod;
           let build = mod.get_build();
           console.log("EVA ICS JavaScript WASM engine loaded. Build: " + build);
