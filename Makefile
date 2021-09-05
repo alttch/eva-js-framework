@@ -35,13 +35,13 @@ pub-framework:
 	cd framework && npm version --no-git-tag-version patch
 	sed -i "s/\(const eva_framework_version\).*/\1 = '`jq < framework/package.json -r .version`';/g" \
 		./framework/src/index.js
-	npm publish @eva-ics/framework --access public
+	cd framework && npm run build && npm publish --access public
 
 pub-toolbox:
 	cd toolbox && npm version --no-git-tag-version patch
 	sed -i "s/\(const eva_toolbox_version\).*/\1 = '`jq < toolbox/package.json -r .version`';/g" \
 		./toolbox/src/index.js
-	npm publish @eva-ics/toolbox --access public
+	cd toolbox && npm publish --access public
 
 done:
 	@which figlet > /dev/null && figlet -f slant "DONE" || echo -e "-----------------\nDONE"

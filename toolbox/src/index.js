@@ -375,7 +375,7 @@
       : eva_toolbox_animate(el);
   }
 
-  const eva_toolbox_version = "0.3.8";
+  const eva_toolbox_version = '0.3.12';
 
   function inject_toolbox() {
     var $eva = window.$eva;
