@@ -848,6 +848,7 @@ const eva_framework_version = '0.3.25';
             try {
               me._debug("heartbeat", "ws ping");
               me.ws.send(JSON.stringify({ s: "ping" }));
+              me.ws.send("");
             } catch (err) {
               me._debug("heartbeat", "error: unable to send ws ping");
               me._invoke_handler("heartbeat_error", err);
@@ -1072,6 +1073,7 @@ const eva_framework_version = '0.3.25';
             }
             if (st) {
               me.ws.send(JSON.stringify(st));
+              me.ws.send("");
             }
             if (me._log_subscribed) {
               me.log_level(me.log.level);
@@ -1085,7 +1087,10 @@ const eva_framework_version = '0.3.25';
     _set_ws_log_level(l) {
       this._log_subscribed = true;
       try {
-        if (this.ws) this.ws.send(JSON.stringify({ s: "log", l: l }));
+        if (this.ws) {
+          this.ws.send(JSON.stringify({ s: "log", l: l }));
+          this.ws.send("");
+        }
       } catch (err) {
         this._debug("log_level", "warning: unable to send ws packet");
       }
