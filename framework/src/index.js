@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.27';
+const eva_framework_version = "0.3.27";
 
 (() => {
   if (typeof window !== "undefined") {
@@ -1045,6 +1045,19 @@ const eva_framework_version = '0.3.27';
             uri += "//" + loc.host;
           } else {
             uri = me.api_uri;
+            if (uri.startsWith("http://")) {
+              uri = uri.replace("http://", "ws://");
+            } else if (uri.startsWith("https://")) {
+              uri = uri.replace("https://", "wss://");
+            } else {
+              var loc = window.location;
+              if (loc.protocol === "https:") {
+                uri = "wss:";
+              } else {
+                uri = "ws:";
+              }
+              uri += "//" + loc.host + me.api_uri;
+            }
           }
           let ws_uri = `${uri}/ws?k=${me.api_token}`;
           if (me._intervals.ws_buf_ttl > 0) {
