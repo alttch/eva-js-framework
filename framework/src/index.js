@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.26';
+const eva_framework_version = "0.3.26";
 
 (() => {
   if (typeof window !== "undefined") {
@@ -967,7 +967,12 @@ const eva_framework_version = '0.3.26';
 
     _set_token_cookie() {
       if (this.set_auth_cookies && typeof document !== "undefined") {
-        ["/ui", "/pvt", "/rpvt", "/upload"].map(
+        [
+          this.api_uri + "/ui",
+          this.api_uri + "/pvt",
+          this.api_uri + "/rpvt",
+          this.api_uri + "/upload"
+        ].map(
           (uri) => (document.cookie = `auth=${this.api_token}; path=${uri}`),
           this
         );
