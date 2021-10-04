@@ -56,6 +56,9 @@ ver-pub:
 	git commit -a -m "version `jq < ./framework/package.json -r .version`"; 
 	git push
 
+release:
+	all pkg pub-pkg
+
 pkg:
 	rm -rf _build
 	mkdir -p _build/ui
