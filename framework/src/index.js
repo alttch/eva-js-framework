@@ -477,17 +477,17 @@ const eva_framework_version = '0.3.29';
      *
      * @param oid - item oid (e.g. sensor:env/temp1, or sensor:env/*)
      * @param func - function to be called
-     * @param ignore_first - skip initial state callback
+     * @param ignore_initial - skip initial state callback
      *
      */
     // WASM override
-    watch(oid, func, ignore_first) {
+    watch(oid, func, ignore_initial) {
       if (!oid.includes("*")) {
         if (!(oid in this._update_state_functions)) {
           this._update_state_functions[oid] = [];
         }
         this._update_state_functions[oid].push(func);
-        if (!ignore_first) {
+        if (!ignore_initial) {
           var state = this.state(oid);
           if (state !== undefined) func(state);
         }
@@ -496,7 +496,7 @@ const eva_framework_version = '0.3.29';
           this._update_state_mask_functions[oid] = [];
         }
         this._update_state_mask_functions[oid].push(func);
-        if (!ignore_first) {
+        if (!ignore_initial) {
           var v = this.state(oid);
           if (Array.isArray(v)) {
             v.map(func);
