@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.29';
+const eva_framework_version = '0.3.30';
 
 (() => {
   if (typeof window !== "undefined") {
@@ -160,7 +160,7 @@ const eva_framework_version = '0.3.29';
     }
 
     _clear() {
-      this._clear_watchers();
+      //this._clear_watchers();
       this._clear_states();
       this.server_info = null;
       this.tsdiff = null;
