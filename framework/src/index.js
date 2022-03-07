@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.31';
+const eva_framework_version = "0.3.31";
 
 (() => {
   if (typeof window !== "undefined") {
@@ -1067,6 +1067,7 @@ const eva_framework_version = '0.3.31';
             method = "item.state";
           }
           if (me.api_version == 4) {
+            params["full"] = true;
             if (me.state_updates == true) {
               params["i"] = "#";
             } else if (Array.isArray(me.state_updates)) {
