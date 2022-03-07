@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.30';
+const eva_framework_version = "0.3.30";
 
 (() => {
   if (typeof window !== "undefined") {
@@ -35,6 +35,7 @@ const eva_framework_version = '0.3.30';
       this._ws_handler_registered = false;
       this.ws_mode = typeof WebSocket !== "undefined";
       this.ws = null;
+      this.api_version = 3;
       this.client_id = null;
       this._api_call_id = 0;
       this.in_evaHI =
@@ -382,8 +383,12 @@ const eva_framework_version = '0.3.30';
      */
     set_readonly() {
       var me = this;
+      var method = "set_token_readonly";
+      if (this.api_version == 4) {
+        method = "session.set_readonly";
+      }
       return new Promise(function(resolve, reject) {
-        me.call("set_token_readonly")
+        me.call(method)
           .then(function(data) {
             me.server_info.aci.token_mode = "readonly";
             resolve(data);
@@ -534,8 +539,12 @@ const eva_framework_version = '0.3.30';
         this._action_watch_functions[uuid] = [];
         this._action_watch_functions[uuid].push(func);
         var me = this;
+        var method = "result";
+        if (this.api_version == 4) {
+          method = "action.result";
+        }
         var watcher = function() {
-          me.call("result", { u: uuid })
+          me.call(method, { u: uuid })
             .then(function(result) {
               if (
                 !me._action_states[uuid] ||
@@ -835,7 +844,7 @@ const eva_framework_version = '0.3.30';
       return new Promise(function(resolve, reject) {
         if (on_login) me._last_ping = null;
         var q = {};
-        if (on_login) {
+        if (on_login && me.api_version != 4) {
           q["icvars"] = 1;
         }
         if (me.ws_mode) {
@@ -852,7 +861,13 @@ const eva_framework_version = '0.3.30';
             me._last_ping = Date.now() / 1000;
             try {
               me._debug("heartbeat", "ws ping");
-              me.ws.send(JSON.stringify({ s: "ping" }));
+              var payload;
+              if (me.api_version == 4) {
+                payload = { m: "ping" };
+              } else {
+                payload = { s: "ping" };
+              }
+              me.ws.send(JSON.stringify(payload));
               me.ws.send("");
             } catch (err) {
               me._debug("heartbeat", "error: unable to send ws ping");
@@ -894,8 +909,12 @@ const eva_framework_version = '0.3.30';
 
     _load_log_entries(postprocess, me) {
       if (!me) var me = this;
+      var method = "log_get";
+      if (me.api_version == 4) {
+        method = "log.get";
+      }
       if (me.ws_mode) me._lr2p = [];
-      me.call("log_get", {
+      me.call(method, {
         l: me.log.level,
         n: me.log.records
       })
@@ -1006,6 +1025,36 @@ const eva_framework_version = '0.3.30';
       }
     }
 
+    _state_updates_v3_as_v4_list(me) {
+      var groups = me.state_updates["g"];
+      var tp = me.state_updates["p"];
+      var masks = [];
+      if (groups && tp) {
+        groups.map((g) => {
+          tp.map((t) => {
+            let mask = t + ":" + g;
+            if (!g.endsWith("#") && !g.endsWith("*")) {
+              mask += "/+";
+            }
+            masks.push(mask);
+          });
+        });
+      } else if (groups) {
+        groups.map((g) => {
+          let mask = "+:" + g;
+          if (!g.endsWith("#") && !g.endsWith("*")) {
+            mask += "/+";
+          }
+          masks.push(mask);
+        });
+      } else if (tp) {
+        tp.map((t) => {
+          masks.push(t + ":#");
+        });
+      }
+      return masks;
+    }
+
     _load_states(me) {
       if (!me) var me = this;
       return new Promise(function(resolve, reject) {
@@ -1013,17 +1062,40 @@ const eva_framework_version = '0.3.30';
           resolve(true);
         } else {
           var params = {};
-          if (me.state_updates !== true) {
-            var groups = me.state_updates["g"];
-            var tp = me.state_updates["p"];
-            if (groups) {
-              params["g"] = groups;
+          var method = "state_all";
+          if (me.api_version == 4) {
+            method = "item.state";
+          }
+          if (me.api_version == 4) {
+            if (me.state_updates == true) {
+              params["i"] = "#";
+            } else if (Array.isArray(me.state_updates)) {
+              params["i"] = me.state_updates;
+            } else {
+              jsaltt.logger.warning(
+                "deprecated state_updates format, consider switching to OID mask array"
+              );
+              var masks;
+              try {
+                masks = me._state_updates_v3_as_v4_list(me);
+                params["i"] = masks;
+              } catch (err) {
+                console.log(err);
+              }
             }
-            if (tp) {
-              params["p"] = tp;
+          } else {
+            if (me.state_updates !== true) {
+              var groups = me.state_updates["g"];
+              var tp = me.state_updates["p"];
+              if (groups) {
+                params["g"] = groups;
+              }
+              if (tp) {
+                params["p"] = tp;
+              }
             }
           }
-          me.call("state_all", params)
+          me.call(method, params)
             .then(function(data) {
               me._process_loaded_states(data, me.clear_unavailable, me);
               resolve(true);
@@ -1079,19 +1151,32 @@ const eva_framework_version = '0.3.30';
             me._debug("_start_ws", "ws connected");
             var st;
             if (me.state_updates) {
-              st = { s: "state" };
-              if (me.state_updates !== true) {
-                var groups = me.state_updates["g"];
-                if (!groups) {
-                  groups = "#";
+              if (me.api_version == 4) {
+                st = { m: "subscribe.state" };
+                var masks;
+                if (me.state_updates == true) {
+                  masks = ["#"];
+                } else if (Array.isArray(me.state_updates)) {
+                  masks = me.state_updates;
+                } else {
+                  masks = me._state_updates_v3_as_v4_list(me);
                 }
-                var tp = me.state_updates["p"];
-                if (!tp) {
-                  tp = "#";
+                st["p"] = masks;
+              } else {
+                st = { s: "state" };
+                if (me.state_updates !== true) {
+                  var groups = me.state_updates["g"];
+                  if (!groups) {
+                    groups = "#";
+                  }
+                  var tp = me.state_updates["p"];
+                  if (!tp) {
+                    tp = "#";
+                  }
+                  st["g"] = groups;
+                  st["tp"] = tp;
+                  st["i"] = [];
                 }
-                st["g"] = groups;
-                st["tp"] = tp;
-                st["i"] = [];
               }
             }
             if (st) {

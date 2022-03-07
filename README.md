@@ -105,7 +105,7 @@ document.getElementById('u').addEventListener('click', function() {
       // watch action result
       $eva.watch_action(data.uuid, function(action) {
         if (action.uuid) {
-            if (action.is_finished) {
+            if (action.finished) {
                 console.log('action is finished, status: ' + action.status);
             }
         } else {
