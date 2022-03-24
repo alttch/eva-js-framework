@@ -88,6 +88,13 @@ $eva.on('login.failed', function(err) {
 $eva.start();
 ```
 
+Note: for EVA ICS v4, the framework must be forcibly switched to the new API
+version:
+
+```javascript
+$eva.api_version = 4;
+```
+
 ## Watching states and performing API calls
 
 ```javascript
