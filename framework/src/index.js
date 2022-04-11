@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = "0.3.31";
+const eva_framework_version = '0.3.32';
 
 (() => {
   if (typeof window !== "undefined") {
@@ -1313,6 +1313,8 @@ const eva_framework_version = "0.3.31";
             old_state === undefined ||
             // controller changed
             state.controller_id != old_state.controller_id ||
+            // node changed (v4)
+            state.node != old_state.node ||
             // use ieid
             (state.ieid !== undefined &&
               (old_state.ieid === undefined ||
