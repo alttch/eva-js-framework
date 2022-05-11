@@ -217,6 +217,9 @@ const eva_framework_version = '0.3.32';
         this._debug("start", "logging in with API key");
       } else if (this.password) {
         q = { u: this.login, p: this.password };
+        if (this.api_token) {
+          q.a = this.api_token;
+        }
         this._debug("start", "logging in with password");
       } else if (this.set_auth_cookies) {
         var token = cookies.read("auth");
@@ -738,6 +741,19 @@ const eva_framework_version = '0.3.32';
         me.logged_in = false;
         if (keep_auth) {
           resolve();
+        } else if (me.api_version == 4) {
+          if (me.api_token) {
+            let token = me.api_token;
+            me.erase_token_cookie();
+            me.call("logout", { 'a': token })
+              .then(function() {
+                me.api_token = "";
+                resolve();
+              })
+              .catch(function(err) {
+                reject(err);
+              });
+          }
         } else {
           me.call("logout")
             .then(function() {
