@@ -745,7 +745,7 @@ const eva_framework_version = '0.3.33';
           if (me.api_token) {
             let token = me.api_token;
             me.erase_token_cookie();
-            me.call("logout", { 'a': token })
+            me._api_call("logout", { 'a': token })
               .then(function() {
                 me.api_token = "";
                 resolve();
