@@ -212,8 +212,13 @@ filled by framework automatically.
 * **log.records** set max. log records to retrieve from the server.
 
 * **state_updates** Possible values:
+
   * true (default) - get states of all items API key has access to
-  * {'p': [types], 'g': [groups]} - subscribe to specified types and groups
+
+  * {'p': [types], 'g': [groups]} - (V3) subscribe to specified types and groups
+
+  * [ 'oidmask1', 'oidmask2' ] - (v4) specified subscriptions for EVA ICS v4 (e.g. 'sensor:env/#')
+
   * false - disable state updates
 
 * **ws_mode** use web sockets. Set automatically if WebSocket object is
