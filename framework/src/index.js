@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.34';
+const eva_framework_version = "0.3.34";
 
 (() => {
   if (typeof window !== "undefined") {
@@ -711,15 +711,24 @@ const eva_framework_version = '0.3.34';
       // if no such item
       if (i === undefined) return undefined;
       // if item has no expiration or expiration is set to zero
-      if (i.expires === undefined || i.expires == 0) return null;
+      if (this.api_version == 4) {
+        if (!i.meta || i.meta.expires === undefined || i.meta.expires == 0)
+          return null;
+      } else {
+        if (i.expires === undefined || i.expires == 0) return null;
+      }
       // if no timestamp diff
       if (this.tsdiff == null) return undefined;
       // if timer is disabled (stopped), return -2
       if (i.status == 0) return -2;
       // if timer is expired, return -1
       if (i.status == -1) return -1;
-      var t =
-        i.expires - new Date().getTime() / 1000 + this.tsdiff + i.set_time;
+      var t;
+      if (this.api_version == 4) {
+        t = i.meta.expires - new Date().getTime() / 1000 + this.tsdiff + i.t;
+      } else {
+        t = i.expires - new Date().getTime() / 1000 + this.tsdiff + i.set_time;
+      }
       if (t < 0) t = 0;
       return t;
     }
@@ -745,7 +754,7 @@ const eva_framework_version = '0.3.34';
           if (me.api_token) {
             let token = me.api_token;
             me.erase_token_cookie();
-            me._api_call("logout", { 'a': token })
+            me._api_call("logout", { a: token })
               .then(function() {
                 me.api_token = "";
                 resolve();
@@ -1326,9 +1335,11 @@ const eva_framework_version = '0.3.34';
           });
         }
         if (!jsaltt.cmp(state, old_state)) {
-          if (state.set_time === true) {
-            old_state = undefined;
-            state.set_time = 0;
+          if (this.api_version != 4) {
+            if (state.set_time === true) {
+              old_state = undefined;
+              state.set_time = 0;
+            }
           }
           if (
             // no old state
