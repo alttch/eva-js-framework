@@ -1213,7 +1213,13 @@ const eva_framework_version = '0.3.34';
       this._log_subscribed = true;
       try {
         if (this.ws) {
-          this.ws.send(JSON.stringify({ s: "log", l: l }));
+          var payload;
+          if (this.api_version == 4) {
+            payload = { m: "subscribe.log", p: l };
+          } else {
+            payload = { s: "log", l: l };
+          }
+          this.ws.send(JSON.stringify(payload));
           this.ws.send("");
         }
       } catch (err) {
