@@ -106,8 +106,8 @@ $eva.watch('unit:tests/unit1', function(state) {
 
 // action example
 document.getElementById('u').addEventListener('click', function() {
-  $eva.call('action_toggle', 'unit:tests/unit1', { w: 30 })
-    then(function(data) {
+  $eva.call('action_toggle', 'unit:tests/unit1', { w: 30 }
+    ).then(function(data) {
       console.log('action sent to server, uuid: ' + data.uuid)
       // watch action result
       $eva.watch_action(data.uuid, function(action) {
