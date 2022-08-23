@@ -63,8 +63,8 @@ pkg:
 	mkdir -p _build/ui
 	cp dist/eva.min.js dist/eva.framework.min.js _build/ui
 	sed "s/^VERSION=.*/VERSION='$(VERSION)'/g" setup.py > _build/setup.py
-	cd _build && tar czf eva-js-framework-$(VERSION).evapkg ui setup.py
+	#cd _build && tar czf eva-js-framework-$(VERSION).evapkg ui setup.py
 
 pub-pkg:
 	echo "" | gh release create v$(VERSION) -t "v$(VERSION)" \
-	 	_build/eva-js-framework-$(VERSION).evapkg dist/eva.min.js dist/eva.framework.min.js
+	 	_dist/eva.min.js dist/eva.framework.min.js

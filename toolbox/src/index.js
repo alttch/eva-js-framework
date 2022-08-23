@@ -113,7 +113,6 @@
         if (!t_end) t_end = null;
         let _api_opts = jsaltt.extend(
           {
-            t: "iso",
             s: t_start,
             e: t_end,
             x: x,
@@ -121,13 +120,24 @@
           },
           api_opts
         );
-        calls.push($eva.call("state_history", _oid, _api_opts));
+        let method;
+        if ($eva.api_version == 4) {
+          method = "item.state_history";
+        } else {
+          method = "state_history";
+        }
+        calls.push($eva.call(method, _oid, _api_opts));
       });
       Promise.all(calls)
         .then(function(result) {
           let index = 0;
           let wtf = 0;
           result.map((data) => {
+            data.t.forEach((t, index) => {
+              if (t) {
+                data.t[index] = new Date(t * 1000);
+              }
+            });
             if (chart) {
               if (wtf == primary_tf_idx) {
                 chart.data.labels = data.t;
@@ -375,7 +385,7 @@
       : eva_toolbox_animate(el);
   }
 
-  const eva_toolbox_version = '0.3.12';
+  const eva_toolbox_version = '0.3.13';
 
   function inject_toolbox() {
     var $eva = window.$eva;
