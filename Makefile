@@ -67,4 +67,4 @@ pkg:
 
 pub-pkg:
 	echo "" | gh release create v$(VERSION) -t "v$(VERSION)" \
-	 	_dist/eva.min.js dist/eva.framework.min.js
+	 	dist/eva.min.js dist/eva.framework.min.js
