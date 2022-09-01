@@ -9,17 +9,6 @@ The library works both in web browsers and Node.js.
 
 ### For web browsers
 
-#### Package (EVA ICS 3.3.2+)
-
-Go to https://github.com/alttch/eva-js-framework/releases and install the
-desired package:
-
-```shell
-eva sfa server pkg-install -w 30 <URI_OF_EVAPKG>
-```
-
-#### Manual
-
 Download from the [releases](https://github.com/alttch/eva-js-framework/releases):
 
 Framework only: *eva.framework.min.js*
