@@ -254,6 +254,10 @@ filled by framework automatically.
   specified, all watching functions are removed for a single oid (mask) or for
   all
 
+* **parse_svc_message(msg)** parses string-encoded service messages, returning
+  object with fields *kind*, *svc*, *message*, *value* or null if the message
+  is invalid.
+
 ## Server custom variables
 
 All defined CVARs are set as globals after successful log in. CVARs can be also
@@ -284,6 +288,20 @@ Example:
 ```javascript
   $eva.hiQR('evaccqr', {password: null});
 ```
+
+## QR code for OTP
+
+Method *otpQR* generates QR code for OTP authenticators (e.g. Google
+Authenticator or Microsoft Authenticator).
+
+Parameters:
+
+* **ctx** html <canvas /> element or id to generate QR code in
+* **params** object with additional parameters:
+  * size - QR code size in px (default: 200px)
+  * issuer - override issuer (default: HMI document.location.hostname)
+  * user - override user (default: $eva.login)
+  * xtr - extra parameters (added as-is)
 
 ## Multi-page interfaces, external authentication
 

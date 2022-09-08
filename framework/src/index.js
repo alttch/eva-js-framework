@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.36';
+const eva_framework_version = '0.3.37';
 
 (() => {
   if (typeof window !== "undefined") {
@@ -21,6 +21,7 @@ const eva_framework_version = '0.3.36';
       this.version = eva_framework_version;
       this.login = "";
       this.password = "";
+      this.login_xopts = null;
       this.apikey = "";
       this.api_uri = "";
       this.set_auth_cookies = true;
@@ -214,11 +215,17 @@ const eva_framework_version = '0.3.36';
       var q = {};
       if (this.apikey) {
         q = { k: this.apikey };
+        if (this.login_xopts) {
+          q.xopts = this.login_xopts;
+        }
         this._debug("start", "logging in with API key");
       } else if (this.password) {
         q = { u: this.login, p: this.password };
         if (this.api_token) {
           q.a = this.api_token;
+        }
+        if (this.login_xopts) {
+          q.xopts = this.login_xopts;
         }
         this._debug("start", "logging in with password");
       } else if (this.set_auth_cookies) {
@@ -407,7 +414,7 @@ const eva_framework_version = '0.3.36';
      *
      * (EVA ICS 3.3.2+)
      */
-    set_normal(u, p) {
+    set_normal(u, p, xopts) {
       var q = {};
       var user;
       if (u === undefined) {
@@ -420,7 +427,10 @@ const eva_framework_version = '0.3.36';
       } else {
         q = { u: user, p: p };
       }
-      q["a"] = this.api_token;
+      q.a = this.api_token;
+      if (xopts !== undefined) {
+        q.xopts = xopts;
+      }
       var me = this;
       return new Promise(function(resolve, reject) {
         me._api_call("login", q)
@@ -1450,6 +1460,72 @@ const eva_framework_version = '0.3.36';
           ["EVA::" + method].concat([].slice.call(arguments, 1))
         );
       }
+    }
+
+    parse_svc_message(msg) {
+      if (msg && msg.startsWith("|")) {
+        let sp = msg.split("|");
+        let kind = sp[1];
+        if (kind) {
+          let result = { kind: kind, svc: sp[2] };
+          let svc_msg = sp[3];
+          if (svc_msg) {
+            let sp_msg = svc_msg.split("=");
+            result.message = sp_msg[0];
+            result.value = sp_msg[1];
+          }
+          return result;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * OTP setup code
+     *
+     * @param ctx - html <canvas /> element or id to generate QR code in
+     * @param secret - OTP secret
+     * @param params - object with additional parameters:
+     *       @size - QR code size in px (default: 200)
+     *       @issuer - override issuer (default: HMI document.location.hostname)
+     *       @user - override user (default: $eva.login)
+     *       @xtr - extra parameters (added as-is)
+     *
+     * @returns Qrious QR object if QR code is generated
+     */
+    otpQR(ctx, secret, params) {
+      if (typeof document !== "object") {
+        jsaltt.logger.error("document object not found");
+        return;
+      }
+      var params = params;
+      if (!params) params = {};
+      let size = params["size"];
+      if (!size) {
+        size = 200;
+      }
+      let issuer = params["issuer"];
+      if (!issuer) {
+        issuer = "HMI " + document.location.hostname;
+      }
+      let user = params["user"];
+      if (!user) {
+        user = this.login;
+      }
+      let value =
+        "otpauth://totp/" +
+        encodeURIComponent(user) +
+        `?secret=${secret}&issuer=` +
+        encodeURIComponent(issuer);
+      let xtr = params["xtr"];
+      if (xtr) {
+        value += xtr;
+      }
+      return new QRious({
+        element: typeof ctx === "object" ? ctx : document.getElementById(ctx),
+        value: value,
+        size: size
+      });
     }
 
     /**
