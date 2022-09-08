@@ -181,6 +181,7 @@ filled by framework automatically.
 
 * **login** user login
 * **password** user password
+* **xopts** extra login options (EVA ICS v4 only)
 * **apikey** API key
 * **client_id** Report custom client id to the server (e.g. a custom-defined ID
   of the current UI page)
