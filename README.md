@@ -155,6 +155,9 @@ Event handlers are set by *on(event, func)* and fired on:
 
 * **login.success** successful login
 * **login.failed** login failure
+* **login.otp_required** OTP code is required for login
+* **login.otp_invalid** OTP code is provided but invalid
+* **login.otp_setup** OTP setup is required, the parameter contains OTP secret
 * **ws.event** WebSocket event. If handler return false, event is skipped by
   framework.
 * **server.reload** server asked clients to reload UI
