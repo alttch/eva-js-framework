@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.38';
+const eva_framework_version = '0.3.39';
 
 (() => {
   if (typeof window !== "undefined") {
@@ -299,13 +299,13 @@ const eva_framework_version = '0.3.38';
             if (msg && msg.kind == "OTP") {
               switch (msg.message) {
                 case "REQ":
-                  me._invoke_handler("login.otp_required");
+                  me._invoke_handler("login.otp_required", msg);
                   return;
                 case "INVALID":
-                  me._invoke_handler("login.otp_invalid");
+                  me._invoke_handler("login.otp_invalid", msg);
                   return;
                 case "SETUP":
-                  me._invoke_handler("login.otp_setup", msg.value);
+                  me._invoke_handler("login.otp_setup", msg);
                   return;
               }
             }
