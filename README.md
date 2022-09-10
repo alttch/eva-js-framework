@@ -333,7 +333,7 @@ perform a single authentication attempt to re-use existing token:
 
 The same method is used when client can authenticate itself with basic
 authentication on front-end sever or uses :doc:`EVA ICS Smartphone
-application</evahi>`.
+application</eva4/evahi>`.
 
 ### Secondary pages
 
