@@ -280,7 +280,7 @@ password value.
 
 Parameters:
 
-* **ctx** html <canvas /> element or id to generate QR code in
+* **ctx** html canvas element or id to generate QR code in
 * **params** object with additional parameters:
   * size - QR code size in px (default: 200px)
   * url - override UI url (default: document.location)
@@ -300,7 +300,7 @@ Authenticator or Microsoft Authenticator).
 
 Parameters:
 
-* **ctx** html <canvas /> element or id to generate QR code in
+* **ctx** html canvas element or id to generate QR code in
 * **params** object with additional parameters:
   * size - QR code size in px (default: 200px)
   * issuer - override issuer (default: HMI document.location.hostname)
@@ -332,8 +332,8 @@ perform a single authentication attempt to re-use existing token:
 ```
 
 The same method is used when client can authenticate itself with basic
-authentication on front-end sever or uses :doc:`EVA ICS Smartphone
-application</eva4/evahi>`.
+authentication on front-end sever or uses [EVA ICS Smartphone
+application](/eva4/evahi.rst).
 
 ### Secondary pages
 
