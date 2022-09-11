@@ -17,7 +17,7 @@ The library works both in web browsers and Node.js.
 ### For web browsers
 
 Download from https://pub.bma.ai/eva-js-framework/ or
-https://github.com/alttch/eva-js-framework/releases:
+https://github.com/alttch/eva-js-framework/releases
 
 Framework only: *eva.framework.min.js*
 
