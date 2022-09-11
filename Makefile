@@ -68,3 +68,5 @@ pkg:
 pub-pkg:
 	echo "" | gh release create v$(VERSION) -t "v$(VERSION)" \
 	 	dist/eva.min.js dist/eva.framework.min.js
+	gsutil -m cp dist/eva.min.js dist/eva.framework.min.js gs://pub.bma.ai/eva-js-framework/$(VERSION)/
+	jks build pub.bma.ai

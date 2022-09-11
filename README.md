@@ -5,11 +5,19 @@ platform for home and industrial IoT.
 
 The library works both in web browsers and Node.js.
 
+* Download: https://pub.bma.ai/eva-js-framework/
+
+* Source code: https://github.com/alttch/eva-js-framework
+
+* NPM packages: [Framework](https://www.npmjs.com/package/@eva-ics/framework),
+  [Toolbox](https://www.npmjs.com/package/@eva-ics/toolbox)
+
 ## Installation
 
 ### For web browsers
 
-Download from the [releases](https://github.com/alttch/eva-js-framework/releases):
+Download from https://pub.bma.ai/eva-js-framework/ or
+https://github.com/alttch/eva-js-framework/releases:
 
 Framework only: *eva.framework.min.js*
 
