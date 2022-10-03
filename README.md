@@ -208,7 +208,7 @@ filled by framework automatically.
 
 * **debug** enable debug mode (1), enable verbose debug mode (2)
 
-* **global_cvars** if true (default), all server cvars are set as globals.
+* **global_cvars** if true (default), all server cvars are set as globals (EVA ICS v3).
 
 * **log.records** set max. log records to retrieve from the server.
 
@@ -270,7 +270,7 @@ filled by framework automatically.
   object with fields *kind*, *svc*, *message*, *value* or null if the message
   is invalid.
 
-## Server custom variables
+## Server custom variables (EVA ICS v3)
 
 All defined CVARs are set as globals after successful log in. CVARs can be also
 read with method
