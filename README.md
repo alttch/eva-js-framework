@@ -1,7 +1,8 @@
 # JavaScript Framework for EVA ICS
 
-JavaScript Framework for [EVA ICS](https://www.eva-ics.com/) - open source
-platform for industrial and home IoT.
+JavaScript Framework for [EVA
+ICS](https://www.bohemia-automation.com/software/eva4/) - open source platform
+for industrial and home IoT.
 
 The library works both in web browsers and Node.js.
 
@@ -121,8 +122,7 @@ document.getElementById('u').addEventListener('click', function() {
     });
 ```
 
-Any [EVA ICS API method](https://www.eva-ics.com/doc) can be called. Methods
-are called with JSON RPC.
+Any EVA ICS API method can be called. Methods are called with JSON RPC.
 
 Function *call* returns Promise object, on success = API call result, on error
 = object with props:
