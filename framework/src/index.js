@@ -250,6 +250,9 @@ const eva_framework_version = '0.3.39';
             } else {
               me.api_version = 3;
             }
+            if (window.evajw) {
+              window.evajw.set_api_version(me.api_version);
+            }
           }
           return Promise.all([
             me._load_states(),
