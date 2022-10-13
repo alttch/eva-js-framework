@@ -36,7 +36,7 @@ const eva_framework_version = '0.3.39';
       this._ws_handler_registered = false;
       this.ws_mode = typeof WebSocket !== "undefined";
       this.ws = null;
-      this.api_version = 3;
+      this.api_version = null;
       this.client_id = null;
       this._api_call_id = 0;
       this.in_evaHI =
@@ -244,6 +244,13 @@ const eva_framework_version = '0.3.39';
           me.api_token = data.token;
           user = data.user;
           me._set_token_cookie();
+          if (!me.api_version) {
+            if (data.api_version) {
+              me.api_version = data.api_version;
+            } else {
+              me.api_version = 3;
+            }
+          }
           return Promise.all([
             me._load_states(),
             me._heartbeat(me, true),
