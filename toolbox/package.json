@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@eva-ics/framework": "^0.3.24",
-    "chart.js": "^2.8.0"
+    "chart.js": "^2.9.4"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {
