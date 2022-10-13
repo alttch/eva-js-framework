@@ -86,13 +86,6 @@ $eva.on('login.failed', function(err) {
 $eva.start();
 ```
 
-Note: for EVA ICS v4, the framework must be forcibly switched to the new API
-version:
-
-```javascript
-$eva.api_version = 4;
-```
-
 ## Watching states and performing API calls
 
 ```javascript
@@ -233,6 +226,7 @@ filled by framework automatically.
 * **version** Framework version (also available as *eva_framework_version* in
   browsers)
 * **api_token** current API token
+* **api_version** current API version
 * **authorized_user** current authorized user
 * **logged_in** boolean, set to true when user is logged in
 * **ws** Framework web socket object
