@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.40';
+const eva_framework_version = '0.3.41';
 
 (() => {
   if (typeof window !== "undefined") {
@@ -250,9 +250,9 @@ const eva_framework_version = '0.3.40';
             } else {
               me.api_version = 3;
             }
-            if (window.evajw) {
-              window.evajw.set_api_version(me.api_version);
-            }
+          }
+          if (window.evajw) {
+            window.evajw.set_api_version(me.api_version);
           }
           return Promise.all([
             me._load_states(),
