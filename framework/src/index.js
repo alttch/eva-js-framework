@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.41';
+const eva_framework_version = '0.3.42';
 
 (() => {
   if (typeof window !== "undefined") {
