@@ -303,7 +303,6 @@ const eva_framework_version = '0.3.41';
           }
           me._debug("start", `login failed: ${err.code} (${err.message})`);
           me._stop_engine();
-          me.erase_token_cookie();
           if (err.code == -32022) {
             let msg = me.parse_svc_message(err.message);
             if (msg && msg.kind == "OTP") {
@@ -320,6 +319,7 @@ const eva_framework_version = '0.3.41';
               }
             }
           }
+          me.erase_token_cookie();
           me._invoke_handler("login.failed", err);
         });
       return true;
