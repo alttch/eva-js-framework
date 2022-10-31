@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.42';
+const eva_framework_version = '0.3.43';
 
 (() => {
   if (typeof window !== "undefined") {
@@ -303,22 +303,7 @@ const eva_framework_version = '0.3.42';
           }
           me._debug("start", `login failed: ${err.code} (${err.message})`);
           me._stop_engine();
-          if (err.code == -32022) {
-            let msg = me.parse_svc_message(err.message);
-            if (msg && msg.kind == "OTP") {
-              switch (msg.message) {
-                case "REQ":
-                  me._invoke_handler("login.otp_required", msg);
-                  return;
-                case "INVALID":
-                  me._invoke_handler("login.otp_invalid", msg);
-                  return;
-                case "SETUP":
-                  me._invoke_handler("login.otp_setup", msg);
-                  return;
-              }
-            }
-          }
+          me.error_handler(err);
           me.erase_token_cookie();
           me._invoke_handler("login.failed", err);
         });
@@ -465,9 +450,34 @@ const eva_framework_version = '0.3.42';
             resolve(data);
           })
           .catch(function(err) {
+            me.error_handler(err);
             reject(err);
           });
       });
+    }
+
+    /**
+     * Set error handler function.
+     *
+     * @param err - error object
+     */
+    error_handler(err) {
+      if (err.code == -32022) {
+        let msg = this.parse_svc_message(err.message);
+        if (msg && msg.kind == "OTP") {
+          switch (msg.message) {
+            case "REQ":
+              this._invoke_handler("login.otp_required", msg);
+              return;
+            case "INVALID":
+              this._invoke_handler("login.otp_invalid", msg);
+              return;
+            case "SETUP":
+              this._invoke_handler("login.otp_setup", msg);
+              return;
+          }
+        }
+      }
     }
 
     /**
