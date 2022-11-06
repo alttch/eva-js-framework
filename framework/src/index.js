@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.43';
+const eva_framework_version = "0.3.43";
 
 (() => {
   if (typeof window !== "undefined") {
@@ -303,7 +303,7 @@ const eva_framework_version = '0.3.43';
           }
           me._debug("start", `login failed: ${err.code} (${err.message})`);
           me._stop_engine();
-          me.error_handler(err, 'login');
+          me.error_handler(err, "login");
           me.erase_token_cookie();
           me._invoke_handler("login.failed", err);
         });
@@ -449,7 +449,7 @@ const eva_framework_version = '0.3.43';
           me._invoke_handler("login.success");
         })
         .catch(function(err) {
-          me.error_handler(err, 'set_normal');
+          me.error_handler(err, "set_normal");
           if (err.code !== -32022) {
             me._invoke_handler("login.failed", err);
           }
@@ -1338,9 +1338,9 @@ const eva_framework_version = '0.3.43';
       if (data.s == "state") {
         this._debug("ws", "state");
         if (Array.isArray(data.d)) {
-          data.d.map((s) => this._process_state(s), this);
+          data.d.map((s) => this._process_state(s, true), this);
         } else {
-          this._process_state(data.d);
+          this._process_state(data.d, true);
         }
         return;
       }
@@ -1367,20 +1367,16 @@ const eva_framework_version = '0.3.43';
       });
     }
 
-    _process_state(state) {
-      var z = [];
-      var x = [];
+    _process_state(state, is_update) {
+      var old_state;
       try {
         var oid = state.oid;
         // copy missing fields from old state
         if (oid in this._states) {
-          var old_state = this._states[oid];
-          z = "";
-          Object.keys(old_state).map(function(k) {
-            if (!(k in state)) {
-              state[k] = old_state[k];
-            }
-          });
+          old_state = this._states[oid];
+        }
+        if (!old_state && is_update) {
+          return;
         }
         if (!jsaltt.cmp(state, old_state)) {
           if (this.api_version != 4) {
@@ -1409,6 +1405,13 @@ const eva_framework_version = '0.3.43';
                 old_state.set_time === undefined ||
                 state.set_time >= old_state.set_time))
           ) {
+            if (old_state && (is_update || state.ieid == undefined)) {
+              Object.keys(old_state).map(function(k) {
+                if (!(k in state)) {
+                  state[k] = old_state[k];
+                }
+              });
+            }
             this._debug(
               "process_state",
               `${oid} s: ${state.status} v: "${state.value}"`,
