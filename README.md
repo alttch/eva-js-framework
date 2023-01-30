@@ -137,6 +137,34 @@ All API methods are called with *call* function:
 If first parameter is a string, it's automatically set to "i" argument of API
 request.
 
+## Bulk API calls
+
+The framework can perform bulk JSON RPC API calls. The methods are always
+executed in the same order they are prepared.
+
+```javascript
+    let bulk = $eva.bulk_request();
+    bulk.prepare('action.toggle', 'unit:lights/l1', { w: 5 }).then((data) => {
+      console.log('action l1 ok: ', data);
+    }).catch((err) => {
+      console.log('action l1 error: ', err);
+    });
+    bulk.prepare('action.toggle', 'unit:lights/l2', { w: 5 }).then((data) => {
+      console.log('action l2 ok: ', data);
+    }).catch((err) => {
+      console.log('action l2 error: ', err);
+    });
+    bulk.call().then(
+        () => { console.log('bulk call ok')}
+    ).catch(
+        (err) => { console.log('bulk call error', err)}
+    );
+```
+
+Each prepared request in the bulk gets its own unique id. It is not recommended
+to execute *call* method on the same bulk more than once. Prepare a new bulk
+request instead.
+
 ## Setting intervals
 
 Intervals are set by *interval* method, e.g. *$eva.interval("reload", 5)*,
