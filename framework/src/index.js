@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.44';
+const eva_framework_version = "0.3.44";
 
 (() => {
   if (typeof window !== "undefined") {
@@ -15,6 +15,158 @@ const eva_framework_version = '0.3.44';
   const cookies = require("@altertech/cookies");
 
   const QRious = require("qrious");
+
+  class EVABulkRequestPartHandler {
+    constructor() {}
+    then(fn_ok) {
+      this.fn_ok = fn_ok;
+      return this;
+    }
+    catch(fn_err) {
+      this.fn_err = fn_err;
+      return this;
+    }
+  }
+
+  class EVABulkRequest {
+    constructor(framework) {
+      this.requests = {};
+      this.payload = [];
+      this.framework = framework;
+    }
+    /**
+     * prepare API function call for bulk calling
+     *
+     * Calls any available SFA API function
+     *
+     * @param p1 - item OID (if required), API call params
+     * @param p2 - extra call params or empty object
+     * @param fn_ok - function which is executed on successfull call
+     * @parma fn_err - function which is executed on error
+     *
+     * @returns - Promise object
+     */
+    prepare(func, p1, p2) {
+      var params;
+      if (typeof p1 === "string" || Array.isArray(p1)) {
+        params = jsaltt.extend({}, p2);
+        params["i"] = p1;
+      } else {
+        params = p1;
+      }
+      var p = this.framework._prepare_call_params(params);
+      var payload = this.framework._api_call(func, p, true);
+      var req = new EVABulkRequestPartHandler();
+      this.requests[payload.id] = req;
+      this.payload.push(payload);
+      return req;
+    }
+    /**
+     * performs bulk API call
+     */
+    call() {
+      var api_uri = this.framework.api_uri + "/jrpc";
+      var framework = this.framework;
+      var me = this;
+      framework._debug("call_bulk", `${api_uri}`);
+      return new Promise(function(resolve, reject) {
+        fetch(api_uri, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          redirect: "error",
+          body: JSON.stringify(me.payload)
+        })
+          .then(function(response) {
+            if (response.ok) {
+              response
+                .json()
+                .then(function(data) {
+                  framework._debug("call_bulk success");
+                  if (Array.isArray(data)) {
+                    data.forEach((d) => {
+                      if (!"id" in d || (!"result" in d && !"error" in d)) {
+                        reject({
+                          code: 9,
+                          message: "Invalid server response",
+                          data: d
+                        });
+                      } else {
+                        let id = d.id;
+                        let req = me.requests[id];
+                        let fn_ok;
+                        let fn_err;
+                        if (req) {
+                          fn_ok = req.fn_ok;
+                          fn_err = req.fn_err;
+                        }
+                        if ("error" in d) {
+                          framework._debug(
+                            "call_bulk req",
+                            `${id} failed: ${d.error.code} (${d.error.message})`
+                          );
+                          if (fn_err) {
+                            fn_err({
+                              code: d.error.code,
+                              message: d.error.message,
+                              data: d
+                            });
+                          }
+                        } else {
+                          if (framework.debug == 2) {
+                            console.log(
+                              `call_bulk API ${id} ${func} response`,
+                              d.result
+                            );
+                          }
+                          if (fn_ok) {
+                            fn_ok(d.result);
+                          }
+                        }
+                      }
+                    });
+                    resolve(true);
+                  } else {
+                    var code = 9;
+                    var message = "Invalid server response (not an array)";
+                    framework._debug(
+                      "call_bulk",
+                      `failed: ${code} (${message})`
+                    );
+                    reject({
+                      code: code,
+                      message: message,
+                      data: data
+                    });
+                  }
+                })
+                .catch(function(err) {
+                  var code = 9;
+                  var message = "Invalid server response";
+                  framework._debug("call_bulk", `failed: ${code} (${message})`);
+                  reject({
+                    code: code,
+                    message: message,
+                    data: err
+                  });
+                });
+            } else {
+              var code = 7;
+              var message = "Server error";
+              framework._debug("call_bulk", `failed: ${code} (${message})`);
+              reject({ code: code, message: message, data: data });
+            }
+          })
+          .catch(function(err) {
+            var code = 7;
+            var message = "Server error";
+            framework._debug("call_bulk", `failed: ${code} (${message})`);
+            reject({ code: code, message: message, data: null });
+          });
+      });
+    }
+  }
 
   class EVA {
     constructor() {
@@ -72,6 +224,10 @@ const eva_framework_version = '0.3.44';
       this._action_states = {};
       this._clear();
       this._clear_watchers();
+    }
+
+    bulk_request() {
+      return new EVABulkRequest(this);
     }
 
     // WASM override
@@ -827,7 +983,7 @@ const eva_framework_version = '0.3.44';
 
     // ***** private functions *****
 
-    _api_call(func, params) {
+    _api_call(func, params, prepare_only) {
       if (this._api_call_id == 0xffff_ffff) {
         this._api_call_id = 0;
       }
@@ -839,78 +995,91 @@ const eva_framework_version = '0.3.44';
       if (this.debug == 2) {
         console.log(func, params);
       }
-      return new Promise(function(resolve, reject) {
+      if (prepare_only) {
         var payload = {
           jsonrpc: "2.0",
           method: func,
           params: params,
           id: id
         };
-        fetch(api_uri, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          redirect: "error",
-          body: JSON.stringify(payload)
-        })
-          .then(function(response) {
-            if (response.ok) {
-              me._debug("_api_call", id + " success");
-              response
-                .json()
-                .then(function(data) {
-                  if (
-                    !"id" in data ||
-                    data.id != id ||
-                    (!"result" in data && !"error" in data)
-                  ) {
-                    reject({
-                      code: 9,
-                      message: "Invalid server response",
-                      data: data
-                    });
-                  } else if ("error" in data) {
+        return payload;
+      } else {
+        return new Promise(function(resolve, reject) {
+          var payload = {
+            jsonrpc: "2.0",
+            method: func,
+            params: params,
+            id: id
+          };
+          fetch(api_uri, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            redirect: "error",
+            body: JSON.stringify(payload)
+          })
+            .then(function(response) {
+              if (response.ok) {
+                me._debug("_api_call", id + " success");
+                response
+                  .json()
+                  .then(function(data) {
+                    if (
+                      !"id" in data ||
+                      data.id != id ||
+                      (!"result" in data && !"error" in data)
+                    ) {
+                      reject({
+                        code: 9,
+                        message: "Invalid server response",
+                        data: data
+                      });
+                    } else if ("error" in data) {
+                      me._debug(
+                        "_api_call",
+                        `${id} failed: ${data.error.code} (${data.error.message})`
+                      );
+                      reject({
+                        code: data.error.code,
+                        message: data.error.message,
+                        data: data
+                      });
+                    } else {
+                      if (me.debug == 2) {
+                        console.log(`API ${id} ${func} response`, data.result);
+                      }
+                      resolve(data.result);
+                    }
+                  })
+                  .catch(function(err) {
+                    var code = 9;
+                    var message = "Invalid server response";
                     me._debug(
                       "_api_call",
-                      `${id} failed: ${data.error.code} (${data.error.message})`
+                      `${id} failed: ${code} (${message})`
                     );
                     reject({
-                      code: data.error.code,
-                      message: data.error.message,
+                      code: code,
+                      message: message,
                       data: data
                     });
-                  } else {
-                    if (me.debug == 2) {
-                      console.log(`API ${id} ${func} response`, data.result);
-                    }
-                    resolve(data.result);
-                  }
-                })
-                .catch(function(err) {
-                  var code = 9;
-                  var message = "Invalid server response";
-                  me._debug("_api_call", `${id} failed: ${code} (${message})`);
-                  reject({
-                    code: code,
-                    message: message,
-                    data: data
                   });
-                });
-            } else {
+              } else {
+                var code = 7;
+                var message = "Server error";
+                me._debug("_api_call", `${id} failed: ${code} (${message})`);
+                reject({ code: code, message: message, data: data });
+              }
+            })
+            .catch(function(err) {
               var code = 7;
               var message = "Server error";
               me._debug("_api_call", `${id} failed: ${code} (${message})`);
-              reject({ code: code, message: message, data: data });
-            }
-          })
-          .catch(function(err) {
-            var code = 7;
-            var message = "Server error";
-            me._debug("_api_call", `${id} failed: ${code} (${message})`);
-            reject({ code: code, message: message, data: null });
-          });
-      });
+              reject({ code: code, message: message, data: null });
+            });
+        });
+      }
     }
 
     _heartbeat(me, on_login) {
@@ -1648,6 +1817,7 @@ const eva_framework_version = '0.3.44';
 
   if (typeof exports === "object") {
     exports.EVA = EVA;
+    exports.EVABulkRequest = EVABulkRequest;
     exports.$eva = $eva;
   }
 
