@@ -1,13 +1,14 @@
-require('babel-register');
+require('@babel/register');
 require('babel-loader');
 
 const webpack = require('webpack');
 const path = require('path');
 
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+//const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-const TerserJSPlugin = require('terser-webpack-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+//const TerserJSPlugin = require('terser-webpack-plugin');
+//const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+//const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
 module.exports = {
   mode: 'production',
@@ -22,7 +23,8 @@ module.exports = {
   },
   externals: ['node-fetch', 'ws', 'chalk'],
   optimization: {
-    minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})],
+    //minimizer: [new TerserJSPlugin({}), new CssMinimizerPlugin()],
+    //minimizer: [new CssMinimizerPlugin()],
   },
   module: {
     rules: [
@@ -56,10 +58,18 @@ module.exports = {
     ]
   },
   plugins: [
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-    new MiniCssExtractPlugin({
-      filename: '[name].css',
-      chunkFilename: '[id].css'
-    })
-  ]
+    new webpack.IgnorePlugin({
+        resourceRegExp: /^\.\/locale$/,
+        contextRegExp: /moment$/,
+    }),
+    //new MiniCssExtractPlugin({
+      //filename: '[name].css',
+      //chunkFilename: '[id].css'
+    //})
+  ],
+  performance: {
+    hints: false,
+    maxEntrypointSize: 512000,
+    maxAssetSize: 512000
+  }
 };

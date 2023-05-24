@@ -1,17 +1,17 @@
-require('babel-register');
-require('babel-loader');
+require("@babel/register");
+require("babel-loader");
 
-const webpack = require('webpack');
-const path = require('path');
+const webpack = require("webpack");
+const path = require("path");
 
 module.exports = {
-  mode: 'production',
-  target: 'web',
+  mode: "production",
+  target: "web",
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'eva.framework.min.js'
+    path: path.resolve(__dirname, "dist"),
+    filename: "eva.framework.min.js"
   },
-  externals: ['node-fetch', 'ws', 'chalk'],
+  externals: ["node-fetch", "ws", "chalk"],
   //optimization: {
   //minimize: false
   //},
@@ -21,10 +21,10 @@ module.exports = {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
+          loader: "babel-loader",
           options: {
-            presets: ['@babel/preset-env'],
-            plugins: ['transform-class-properties']
+            presets: ["@babel/preset-env"],
+            plugins: ["transform-class-properties"]
           }
         }
       }

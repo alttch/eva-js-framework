@@ -4,7 +4,15 @@ all: build
 
 prepare:
 	npm i @babel/core @babel/cli babel-plugin-transform-class-properties \
-	 	@babel/preset-env babel-preset-minify cssmin-cli @altertech/jsaltt @altertech/cookies
+	 	@babel/preset-env babel-preset-minify @altertech/jsaltt @altertech/cookies
+
+bump:
+	cd framework && npm version --no-git-tag-version patch
+	sed -i "s/\(const eva_framework_version\).*/\1 = \"`jq < framework/package.json -r .version`\";/g" \
+		./framework/src/index.js
+	cd toolbox && npm version --no-git-tag-version patch
+	sed -i "s/\(const eva_toolbox_version\).*/\1 = \"`jq < toolbox/package.json -r .version`\";/g" \
+		./toolbox/src/index.js
 
 build: clean-dist build-framework build-full done
 
@@ -32,15 +40,9 @@ build-full:
 
 pub-framework:
 	cp README.md ./framework/
-	cd framework && npm version --no-git-tag-version patch
-	sed -i "s/\(const eva_framework_version\).*/\1 = '`jq < framework/package.json -r .version`';/g" \
-		./framework/src/index.js
 	cd framework && npm run build && npm publish --access public
 
 pub-toolbox:
-	cd toolbox && npm version --no-git-tag-version patch
-	sed -i "s/\(const eva_toolbox_version\).*/\1 = '`jq < toolbox/package.json -r .version`';/g" \
-		./toolbox/src/index.js
 	cd toolbox && npm publish --access public
 
 done:

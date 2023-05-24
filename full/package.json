@@ -13,21 +13,21 @@
     "@eva-ics/toolbox": "file:../toolbox",
     "@altertech/cookies": "^0.0.5",
     "@altertech/jsaltt": "0.0.11",
-    "chart.js": "^2.8.0",
+    "chart.js": "^2.9.4",
     "qrious": "^4.0.2"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {
-    "@babel/core": "^7.4.5",
-    "@babel/preset-env": "^7.4.5",
-    "babel-loader": "^8.0.6",
+    "@babel/core": "^7.21.8",
+    "@babel/preset-env": "^7.21.5",
+    "@babel/register": "^7.21.0",
+    "babel-loader": "^9.1.2",
     "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-register": "^6.26.0",
-    "css-loader": "^3.0.0",
-    "mini-css-extract-plugin": "^0.7.0",
-    "optimize-css-assets-webpack-plugin": "^5.0.1",
-    "style-loader": "^0.23.1",
-    "webpack": "^4.33.0",
-    "webpack-cli": "^3.3.4"
+    "css-loader": "^6.7.4",
+    "style-loader": "^3.3.3",
+    "webpack": "^5.84.0",
+    "webpack-cli": "^5.1.1",
+    "mini-css-extract-plugin": "^2.7.6",
+    "css-minimizer-webpack-plugin": "^5.0.0"
   }
 }

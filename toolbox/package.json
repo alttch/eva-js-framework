@@ -1,6 +1,6 @@
 {
   "name": "@eva-ics/toolbox",
-  "version": "0.3.13",
+  "version": "0.4.0",
   "description": "UI Toolbox for EVA ICS",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -29,12 +29,12 @@
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {
-    "@babel/core": "^7.4.5",
-    "@babel/preset-env": "^7.4.5",
-    "babel-loader": "^8.0.6",
-    "babel-register": "^6.26.0",
+    "@babel/core": "^7.21.8",
+    "@babel/preset-env": "^7.21.5",
+    "@babel/register": "^7.21.0",
+    "babel-loader": "^9.1.2",
     "cssmin-cli": "0.0.5",
-    "webpack": "^4.33.0",
-    "webpack-cli": "^3.3.4"
+    "webpack": "^5.84.0",
+    "webpack-cli": "^5.1.1"
   }
 }
