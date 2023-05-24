@@ -172,24 +172,59 @@ const eva_framework_version = "0.3.45";
     constructor(eva) {
       this.eva = eva;
     }
+    /* Call unit action with status=1
+     *
+     * @param oid - unit OID
+     * @param wait - wait until the action is completed
+     */
     start(oid, wait) {
       return this.action(oid, { s: 1 }, wait);
     }
+    /* Call unit action with status=0
+     *
+     * @param oid - unit OID
+     * @param wait - wait until the action is completed
+     */
     stop(oid, wait) {
       return this.action(oid, { s: 0 }, wait);
     }
+    /* Call unit action to toggle its status
+     *
+     * @param oid - unit OID
+     * @param wait - wait until the action is completed
+     */
     toggle(oid, wait) {
       return this._act("action.toggle", oid, {}, wait);
     }
+    /* Call unit action
+     *
+     * @param oid - unit OID
+     * @param params - action params
+     * @param wait - wait until the action is completed
+     */
     exec(oid, params, wait) {
       return this._act("action", oid, params, wait);
     }
+    /* Terminate all unit actions
+     *
+     * @param oid - unit OID
+     */
     async kill(oid) {
       await this.eva.call("action.kill", oid);
     }
-    async terminate(action_uuid) {
-      await this.eva.call("action.terminate", { u: action_uuid });
+    /* Terminate a unit action
+     *
+     * @param uuid - action uuid
+     */
+    async terminate(uuid) {
+      await this.eva.call("action.terminate", { u: uuid });
     }
+    /* Run lmacro
+     *
+     * @param oid - lmacro oid
+     * @param params - call params
+     * @param wait - wait until the execution is completed
+     */
     run(oid, params, wait) {
       return this._act("run", oid, params, wait);
     }
@@ -211,23 +246,53 @@ const eva_framework_version = "0.3.45";
     constructor(eva) {
       this.eva = eva;
     }
+    /* Reset lvar (set status to 1)
+     *
+     * @param oid - lvar oid
+     */
     async reset(oid) {
       await this.eva.call("lvar.reset", oid);
     }
+    /* Clear lvar (set status to 0)
+     *
+     * @param oid - lvar oid
+     */
     async clear(oid) {
       await this.eva.call("lvar.clear", oid);
     }
+    /* Toggle lvar status
+     *
+     * @param oid - lvar oid
+     */
     async toggle(oid) {
       await this.eva.call("lvar.toggle", oid);
     }
+    /* Increment lvar value
+     *
+     * Returns the new value
+     *
+     * @param oid - lvar oid
+     */
     async increment(oid) {
       let data = await this.eva.call("lvar.incr", oid);
       return data["result"];
     }
+    /* Decrement lvar value
+     *
+     * Returns the new value
+     *
+     * @param oid - lvar oid
+     */
     async decrement(oid) {
       let data = await this.eva.call("lvar.decr", oid);
       return data["result"];
     }
+    /* Set lvar state
+     *
+     * @param oid - lvar oid
+     * @param status - lvar status
+     * @param value - lvar value
+     */
     async set(oid, status, value) {
       let params = {};
       if (status !== undefined) {
@@ -240,9 +305,19 @@ const eva_framework_version = "0.3.45";
         await this.eva.call("lvar.set", oid, params);
       }
     }
+    /* Set lvar status
+     *
+     * @param oid - lvar oid
+     * @param status - lvar status
+     */
     async set_status(oid, status) {
       await this.set(oid, status);
     }
+    /* Set lvar value
+     *
+     * @param oid - lvar oid
+     * @param value - lvar value
+     */
     async set_value(oid, value) {
       await this.set(oid, undefined, value);
     }
