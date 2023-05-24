@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = '0.3.45';
+const eva_framework_version = "0.3.45";
 
 (() => {
   if (typeof window !== "undefined") {
@@ -168,6 +168,128 @@ const eva_framework_version = '0.3.45';
     }
   }
 
+  class EVA_ACTION {
+    constructor(eva) {
+      this.eva = eva;
+    }
+    start(oid, wait) {
+      return this.action(oid, { s: 1 }, wait);
+    }
+    stop(oid, wait) {
+      return this.action(oid, { s: 0 }, wait);
+    }
+    toggle(oid, wait) {
+      return this._act("action.toggle", oid, {}, wait);
+    }
+    exec(oid, params, wait) {
+      return this._act("action", oid, params, wait);
+    }
+    async kill(oid) {
+      await this.eva.call("action.kill", oid);
+    }
+    async terminate(action_uuid) {
+      await this.eva.call("action.terminate", { u: action_uuid });
+    }
+    run(oid, params, wait) {
+      return this._act("run", oid, params, wait);
+    }
+    async _act(method, oid, params, wait) {
+      let data = await this.eva.call(method, oid, params);
+      if (wait == false) {
+        return data;
+      } else {
+        this.eva.watch_action(data.uuid, (action) => {
+          if (action.finished) {
+            return action;
+          }
+        });
+      }
+    }
+  }
+
+  class EVA_LVAR {
+    constructor(eva) {
+      this.eva = eva;
+    }
+    async reset(oid) {
+      await this.eva.call("lvar.reset", oid);
+    }
+    async clear(oid) {
+      await this.eva.call("lvar.clear", oid);
+    }
+    async toggle(oid) {
+      await this.eva.call("lvar.toggle", oid);
+    }
+    async increment(oid) {
+      let data = await this.eva.call("lvar.incr", oid);
+      return data["result"];
+    }
+    async decrement(oid) {
+      let data = await this.eva.call("lvar.decr", oid);
+      return data["result"];
+    }
+    async set(oid, status, value) {
+      let params = {};
+      if (status !== undefined) {
+        params["status"] = status;
+      }
+      if (value !== undefined) {
+        params["value"] = value;
+      }
+      if (params) {
+        await this.eva.call("lvar.set", oid, params);
+      }
+    }
+    async set_status(oid, status) {
+      await this.set(oid, status);
+    }
+    async set_value(oid, value) {
+      await this.set(oid, undefined, value);
+    }
+
+    /**
+     * get lvar expiration time left
+     *
+     * @param lvar_oid - item id in format type:full_id, e.g. lvar:timers/timer1
+     *
+     * @returns - seconds to expiration, -1 if expired, -2 if stopped
+     */
+    expires(lvar_oid) {
+      // get item
+      var i = this.eva.state(
+        (lvar_oid.startsWith("lvar:") ? "" : "lvar:") + lvar_oid
+      );
+      // if no such item
+      if (i === undefined) return undefined;
+      // if item has no expiration or expiration is set to zero
+      if (this.eva.api_version == 4) {
+        if (!i.meta || i.meta.expires === undefined || i.meta.expires == 0)
+          return null;
+      } else {
+        if (i.expires === undefined || i.expires == 0) return null;
+      }
+      // if no timestamp diff
+      if (this.eva.tsdiff == null) return undefined;
+      // if timer is disabled (stopped), return -2
+      if (i.status == 0) return -2;
+      // if timer is expired, return -1
+      if (i.status == -1) return -1;
+      var t;
+      if (this.eva.api_version == 4) {
+        t =
+          i.meta.expires - new Date().getTime() / 1000 + this.eva.tsdiff + i.t;
+      } else {
+        t =
+          i.expires -
+          new Date().getTime() / 1000 +
+          this.eva.tsdiff +
+          i.set_time;
+      }
+      if (t < 0) t = 0;
+      return t;
+    }
+  }
+
   class EVA {
     constructor() {
       this.version = eva_framework_version;
@@ -224,6 +346,8 @@ const eva_framework_version = '0.3.45';
       this._action_states = {};
       this._clear();
       this._clear_watchers();
+      this.action = new EVA_ACTION(this);
+      this.lvar = new EVA_LVAR(this);
     }
 
     bulk_request() {
@@ -467,6 +591,27 @@ const eva_framework_version = '0.3.45';
     }
 
     /**
+     * get system name
+     *
+     * returns the system name or null if the framework is not logged in
+     */
+    system_name() {
+      if ($eva.server_info) {
+        return this.eva.server_info.system_name;
+      } else {
+        return null;
+      }
+    }
+    /**
+     * sleep the number of seconds
+     *
+     * @param sec - seconds to sleep
+     */
+    sleep(sec) {
+      return new Promise((resolve) => setTimeout(resolve, sec * 1000));
+    }
+
+    /**
      * start log processing
      *
      * Starts log processing. Framework class must be already logged in.
@@ -488,6 +633,13 @@ const eva_framework_version = '0.3.45';
           }, this._intervals.ajax_log_reload * 1000);
         }
       }
+    }
+
+    /**
+     * DEPRECATED use $eva.lvar.expires
+     */
+    expires_in(lvar_oid) {
+      return this.lvar.expires(lvar_oid);
     }
 
     /**
@@ -898,43 +1050,6 @@ const eva_framework_version = '0.3.45';
         }
       }, this);
       return result;
-    }
-
-    /**
-     * get lvar expiration time left
-     *
-     * @param lvar_id - item id in format type:full_id, e.g. lvar:timers/timer1
-     *
-     * @returns - seconds to expiration, -1 if expired, -2 if stopped
-     */
-    expires_in(lvar_id) {
-      // get item
-      var i = this.state(
-        (lvar_id.startsWith("lvar:") ? "" : "lvar:") + lvar_id
-      );
-      // if no such item
-      if (i === undefined) return undefined;
-      // if item has no expiration or expiration is set to zero
-      if (this.api_version == 4) {
-        if (!i.meta || i.meta.expires === undefined || i.meta.expires == 0)
-          return null;
-      } else {
-        if (i.expires === undefined || i.expires == 0) return null;
-      }
-      // if no timestamp diff
-      if (this.tsdiff == null) return undefined;
-      // if timer is disabled (stopped), return -2
-      if (i.status == 0) return -2;
-      // if timer is expired, return -1
-      if (i.status == -1) return -1;
-      var t;
-      if (this.api_version == 4) {
-        t = i.meta.expires - new Date().getTime() / 1000 + this.tsdiff + i.t;
-      } else {
-        t = i.expires - new Date().getTime() / 1000 + this.tsdiff + i.set_time;
-      }
-      if (t < 0) t = 0;
-      return t;
     }
 
     /**
