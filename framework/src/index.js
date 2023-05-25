@@ -35,7 +35,7 @@ const eva_framework_version = "0.4.0";
       this.framework = framework;
     }
     /**
-     * prepare API function call for bulk calling
+     * Prepare API function call for bulk calling
      *
      * Calls any available SFA API function
      *
@@ -62,7 +62,7 @@ const eva_framework_version = "0.4.0";
       return req;
     }
     /**
-     * performs bulk API call
+     * Perform bulk API call
      */
     call() {
       var api_uri = this.framework.api_uri + "/jrpc";
@@ -311,7 +311,7 @@ const eva_framework_version = "0.4.0";
      *
      * @returns the new value
      */
-    async increment(oid) {
+    async incr(oid) {
       let method = "lvar.incr";
       if (this.eva.api_version == 3) {
         method = "increment";
@@ -326,7 +326,7 @@ const eva_framework_version = "0.4.0";
      *
      * @returns the new value
      */
-    async decrement(oid) {
+    async decr(oid) {
       let method = "lvar.decr";
       if (this.eva.api_version == 3) {
         method = "decrement";
@@ -487,7 +487,7 @@ const eva_framework_version = "0.4.0";
     /**
      * Get framework engine mode
      *
-     * @returns js or wasm
+     * @returns "js" or "wasm"
      */
     get_mode() {
       return "js";
@@ -772,11 +772,11 @@ const eva_framework_version = "0.4.0";
     /**
      * Ask server to return the token to normal mode
      *
+     * (EVA ICS 3.3.2+)
+     *
      * @param u {string} login
      * @param p {string} password
      * @param xopts {object} extra options (e.g. OTP)
-     *
-     * (EVA ICS 3.3.2+)
      */
     set_normal(u, p, xopts) {
       var q = {};
@@ -884,9 +884,9 @@ const eva_framework_version = "0.4.0";
      * first state load).
      *
      * If state is already loaded, function will be called immediately. One item
-     * (or item mask, set with *) can have multiple watchers.
+     * (or item mask, set with "*") can have multiple watchers.
      *
-     * @param oid {string} item oid (e.g. sensor:env/temp1, or sensor:env/*)
+     * @param oid {string} item oid (e.g. sensor:env/temp1, or sensor:env/\*)
      * @param func {function} function to be called
      * @param ignore_initial {boolean} skip initial state callback
      *
@@ -982,7 +982,7 @@ const eva_framework_version = "0.4.0";
      * If item oid or function is not specified, all watching functions are
      * removed for a single oid (mask) or for all the items watched.
      *
-     * @param oid {string} item oid (e.g. sensor:env/temp1, or sensor:env/*)
+     * @param oid {string} item oid (e.g. sensor:env/temp1, or sensor:env/\*)
      * @param func {function} function to be removed
      */
     unwatch(oid, func) {

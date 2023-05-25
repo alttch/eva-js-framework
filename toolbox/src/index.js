@@ -17,32 +17,32 @@ import 'chartjs-adapter-date-fns';
    * filled as: first timeframe for all items, second timeframe for all
    * items etc.
    *
-   * @param ctx html container element or id to draw in (must have fixed
-   *            width/height)
-   * @param cfg {object} Chart.js configuration
-   * @param oid item oid or oids (array)
+   * @param ctx {string|object} html container element or id to draw in (must
+   *                            have fixed width/height)
+   * @param cfg {object} Chart.js configuration (Chart.js v4)
+   * @param oid {string|array} item oid or oids
    *
-   * @param params object with props
+   * @param params {object} object with props
    *
-   *              @timeframe - timeframe to display (5T - 5 min, 2H - 2 hr, 2D
-   *              - 2 days etc.), default: 1D. To display past timeframes, use
-   *              two values, separated with ":", e.g. 2D:1D - get data for
-   *              yesterday. To display multiple timeframes, send this param as
-   *              array. Axis X is always formed from the first timeframe. If
-   *              you want to change this, put "t" before the necessary
-   *              timeframe, e.g.: t2D:1D
+   *               timeframe - timeframe to display (5T - 5 min, 2H - 2 hr, 2D
+   *               - 2 days etc.), default: 1D. To display past timeframes, use
+   *               two values, separated with ":", e.g. 2D:1D - get data for
+   *               yesterday. To display multiple timeframes, send this param as
+   *               array. Axis X is always formed from the first timeframe. If
+   *               you want to change this, put "t" before the necessary
+   *               timeframe, e.g.: t2D:1D
    *
-   *              @fill - precision[:np] (10T - 60T recommended, more accurate -
-   *              more data), np - number precision, optional. default: 30T:2
+   *               fill - precision[:np] (10T - 60T recommended, more accurate -
+   *               more data), np - number precision, optional. default: 30T:2
    *
-   *              @update - update interval in seconds. If the chart container
-   *              is no longer visible, chart stops updating
+   *               update - update interval in seconds. If the chart container
+   *               is no longer visible, chart stops updating
    *
-   *              @prop - item property to use (default is value)
+   *               prop - item property to use (default is value)
    *
-   *              @units - data units (e.g. mm or °C)
+   *               units - data units (e.g. mm or °C)
    *
-   *              @args - additional API options (state_history)
+   *               args - additional API options (state_history)
    *
    * @returns chart object
    */
@@ -202,7 +202,7 @@ import 'chartjs-adapter-date-fns';
    *
    * Simple loading animation
    *
-   * @param ctx DOM element (or id)
+   * @param {string|object} ctx DOM element (or id)
    */
   function eva_toolbox_animate(ctx) {
     var el = typeof ctx === "object" ? ctx : document.getElementById(ctx);
@@ -218,24 +218,32 @@ import 'chartjs-adapter-date-fns';
   /**
    * Popup window
    *
-   * Opens popup window. Requires bootstrap css.
-   * There can be only 1 popup opened with specified html ctx. If the page want
-   * to open another popup, the current one will be overwritten unless it's
-   * class is higher than a new one, otherwise exception is raised.
+   * Opens  popup window.
    *
-   * @param ctx html element id to use as popup (any empty <div /> is fine)
-   * @param pclass {string} popup class: info, warning or error. opens big
-   *                 popup window if '!' is put before the class (e.g. !info)
+   * There can be only one popup opened using the specified html ctx. If the
+   * page wants to open another popup, the current one is overwritten unless
+   * its pclass is higher than a new one.
+   *
+   * @param ctx {string|object} html element to use as popup (any empty <div />
+   *                            is fine)
+   * @param pclass {string} popup class: info, warning or error. opens a large
+   *                        popup window if '!' is put before the class (e.g.
+   *                        !info)
    * @param title {string} popup window title
    * @param msg {string} popup window message
    * @param params {object} object with handlers and additional parameters:
-   *              @ct - popup auto close time (sec), equal to pressing escape
-   *              @btn1 - button 1 name (default: 'OK')
-   *              @btn2 - button 2 name
-   *              @va - validate function which runs before Promise resolve
-   *              function. If the function return true, the popup is closed and
-   *              resolve function is executed. "va" function is used to
-   *              validate an input, if popup contains any input fields.
+   *
+   *                        ct - popup auto close time (sec), equal to pressing
+   *                        escape
+   *
+   *                        btn1 - button 1 name (default: 'OK')
+   *                        btn2 - button 2 name
+   *
+   *                        va - validate function which is executed before
+   *                        Promise resolves. If the function returns true, the
+   *                        popup is closed and resolve function is executed.
+   *                        The function is commonly used to validate input if
+   *                        popup contains input fields.
    *
    * @returns Promise object. Resolve and reject functions are called with
    *                         "true" parameter if button is pressed by user.
