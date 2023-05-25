@@ -1959,13 +1959,13 @@ const eva_framework_version = "0.4.0";
     /**
      * OTP setup code
      *
-     * @param ctx - html <canvas /> element or id to generate QR code in
-     * @param secret - OTP secret
-     * @param params - object with additional parameters:
-     *       @size - QR code size in px (default: 200)
-     *       @issuer - override issuer (default: HMI document.location.hostname)
-     *       @user - override user (default: $eva.login)
-     *       @xtr - extra parameters (added as-is)
+     * @param ctx html <canvas /> element or id to generate QR code in
+     * @param secret {string} OTP secret
+     * @param params {object} object with additional parameters
+     *        size QR code size in px (default: 200)
+     *        issuer override issuer (default: HMI document.location.hostname)
+     *        user override user (default: $eva.login)
+     *        xtr extra parameters (added as-is)
      *
      * @returns Qrious QR object if QR code is generated
      */
@@ -2012,12 +2012,12 @@ const eva_framework_version = "0.4.0";
      * must be authorized using user login. If $eva.password is defined, QR
      * code also contain password value. Requires qrious js library.
      *
-     * @param ctx - html <canvas /> element or id to generate QR code in
-     * @param params - object with additional parameters:
-     *              @size - QR code size in px (default: 200)
-     *              @url - override UI url (default: document.location)
-     *              @user - override user (default: authorized_user)
-     *              @password - override password
+     * @param ctx html <canvas /> element or id to generate QR code in
+     * @param params {object} object with additional parameters
+     *                        size - QR code size in px (default: 200)
+     *                        url - override UI url (default: document.location)
+     *                        user - override user (default: authorized_user)
+     *                        password - override password
      *
      * @returns Qrious QR object if QR code is generated
      */
