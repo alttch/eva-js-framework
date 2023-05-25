@@ -13,7 +13,8 @@
     "@eva-ics/toolbox": "file:../toolbox",
     "@altertech/cookies": "^0.0.5",
     "@altertech/jsaltt": "0.0.11",
-    "chart.js": "^2.9.4",
+    "chart.js": "^4.3.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "qrious": "^4.0.2"
   },
   "homepage": "https://www.eva-ics.com/",
@@ -26,8 +27,6 @@
     "css-loader": "^6.7.4",
     "style-loader": "^3.3.3",
     "webpack": "^5.84.0",
-    "webpack-cli": "^5.1.1",
-    "mini-css-extract-plugin": "^2.7.6",
-    "css-minimizer-webpack-plugin": "^5.0.0"
+    "webpack-cli": "^5.1.1"
   }
 }

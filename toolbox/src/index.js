@@ -1,9 +1,11 @@
 "use strict";
 
+import Chart from 'chart.js/auto';
+import 'chartjs-adapter-date-fns';
+
 (() => {
   const eva_framework = require("@eva-ics/framework");
   const jsaltt = require("@altertech/jsaltt");
-  const Chart = require("chart.js");
 
   const css = require("./style.css");
 
@@ -159,8 +161,17 @@
               cc.innerHTML = "";
               cc.appendChild(canvas);
               if (data_units) {
-                work_cfg.options.tooltips.callbacks.label = function(tti) {
-                  return tti.yLabel + data_units;
+                let p = {
+                  tooltip: {
+                    callbacks: {}
+                  }
+                };
+                work_cfg.options.plugins = jsaltt.extend(
+                  p,
+                  work_cfg.options.plugins
+                );
+                work_cfg.options.plugins.tooltip.callbacks.label = (ctx) => {
+                  return ctx.formattedValue + data_units;
                 };
               }
             }

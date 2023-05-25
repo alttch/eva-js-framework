@@ -1,8 +1,8 @@
-require('@babel/register');
-require('babel-loader');
+require("@babel/register");
+require("babel-loader");
 
-const webpack = require('webpack');
-const path = require('path');
+const webpack = require("webpack");
+const path = require("path");
 
 //const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
@@ -11,65 +11,68 @@ const path = require('path');
 //const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
 module.exports = {
-  mode: 'production',
+  mode: "production",
   devtool: false,
-  target: 'web',
+  target: "web",
   resolve: {
-    modules: [path.join(__dirname, 'node_modules')]
+    modules: [path.join(__dirname, "node_modules")]
   },
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'eva.min.js'
+    path: path.resolve(__dirname, "dist"),
+    filename: "eva.min.js"
   },
-  externals: ['node-fetch', 'ws', 'chalk'],
-  optimization: {
-    //minimizer: [new TerserJSPlugin({}), new CssMinimizerPlugin()],
-    //minimizer: [new CssMinimizerPlugin()],
-  },
+  externals: ["node-fetch", "ws", "chalk"],
+  //optimization: {
+  //minimizer: [new TerserJSPlugin({}), new CssMinimizerPlugin()],
+  //minimizer: [new CssMinimizerPlugin()],
+  //},
+  //optimization: {
+    //minimize: false
+  //},
   module: {
     rules: [
       {
         test: /\.css$/,
-        use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
+        use: [{ loader: "style-loader" }, { loader: "css-loader" }]
       },
       //{
-        //test: /\.css$/,
-        //use: [
-          //{
-            //loader: MiniCssExtractPlugin.loader,
-            //options: {
-              //hmr: process.env.NODE_ENV === 'development'
-            //}
-          //},
-          //'css-loader'
-        //]
+      //test: /\.css$/,
+      //use: [
+      //{
+      //loader: MiniCssExtractPlugin.loader,
+      //options: {
+      //hmr: process.env.NODE_ENV === 'development'
+      //}
+      //},
+      //'css-loader'
+      //]
       //},
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
+          loader: "babel-loader",
           options: {
-            presets: ['@babel/preset-env'],
-            plugins: ['transform-class-properties']
+            presets: ["@babel/preset-env"],
+            plugins: ["transform-class-properties"]
           }
         }
       }
     ]
   },
-  plugins: [
-    new webpack.IgnorePlugin({
-        resourceRegExp: /^\.\/locale$/,
-        contextRegExp: /moment$/,
-    }),
-    //new MiniCssExtractPlugin({
-      //filename: '[name].css',
-      //chunkFilename: '[id].css'
+  //plugins: [
+    //new webpack.IgnorePlugin({
+      //resourceRegExp: /^\.\/locale$/,
+      //contextRegExp: /moment$/
     //})
-  ],
+    //new MiniCssExtractPlugin({
+    //filename: '[name].css',
+    //chunkFilename: '[id].css'
+    //})
+  //],
   performance: {
     hints: false,
-    maxEntrypointSize: 512000,
-    maxAssetSize: 512000
+    maxEntrypointSize: 350000,
+    maxAssetSize: 350000
   }
 };
