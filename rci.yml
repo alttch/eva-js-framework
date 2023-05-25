@@ -1,0 +1,25 @@
+git:
+  url: https://github.com/alttch/eva-js-framework/
+  branch: master
+secret: null
+commands:
+  build: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm install v18.16.0
+    nvm use v18.16.0
+    npm config set fund false
+    make build
+  test: null
+  release: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    make pub-pkg
+    make pub-framework
+    make pub-toolbox
+on:
+  success: null
+  fail: null
+timeout: 1200
+enabled: true
+
