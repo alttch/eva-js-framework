@@ -58,13 +58,13 @@ ver-pub:
 	git commit -a -m "version `jq < ./framework/package.json -r .version`"; 
 	git push
 
-release: all pkg pub-pkg
+release: all pub-pkg
 
-pkg:
-	rm -rf _build
-	mkdir -p _build/ui
-	cp dist/eva.min.js dist/eva.framework.min.js _build/ui
-	sed "s/^VERSION=.*/VERSION='$(VERSION)'/g" setup.py > _build/setup.py
+#pkg:
+	#rm -rf _build
+	#mkdir -p _build/ui
+	#cp dist/eva.min.js dist/eva.framework.min.js _build/ui
+	#sed "s/^VERSION=.*/VERSION='$(VERSION)'/g" setup.py > _build/setup.py
 	#cd _build && tar czf eva-js-framework-$(VERSION).evapkg ui setup.py
 
 pub-pkg:
