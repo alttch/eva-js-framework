@@ -178,7 +178,7 @@ const eva_framework_version = "0.4.0";
      * @param wait - wait until the action is completed (default: true)
      */
     start(oid, wait) {
-      return this.action(oid, { s: 1 }, wait);
+      return this.exec(oid, { s: 1 }, wait);
     }
     /* Call unit action with status=0
      *
@@ -186,7 +186,7 @@ const eva_framework_version = "0.4.0";
      * @param wait - wait until the action is completed (default: true)
      */
     stop(oid, wait) {
-      return this.action(oid, { s: 0 }, wait);
+      return this.exec(oid, { s: 0 }, wait);
     }
     /* Call unit action to toggle its status
      *
@@ -195,7 +195,7 @@ const eva_framework_version = "0.4.0";
      */
     toggle(oid, wait) {
       let method = "action.toggle";
-      if (this.api_version == 3) {
+      if (this.eva.api_version == 3) {
         method = "action_toggle";
       }
       return this._act(method, oid, {}, wait);
@@ -215,7 +215,7 @@ const eva_framework_version = "0.4.0";
      */
     async kill(oid) {
       let method = "action.kill";
-      if (this.api_version == 3) {
+      if (this.eva.api_version == 3) {
         method = "kill";
       }
       await this.eva.call(method, oid);
@@ -226,7 +226,7 @@ const eva_framework_version = "0.4.0";
      */
     async terminate(uuid) {
       let method = "action.terminate";
-      if (this.api_version == 3) {
+      if (this.eva.api_version == 3) {
         method = "terminate";
       }
       await this.eva.call(method, { u: uuid });
@@ -245,10 +245,13 @@ const eva_framework_version = "0.4.0";
       if (wait == false) {
         return data;
       } else {
-        this.eva.watch_action(data.uuid, (action) => {
-          if (action.finished) {
-            return action;
-          }
+        let me = this;
+        return new Promise(function(resolve) {
+          me.eva.watch_action(data.uuid, (action) => {
+            if (action.finished) {
+              resolve(action);
+            }
+          });
         });
       }
     }
@@ -264,7 +267,7 @@ const eva_framework_version = "0.4.0";
      */
     async reset(oid) {
       let method = "lvar.reset";
-      if (this.api_version == 3) {
+      if (this.eva.api_version == 3) {
         method = "reset";
       }
       await this.eva.call(method, oid);
@@ -275,7 +278,7 @@ const eva_framework_version = "0.4.0";
      */
     async clear(oid) {
       let method = "lvar.clear";
-      if (this.api_version == 3) {
+      if (this.eva.api_version == 3) {
         method = "clear";
       }
       await this.eva.call(method, oid);
@@ -286,7 +289,7 @@ const eva_framework_version = "0.4.0";
      */
     async toggle(oid) {
       let method = "lvar.toggle";
-      if (this.api_version == 3) {
+      if (this.eva.api_version == 3) {
         method = "toggle";
       }
       await this.eva.call(method, oid);
@@ -299,7 +302,7 @@ const eva_framework_version = "0.4.0";
      */
     async increment(oid) {
       let method = "lvar.incr";
-      if (this.api_version == 3) {
+      if (this.eva.api_version == 3) {
         method = "increment";
       }
       let data = await this.eva.call(method, oid);
@@ -313,7 +316,7 @@ const eva_framework_version = "0.4.0";
      */
     async decrement(oid) {
       let method = "lvar.decr";
-      if (this.api_version == 3) {
+      if (this.eva.api_version == 3) {
         method = "decrement";
       }
       let data = await this.eva.call(method, oid);
@@ -335,7 +338,7 @@ const eva_framework_version = "0.4.0";
       }
       if (params) {
         let method = "lvar.set";
-        if (this.api_version == 3) {
+        if (this.eva.api_version == 3) {
           method = "set";
         }
         await this.eva.call(method, oid, params);
