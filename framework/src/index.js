@@ -39,12 +39,12 @@ const eva_framework_version = "0.4.0";
      *
      * Calls any available SFA API function
      *
-     * @param p1 - item OID (if required), API call params
-     * @param p2 - extra call params or empty object
-     * @param fn_ok - function which is executed on successfull call
-     * @parma fn_err - function which is executed on error
+     * @param p1 item OID (if required) or API call params
+     * @param p2 extra call params or empty object
+     * @param fn_ok function which is executed on successfull call
+     * @parma fn_err function which is executed on error
      *
-     * @returns - Promise object
+     * @returns Promise object
      */
     prepare(func, p1, p2) {
       var params;
@@ -172,26 +172,29 @@ const eva_framework_version = "0.4.0";
     constructor(eva) {
       this.eva = eva;
     }
-    /* Call unit action with status=1
+    /**
+     * Call unit action with status=1
      *
-     * @param oid - unit OID
-     * @param wait - wait until the action is completed (default: true)
+     * @param oid {string} unit OID
+     * @param wait {boolean} wait until the action is completed (default: true)
      */
     start(oid, wait) {
       return this.exec(oid, { s: 1 }, wait);
     }
-    /* Call unit action with status=0
+    /**
+     * Call unit action with status=0
      *
-     * @param oid - unit OID
-     * @param wait - wait until the action is completed (default: true)
+     * @param oid {string} unit OID
+     * @param wait {boolean} wait until the action is completed (default: true)
      */
     stop(oid, wait) {
       return this.exec(oid, { s: 0 }, wait);
     }
-    /* Call unit action to toggle its status
+    /**
+     * Call unit action to toggle its status
      *
-     * @param oid - unit OID
-     * @param wait - wait until the action is completed (default: true)
+     * @param oid {string} unit OID
+     * @param wait {boolean} wait until the action is completed (default: true)
      */
     toggle(oid, wait) {
       let method = "action.toggle";
@@ -200,18 +203,20 @@ const eva_framework_version = "0.4.0";
       }
       return this._act(method, oid, {}, wait);
     }
-    /* Call unit action
+    /**
+     * Call unit action
      *
-     * @param oid - unit OID
-     * @param params - action params
-     * @param wait - wait until the action is completed (default: true)
+     * @param oid {string} unit OID
+     * @param params {object} action params
+     * @param wait {boolean} wait until the action is completed (default: true)
      */
     exec(oid, params, wait) {
       return this._act("action", oid, params, wait);
     }
-    /* Terminate all unit actions
+    /**
+     * Terminate all unit actions
      *
-     * @param oid - unit OID
+     * @param oid {string} unit OID
      */
     async kill(oid) {
       let method = "action.kill";
@@ -220,9 +225,10 @@ const eva_framework_version = "0.4.0";
       }
       await this.eva.call(method, oid);
     }
-    /* Terminate a unit action
+    /**
+     * Terminate a unit action
      *
-     * @param uuid - action uuid
+     * @param uuid {string} action uuid
      */
     async terminate(uuid) {
       let method = "action.terminate";
@@ -231,11 +237,12 @@ const eva_framework_version = "0.4.0";
       }
       await this.eva.call(method, { u: uuid });
     }
-    /* Run lmacro
+    /**
+     * Run lmacro
      *
-     * @param oid - lmacro oid
-     * @param params - call params
-     * @param wait - wait until the execution is completed (default: true)
+     * @param oid {string} lmacro oid
+     * @param params {object} call params
+     * @param wait {boolean} wait until completed (default: true)
      */
     run(oid, params, wait) {
       return this._act("run", oid, params, wait);
@@ -261,9 +268,10 @@ const eva_framework_version = "0.4.0";
     constructor(eva) {
       this.eva = eva;
     }
-    /* Reset lvar (set status to 1)
+    /**
+     * Reset lvar (set status to 1)
      *
-     * @param oid - lvar oid
+     * @param oid {string} lvar oid
      */
     async reset(oid) {
       let method = "lvar.reset";
@@ -272,9 +280,10 @@ const eva_framework_version = "0.4.0";
       }
       await this.eva.call(method, oid);
     }
-    /* Clear lvar (set status to 0)
+    /**
+     * Clear lvar (set status to 0)
      *
-     * @param oid - lvar oid
+     * @param oid {string} lvar oid
      */
     async clear(oid) {
       let method = "lvar.clear";
@@ -283,9 +292,10 @@ const eva_framework_version = "0.4.0";
       }
       await this.eva.call(method, oid);
     }
-    /* Toggle lvar status
+    /**
+     * Toggle lvar status
      *
-     * @param oid - lvar oid
+     * @param oid {string} lvar oid
      */
     async toggle(oid) {
       let method = "lvar.toggle";
@@ -294,11 +304,12 @@ const eva_framework_version = "0.4.0";
       }
       await this.eva.call(method, oid);
     }
-    /* Increment lvar value
+    /**
+     * Increment lvar value
      *
-     * Returns the new value
+     * @param oid {string} lvar oid
      *
-     * @param oid - lvar oid
+     * @returns the new value
      */
     async increment(oid) {
       let method = "lvar.incr";
@@ -308,11 +319,12 @@ const eva_framework_version = "0.4.0";
       let data = await this.eva.call(method, oid);
       return data["result"];
     }
-    /* Decrement lvar value
+    /**
+     * Decrement lvar value
      *
-     * Returns the new value
+     * @param oid {string} lvar oid
      *
-     * @param oid - lvar oid
+     * @returns the new value
      */
     async decrement(oid) {
       let method = "lvar.decr";
@@ -322,11 +334,12 @@ const eva_framework_version = "0.4.0";
       let data = await this.eva.call(method, oid);
       return data["result"];
     }
-    /* Set lvar state
+    /**
+     * Set lvar state
      *
-     * @param oid - lvar oid
-     * @param status - lvar status
-     * @param value - lvar value
+     * @param oid {string} lvar oid
+     * @param status {numberr} lvar status
+     * @param value lvar value
      */
     async set(oid, status, value) {
       let params = {};
@@ -344,29 +357,31 @@ const eva_framework_version = "0.4.0";
         await this.eva.call(method, oid, params);
       }
     }
-    /* Set lvar status
+    /**
+     * Set lvar status
      *
-     * @param oid - lvar oid
-     * @param status - lvar status
+     * @param oid {string} lvar oid
+     * @param status {number} lvar status
      */
     async set_status(oid, status) {
       await this.set(oid, status);
     }
-    /* Set lvar value
+    /**
+     * Set lvar value
      *
-     * @param oid - lvar oid
-     * @param value - lvar value
+     * @param oid {string} lvar oid
+     * @param value lvar value
      */
     async set_value(oid, value) {
       await this.set(oid, undefined, value);
     }
 
     /**
-     * get lvar expiration time left
+     * Get lvar expiration time left
      *
-     * @param lvar_oid - item id in format type:full_id, e.g. lvar:timers/timer1
+     * @param lvar_oid {string} lvar OID
      *
-     * @returns - seconds to expiration, -1 if expired, -2 if stopped
+     * @returns seconds to expiration, -1 if expired, -2 if stopped
      */
     expires(lvar_oid) {
       // get item
@@ -469,119 +484,20 @@ const eva_framework_version = "0.4.0";
     }
 
     // WASM override
+    /**
+     * Get framework engine mode
+     *
+     * @returns js or wasm
+     */
     get_mode() {
       return "js";
     }
 
-    _inject_evajw(mod) {
-      if (mod) {
-        mod.init().then(() => {
-          mod.init_engine();
-          window.evajw = mod;
-          let build = mod.get_build();
-          console.log("EVA ICS JavaScript WASM engine loaded. Build: " + build);
-          try {
-            mod.check_license();
-          } catch (err) {
-            jsaltt.logger.error("License check failed. WASM engine disabled");
-            window.$eva.wasm = false;
-            window.$eva._start_engine();
-            return;
-          }
-          window.$eva._clear_watchers = mod.clear_watchers;
-          window.$eva._clear_states = mod.clear_states;
-          window.$eva.watch = mod.watch;
-          window.$eva.get_mode = mod.get_mode;
-          window.$eva._unwatch_func = mod.unwatch_func;
-          window.$eva._unwatch_all = mod.unwatch_all;
-          window.$eva._unwatch_mask_func = mod.unwatch_mask_func;
-          window.$eva._unwatch_mask_all = mod.unwatch_mask_all;
-          window.$eva.status = mod.status;
-          window.$eva.value = mod.value;
-          window.$eva._state = mod.state;
-          window.$eva._states_by_mask = mod.states_by_mask;
-          window.$eva._process_loaded_states = mod.process_loaded_states;
-          window.$eva._process_ws = mod.process_ws;
-          window.$eva._clear_state = mod.clear_state;
-          // transfer registered watchers to WASM
-          function transfer_watchers(src, mod) {
-            Object.keys(src).map((oid) => {
-              src[oid].map((f) => {
-                mod.watch(oid, f);
-              });
-            });
-          }
-          transfer_watchers(window.$eva._update_state_functions, mod);
-          transfer_watchers(window.$eva._update_state_mask_functions, mod);
-          window.$eva._start_engine();
-        });
-      } else {
-        window.evajw = null;
-      }
-    }
-
-    _start_evajw() {
-      window.evajw = undefined;
-      window.eva_framework = window.$eva;
-      eval(`
-      import("./evajw/evajw.js?" + new Date().getTime())
-        .catch(error => {
-          window.$eva._critical("evajs WASM module not found", true)
-        }
-        )
-        .then((mod) => {
-          window.$eva._inject_evajw(mod);
-        });`);
-    }
-
-    _is_ws_handler_registered() {
-      let me;
-      if (this === undefined) {
-        me = window.$eva;
-      } else {
-        me = this;
-      }
-      return me._ws_handler_registered;
-    }
-
-    // WASM override
-    _clear_watchers() {
-      this._update_state_functions = [];
-      this._update_state_mask_functions = [];
-    }
-
-    // WASM override
-    _clear_states() {
-      this._states = [];
-    }
-
-    _clear() {
-      //this._clear_watchers();
-      this._clear_states();
-      this.server_info = null;
-      this.tsdiff = null;
-      this._cvars = {};
-      this._log_subscribed = false;
-      this._log_first_load = true;
-      this._log_loaded = false;
-      this._log_started = false;
-      this._lr2p = [];
-      this._last_ping = null;
-      this._last_pong = null;
-    }
-
-    _critical(message, write_on_screen) {
-      if (write_on_screen) {
-        document.write('<font color="red" size="30">' + message + "</font>");
-      }
-      jsaltt.logger.error(message);
-      throw "critical";
-    }
-
     /**
-     * start Framework API
-     * After calling the function will authenticate user, open WebSocket (in
-     * case of WS mode) or schedule AJAX refresh interval.
+     * Start the Framework
+     *
+     * After calling the function authenticates user, opens a WebSocket (in
+     * case of WS mode) or schedule AJAXs refresh interval.
      */
     start() {
       this._cancel_scheduled_restart();
@@ -705,9 +621,9 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * get system name
+     * Get system name
      *
-     * returns the system name or null if the framework is not logged in
+     * @returns the system name or null if the framework is not logged in
      */
     system_name() {
       if (this.server_info) {
@@ -721,20 +637,20 @@ const eva_framework_version = "0.4.0";
       }
     }
     /**
-     * sleep the number of seconds
+     * Sleep the number of seconds
      *
-     * @param sec - seconds to sleep
+     * @param sec {number} seconds to sleep
      */
     sleep(sec) {
       return new Promise((resolve) => setTimeout(resolve, sec * 1000));
     }
 
     /**
-     * start log processing
+     * Start log processing
      *
      * Starts log processing. Framework class must be already logged in.
      *
-     * @param log_level - log processing level (optional)
+     * @param log_level {number} log processing level (optional)
      */
     log_start(log_level) {
       this._log_started = true;
@@ -754,16 +670,22 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
+     * Get lvar expiration time left
+     *
      * DEPRECATED use $eva.lvar.expires
+     *
+     * @param lvar_oid {string} lvar OID
+     *
+     * @returns seconds to expiration, -1 if expired, -2 if stopped
      */
     expires_in(lvar_oid) {
       return this.lvar.expires(lvar_oid);
     }
 
     /**
-     * change log processing level
+     * Change log processing level
      *
-     * @param log_level - log processing level
+     * @param log_level {number} log processing level
      */
     log_level(log_level) {
       this.log.level = log_level;
@@ -772,8 +694,9 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * restart Framework API
-     * e.g. used on heartbeat error
+     * Restart the Framework
+     *
+     * e.g. used on heartbeat error or if subscription parameters are changed
      */
     restart() {
       this._cancel_scheduled_restart();
@@ -789,9 +712,9 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * erase auth token cookie
+     * Erase auth token cookie
      *
-     * It's recommended to call this function when login form is displayed to
+     * It is recommended to call this function when login form is displayed to
      * prevent old token caching
      */
     erase_token_cookie() {
@@ -801,13 +724,13 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * call API function
+     * Call API function
      *
      * Calls any available SFA API function
      *
-     * @param arguments - item OID (if required), API call params
+     * @param arguments item OID (if required), API call params
      *
-     * @returns - Promise object
+     * @returns Promise object
      */
     call(func, p1, p2) {
       var params;
@@ -822,7 +745,7 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * ask server to set the token read-only (e.g. after idle)
+     * Ask server to set the token read-only (e.g. after idle)
      *
      * (EVA ICS 3.3.2+)
      *
@@ -847,7 +770,11 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * ask server to return the token to normal mode
+     * Ask server to return the token to normal mode
+     *
+     * @param u {string} login
+     * @param p {string} password
+     * @param xopts {object} extra options (e.g. OTP)
      *
      * (EVA ICS 3.3.2+)
      */
@@ -883,11 +810,6 @@ const eva_framework_version = "0.4.0";
       return true;
     }
 
-    /**
-     * Set error handler function.
-     *
-     * @param err - error object
-     */
     error_handler(err, method) {
       if (err.code == -32022) {
         let msg = this.parse_svc_message(err.message);
@@ -909,13 +831,17 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * Set event handler function. One event can have one handler only
+     * Set event handler function
      *
-     * @param event - event, possible values:
+     * A single kind of event can have a single handler only
+     *
+     * @param event {string} event, possible values:
      *           login.success, login.failed, ws.event, server.reload,
      *           server.restart, heartbeat.success, heartbeat.error, log.record,
-     *           log.postprocess
-     * @param func - function called on event
+     *           log.postprocess, login.otp_required, login.otp_invalid,
+     *           login.otp_setup
+     *
+     * @param func {function} function called on event
      */
     on(event, func) {
       this._handlers[event] = func;
@@ -928,9 +854,9 @@ const eva_framework_version = "0.4.0";
     /**
      * Set intervals
      *
-     * @param i - interval, possible values:
+     * @param i {string} interval, possible values:
      *            ajax_reload, heartbeat, log_reload, reload, restart
-     * @param value - interval value (in seconds)
+     * @param value {number} interval value (in seconds)
      */
     interval(i, value) {
       this._intervals[i] = value;
@@ -939,17 +865,20 @@ const eva_framework_version = "0.4.0";
     /**
      * Get server CVAR
      *
+     * (EVA ICS v3)
+     *
      * All CVARs are also available as globals
      *
-     * @param name - cvar name
+     * @param name {string} cvar name
      *
+     * @returns cvar value
      */
     cvar(name) {
       return this._cvars[name];
     }
 
     /**
-     * watch item state updates
+     * Watch item state updates
      *
      * Registers the function to be called in case of state change event (or at
      * first state load).
@@ -957,9 +886,9 @@ const eva_framework_version = "0.4.0";
      * If state is already loaded, function will be called immediately. One item
      * (or item mask, set with *) can have multiple watchers.
      *
-     * @param oid - item oid (e.g. sensor:env/temp1, or sensor:env/*)
-     * @param func - function to be called
-     * @param ignore_initial - skip initial state callback
+     * @param oid {string} item oid (e.g. sensor:env/temp1, or sensor:env/*)
+     * @param func {function} function to be called
+     * @param ignore_initial {boolean} skip initial state callback
      *
      */
     // WASM override
@@ -990,7 +919,7 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * watch action state by uuid
+     * Watch action state by uuid
      *
      * Registers the function to be called in case of action status change
      * event (or at first state load).
@@ -999,11 +928,11 @@ const eva_framework_version = "0.4.0";
      * Otherwise status is polled from the server with "action_watch" interval
      * (default: 500ms).
      *
-     * There's no unwatch function as watching is stopped as soon as action is
-     * completed (or server error is occurred)
+     * There is no unwatch function as watching is stopped as soon as the
+     * action is completed (or server error is occurred)
      *
-     * @param uuid - action uuid
-     * @param func - function to be called
+     * @param uuid {string} action uuid
+     * @param func {function} function to be called
      *
      */
     watch_action(uuid, func) {
@@ -1051,10 +980,10 @@ const eva_framework_version = "0.4.0";
      * Stop watching item state updates
      *
      * If item oid or function is not specified, all watching functions are
-     * removed for a single oid (mask) or for all.
+     * removed for a single oid (mask) or for all the items watched.
      *
-     * @param oid - item oid (e.g. sensor:env/temp1, or sensor:env/*)
-     * @param func - function to be removed
+     * @param oid {string} item oid (e.g. sensor:env/temp1, or sensor:env/*)
+     * @param func {function} function to be removed
      */
     unwatch(oid, func) {
       if (!oid) {
@@ -1103,11 +1032,11 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * get item status
+     * Get item status
      *
-     * @param oid - item id in format type:full_id, e.g. sensor:env/temp1
+     * @param oid {string} item OID
      *
-     * @returns object status(int) or undefined if no object found
+     * @returns item status(int) or undefined if no object found
      */
     // WASM override
     status(oid) {
@@ -1117,12 +1046,11 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * get item value
+     * Get item value
      *
-     * @param oid - item id in format type:full_id, e.g. sensor:env/temp1
+     * @param oid {string} item OID
      *
-     * @returns object value (null, string or numeric if possible)
-     * or undefined if no object found
+     * @returns item value or undefined if no item found
      */
     // WASM override
     value(oid) {
@@ -1136,11 +1064,11 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * get item state
+     * Get item state
      *
-     * @param oid - item id in format type:full_id, e.g. sensor:env/temp1
+     * @param oid {string} item OID
      *
-     * @returns object state or undefined if no object found
+     * @returns state object or undefined if no item found
      */
     state(oid) {
       if (!oid.includes("*")) {
@@ -1171,14 +1099,14 @@ const eva_framework_version = "0.4.0";
     }
 
     /**
-     * stop Framework API
-     * After calling the function will close open WebSocket if available,
-     * clear all the refresh intervals then try to close server session
+     * Stop Framework
      *
-     * @param keep_auth - keep authentication cookies and token (e.g. on
-     * restart)
+     * After calling the function closes open WebSocket if available, stops all
+     * workers then tries to close the server session
      *
-     * @returns - Promise object
+     * @param keep_auth {boolean} keep authentication cookies and token
+     *
+     * @returns Promise object
      */
     stop(keep_auth) {
       var me = this;
@@ -1215,6 +1143,111 @@ const eva_framework_version = "0.4.0";
     }
 
     // ***** private functions *****
+    _inject_evajw(mod) {
+      if (mod) {
+        mod.init().then(() => {
+          mod.init_engine();
+          window.evajw = mod;
+          let build = mod.get_build();
+          console.log("EVA ICS JavaScript WASM engine loaded. Build: " + build);
+          try {
+            mod.check_license();
+          } catch (err) {
+            jsaltt.logger.error("License check failed. WASM engine disabled");
+            window.$eva.wasm = false;
+            window.$eva._start_engine();
+            return;
+          }
+          window.$eva._clear_watchers = mod.clear_watchers;
+          window.$eva._clear_states = mod.clear_states;
+          window.$eva.watch = mod.watch;
+          window.$eva.get_mode = mod.get_mode;
+          window.$eva._unwatch_func = mod.unwatch_func;
+          window.$eva._unwatch_all = mod.unwatch_all;
+          window.$eva._unwatch_mask_func = mod.unwatch_mask_func;
+          window.$eva._unwatch_mask_all = mod.unwatch_mask_all;
+          window.$eva.status = mod.status;
+          window.$eva.value = mod.value;
+          window.$eva._state = mod.state;
+          window.$eva._states_by_mask = mod.states_by_mask;
+          window.$eva._process_loaded_states = mod.process_loaded_states;
+          window.$eva._process_ws = mod.process_ws;
+          window.$eva._clear_state = mod.clear_state;
+          // transfer registered watchers to WASM
+          function transfer_watchers(src, mod) {
+            Object.keys(src).map((oid) => {
+              src[oid].map((f) => {
+                mod.watch(oid, f);
+              });
+            });
+          }
+          transfer_watchers(window.$eva._update_state_functions, mod);
+          transfer_watchers(window.$eva._update_state_mask_functions, mod);
+          window.$eva._start_engine();
+        });
+      } else {
+        window.evajw = null;
+      }
+    }
+
+    _start_evajw() {
+      window.evajw = undefined;
+      window.eva_framework = window.$eva;
+      eval(`
+      import("./evajw/evajw.js?" + new Date().getTime())
+        .catch(error => {
+          window.$eva._critical("evajs WASM module not found", true)
+        }
+        )
+        .then((mod) => {
+          window.$eva._inject_evajw(mod);
+        });`);
+    }
+
+    _is_ws_handler_registered() {
+      let me;
+      if (this === undefined) {
+        me = window.$eva;
+      } else {
+        me = this;
+      }
+      return me._ws_handler_registered;
+    }
+
+    // WASM override
+    _clear_watchers() {
+      this._update_state_functions = [];
+      this._update_state_mask_functions = [];
+    }
+
+    // WASM override
+    _clear_states() {
+      this._states = [];
+    }
+
+    _clear() {
+      //this._clear_watchers();
+      this._clear_states();
+      this.server_info = null;
+      this.tsdiff = null;
+      this._cvars = {};
+      this._log_subscribed = false;
+      this._log_first_load = true;
+      this._log_loaded = false;
+      this._log_started = false;
+      this._lr2p = [];
+      this._last_ping = null;
+      this._last_pong = null;
+    }
+
+    _critical(message, write_on_screen) {
+      if (write_on_screen) {
+        document.write('<font color="red" size="30">' + message + "</font>");
+      }
+      jsaltt.logger.error(message);
+      throw "critical";
+    }
+
 
     _api_call(func, params, prepare_only) {
       if (this._api_call_id == 0xffff_ffff) {
