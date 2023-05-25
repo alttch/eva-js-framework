@@ -671,8 +671,12 @@ const eva_framework_version = "0.4.0";
      * returns the system name or null if the framework is not logged in
      */
     system_name() {
-      if ($eva.server_info) {
-        return this.eva.server_info.system_name;
+      if (this.server_info) {
+        if (this.api_version == 4) {
+          return this.server_info.system_name;
+        } else {
+          return this.server_info.system;
+        }
       } else {
         return null;
       }
