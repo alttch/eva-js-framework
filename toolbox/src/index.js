@@ -11,16 +11,18 @@ import 'chartjs-adapter-date-fns';
 
   var $eva = eva_framework.$eva;
   /**
-   * display a chart
+   * Display a chart
    *
-   * requires chart.js
+   * If multiple timeframes and multiple items are specified, chart data is
+   * filled as: first timeframe for all items, second timeframe for all
+   * items etc.
    *
-   * @param ctx - html container element or id to draw in (must have fixed
-   *              width/height)
-   * @param cfg - Chart.js configuration
-   * @param oid - item oid or oids, array or comma separated (type:full_id)
+   * @param ctx html container element or id to draw in (must have fixed
+   *            width/height)
+   * @param cfg {object} Chart.js configuration
+   * @param oid item oid or oids (array)
    *
-   * @param params - object with props
+   * @param params object with props
    *
    *              @timeframe - timeframe to display (5T - 5 min, 2H - 2 hr, 2D
    *              - 2 days etc.), default: 1D. To display past timeframes, use
@@ -42,11 +44,7 @@ import 'chartjs-adapter-date-fns';
    *
    *              @args - additional API options (state_history)
    *
-   * @returns - chart object
-   *
-   * If multiple timeframes and multiple items are specified, chart data is
-   * filled as: first timeframe for all items, second timeframe for all
-   * items etc.
+   * @returns chart object
    */
   function eva_toolbox_chart(ctx, cfg, oid, params, _chart) {
     var params = jsaltt.extend({}, params);
@@ -200,11 +198,11 @@ import 'chartjs-adapter-date-fns';
   }
 
   /**
-   * animate html element block
+   * Animate html element block
    *
    * Simple loading animation
    *
-   * @param ctx - DOM element (or id)
+   * @param ctx DOM element (or id)
    */
   function eva_toolbox_animate(ctx) {
     var el = typeof ctx === "object" ? ctx : document.getElementById(ctx);
@@ -218,19 +216,19 @@ import 'chartjs-adapter-date-fns';
   }
 
   /**
-   * popup window
+   * Popup window
    *
    * Opens popup window. Requires bootstrap css.
    * There can be only 1 popup opened with specified html ctx. If the page want
    * to open another popup, the current one will be overwritten unless it's
    * class is higher than a new one, otherwise exception is raised.
    *
-   * @param ctx - html element id to use as popup (any empty <div /> is fine)
-   * @param pclass - popup class: info, warning or error. opens big popup window
-   *                 if '!' is put before the class (e.g. !info)
-   * @param title - popup window title
-   * @param msg - popup window message
-   * @param params - object with handlers and additional parameters:
+   * @param ctx html element id to use as popup (any empty <div /> is fine)
+   * @param pclass {string} popup class: info, warning or error. opens big
+   *                 popup window if '!' is put before the class (e.g. !info)
+   * @param title {string} popup window title
+   * @param msg {string} popup window message
+   * @param params {object} object with handlers and additional parameters:
    *              @ct - popup auto close time (sec), equal to pressing escape
    *              @btn1 - button 1 name (default: 'OK')
    *              @btn2 - button 2 name
@@ -239,8 +237,8 @@ import 'chartjs-adapter-date-fns';
    *              resolve function is executed. "va" function is used to
    *              validate an input, if popup contains any input fields.
    *
-   * @returns - Promise object. Resolve and reject functions are called with
-   *            "true" parameter if button is pressed by user.
+   * @returns Promise object. Resolve and reject functions are called with
+   *                         "true" parameter if button is pressed by user.
    *
    */
   function eva_toolbox_popup(ctx, pclass, title, msg, params) {
