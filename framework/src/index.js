@@ -175,7 +175,7 @@ const eva_framework_version = "0.4.0";
     /* Call unit action with status=1
      *
      * @param oid - unit OID
-     * @param wait - wait until the action is completed
+     * @param wait - wait until the action is completed (default: true)
      */
     start(oid, wait) {
       return this.action(oid, { s: 1 }, wait);
@@ -183,7 +183,7 @@ const eva_framework_version = "0.4.0";
     /* Call unit action with status=0
      *
      * @param oid - unit OID
-     * @param wait - wait until the action is completed
+     * @param wait - wait until the action is completed (default: true)
      */
     stop(oid, wait) {
       return this.action(oid, { s: 0 }, wait);
@@ -191,16 +191,20 @@ const eva_framework_version = "0.4.0";
     /* Call unit action to toggle its status
      *
      * @param oid - unit OID
-     * @param wait - wait until the action is completed
+     * @param wait - wait until the action is completed (default: true)
      */
     toggle(oid, wait) {
-      return this._act("action.toggle", oid, {}, wait);
+      let method = "action.toggle";
+      if (this.api_version == 3) {
+        method = "action_toggle";
+      }
+      return this._act(method, oid, {}, wait);
     }
     /* Call unit action
      *
      * @param oid - unit OID
      * @param params - action params
-     * @param wait - wait until the action is completed
+     * @param wait - wait until the action is completed (default: true)
      */
     exec(oid, params, wait) {
       return this._act("action", oid, params, wait);
@@ -210,20 +214,28 @@ const eva_framework_version = "0.4.0";
      * @param oid - unit OID
      */
     async kill(oid) {
-      await this.eva.call("action.kill", oid);
+      let method = "action.kill";
+      if (this.api_version == 3) {
+        method = "kill";
+      }
+      await this.eva.call(method, oid);
     }
     /* Terminate a unit action
      *
      * @param uuid - action uuid
      */
     async terminate(uuid) {
-      await this.eva.call("action.terminate", { u: uuid });
+      let method = "action.terminate";
+      if (this.api_version == 3) {
+        method = "terminate";
+      }
+      await this.eva.call(method, { u: uuid });
     }
     /* Run lmacro
      *
      * @param oid - lmacro oid
      * @param params - call params
-     * @param wait - wait until the execution is completed
+     * @param wait - wait until the execution is completed (default: true)
      */
     run(oid, params, wait) {
       return this._act("run", oid, params, wait);
@@ -251,21 +263,33 @@ const eva_framework_version = "0.4.0";
      * @param oid - lvar oid
      */
     async reset(oid) {
-      await this.eva.call("lvar.reset", oid);
+      let method = "lvar.reset";
+      if (this.api_version == 3) {
+        method = "reset";
+      }
+      await this.eva.call(method, oid);
     }
     /* Clear lvar (set status to 0)
      *
      * @param oid - lvar oid
      */
     async clear(oid) {
-      await this.eva.call("lvar.clear", oid);
+      let method = "lvar.clear";
+      if (this.api_version == 3) {
+        method = "clear";
+      }
+      await this.eva.call(method, oid);
     }
     /* Toggle lvar status
      *
      * @param oid - lvar oid
      */
     async toggle(oid) {
-      await this.eva.call("lvar.toggle", oid);
+      let method = "lvar.toggle";
+      if (this.api_version == 3) {
+        method = "toggle";
+      }
+      await this.eva.call(method, oid);
     }
     /* Increment lvar value
      *
@@ -274,7 +298,11 @@ const eva_framework_version = "0.4.0";
      * @param oid - lvar oid
      */
     async increment(oid) {
-      let data = await this.eva.call("lvar.incr", oid);
+      let method = "lvar.incr";
+      if (this.api_version == 3) {
+        method = "increment";
+      }
+      let data = await this.eva.call(method, oid);
       return data["result"];
     }
     /* Decrement lvar value
@@ -284,7 +312,11 @@ const eva_framework_version = "0.4.0";
      * @param oid - lvar oid
      */
     async decrement(oid) {
-      let data = await this.eva.call("lvar.decr", oid);
+      let method = "lvar.decr";
+      if (this.api_version == 3) {
+        method = "decrement";
+      }
+      let data = await this.eva.call(method, oid);
       return data["result"];
     }
     /* Set lvar state
@@ -302,7 +334,11 @@ const eva_framework_version = "0.4.0";
         params["value"] = value;
       }
       if (params) {
-        await this.eva.call("lvar.set", oid, params);
+        let method = "lvar.set";
+        if (this.api_version == 3) {
+          method = "set";
+        }
+        await this.eva.call(method, oid, params);
       }
     }
     /* Set lvar status
