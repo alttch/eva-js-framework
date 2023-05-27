@@ -10,6 +10,9 @@ Technical documentation: <https://info.bma.ai/en/actual/eva-js-framework/index.h
 
 * EVA JS Framework and Toolbox have become ES modules.
 
+* Toolbox module can not be used in environments which do not allow importing
+CSS styles.
+
 * the default "$eva" object is now available for web browsers only
 
 * Web socket mode is now turned on by default
