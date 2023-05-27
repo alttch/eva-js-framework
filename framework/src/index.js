@@ -561,7 +561,7 @@ const eva_framework_version = "0.4.0";
               me.api_version = 3;
             }
           }
-          if (window.evajw) {
+          if (typeof window !== "undefined" && window.evajw) {
             window.evajw.set_api_version(me.api_version);
           }
           return Promise.all([
@@ -1850,7 +1850,7 @@ const eva_framework_version = "0.4.0";
             this._debug(
               "process_state",
               `${oid} s: ${state.status} v: "${state.value}"`,
-              `ns: ${state.nstatus} nv: "${state.nvalue}"`
+              `act: ${state.act} t: "${state.t}"`
             );
             this._states[oid] = state;
             if (oid in this._update_state_functions) {

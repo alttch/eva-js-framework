@@ -27,7 +27,7 @@
   "dependencies": {
     "@altertech/cookies": "^0.0.5",
     "@altertech/jsaltt": "0.0.11",
-    "node-fetch": "^3.3.1",
+    "node-fetch": "^2.6.11",
     "qrious": "^4.0.2",
     "ws": "^8.13.0"
   },
