@@ -9,6 +9,7 @@
     "type": "git",
     "url": "git+https://github.com/alttch/eva-js-framework.git"
   },
+  "type": "module",
   "main": "src/index.js",
   "keywords": [
     "iot",
@@ -24,9 +25,8 @@
     "url": "https://github.com/alttch/eva-js-framework/issues"
   },
   "dependencies": {
-    "@eva-ics/framework": "^0.3.24",
-    "chart.js": "^4.3.0",
-    "chartjs-adapter-date-fns": "^3.0.0"
+    "@altertech/jsaltt": "^0.0.11",
+    "@eva-ics/framework": "^0.3.24"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {

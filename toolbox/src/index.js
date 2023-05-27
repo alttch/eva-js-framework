@@ -1,15 +1,21 @@
 "use strict";
 
-import Chart from 'chart.js/auto';
-import 'chartjs-adapter-date-fns';
+import jsaltt from "@altertech/jsaltt";
 
-(() => {
-  const eva_framework = require("@eva-ics/framework");
-  const jsaltt = require("@altertech/jsaltt");
+const eva_toolbox_version = "0.4.1";
 
-  const css = require("./style.css");
+import "./style.css";
 
-  var $eva = eva_framework.$eva;
+class EVA_TOOLBOX {
+  /**
+   * Constructs a toolbox object
+   *
+   * @param eva {obect} EVA object instance
+   */
+  constructor(eva) {
+    this.eva = eva;
+    this.version = eva_toolbox_version;
+  }
   /**
    * Display a chart
    *
@@ -17,9 +23,12 @@ import 'chartjs-adapter-date-fns';
    * filled as: first timeframe for all items, second timeframe for all
    * items etc.
    *
+   * To use the function, EVA object instance external.Chart field
+   * ($eva.external.Chart for web browsers) must be set to Chart.js class
+   *
    * @param ctx {string|object} html container element or id to draw in (must
    *                            have fixed width/height)
-   * @param cfg {object} Chart.js configuration (Chart.js v4)
+   * @param cfg {object} Chart.js configuration
    * @param oid {string|array} item oid or oids
    *
    * @param params {object} object with props
@@ -46,7 +55,7 @@ import 'chartjs-adapter-date-fns';
    *
    * @returns chart object
    */
-  function eva_toolbox_chart(ctx, cfg, oid, params, _chart) {
+  chart(ctx, cfg, oid, params, _chart) {
     var params = jsaltt.extend({}, params);
     var _oid;
     if (typeof oid === "object") {
@@ -73,7 +82,7 @@ import 'chartjs-adapter-date-fns';
     var animate = params["animate"];
     var api_opts = params["args"];
     if (!api_opts) api_opts = {};
-    if (!animate) animate = animate_el;
+    if (!animate) animate = this.animate;
     if (_chart) {
       chart = _chart;
     } else {
@@ -84,8 +93,9 @@ import 'chartjs-adapter-date-fns';
       cc.innerHTML = "";
       cc.appendChild(canvas);
       work_cfg = jsaltt.extend({}, cfg);
-      nchart = new Chart(canvas, work_cfg);
+      nchart = new this.eva.external.Chart(canvas, work_cfg);
     }
+    let me = this;
     var chartfunc = function() {
       if (chart && (cc.offsetWidth <= 0 || cc.offsetHeight <= 0)) {
         chart.destroy();
@@ -121,12 +131,12 @@ import 'chartjs-adapter-date-fns';
           api_opts
         );
         let method;
-        if ($eva.api_version == 4) {
+        if (me.eva.api_version == 4) {
           method = "item.state_history";
         } else {
           method = "state_history";
         }
-        calls.push($eva.call(method, _oid, _api_opts));
+        calls.push(me.eva.call(method, _oid, _api_opts));
       });
       Promise.all(calls)
         .then(function(result) {
@@ -204,7 +214,7 @@ import 'chartjs-adapter-date-fns';
    *
    * @param {string|object} ctx DOM element (or id)
    */
-  function eva_toolbox_animate(ctx) {
+  animate(ctx) {
     var el = typeof ctx === "object" ? ctx : document.getElementById(ctx);
     el.innerHTML =
       '<div class="eva-toolbox-cssload-square"><div \
@@ -249,7 +259,7 @@ import 'chartjs-adapter-date-fns';
    *                         "true" parameter if button is pressed by user.
    *
    */
-  function eva_toolbox_popup(ctx, pclass, title, msg, params) {
+  popup(ctx, pclass, title, msg, params) {
     var params = params;
     if (!params) params = {};
     return new Promise(function(resolve, reject) {
@@ -395,33 +405,11 @@ import 'chartjs-adapter-date-fns';
       }
     });
   }
+}
 
-  function animate_el(el) {
-    typeof $eva === "object" && typeof $eva.toolbox === "object"
-      ? $eva.toolbox.animate(el)
-      : eva_toolbox_animate(el);
+if (typeof window !== "undefined") {
+  var $eva = window.$eva;
+  if (typeof $eva === "object") {
+    $eva.toolbox = new EVA_TOOLBOX($eva);
   }
-
-  const eva_toolbox_version = "0.4.1";
-
-  function inject_toolbox() {
-    var $eva = window.$eva;
-    if (typeof $eva === "object") {
-      if (!$eva.toolbox) {
-        $eva.toolbox = {};
-      }
-      $eva.toolbox.chart = eva_toolbox_chart;
-      $eva.toolbox.animate = eva_toolbox_animate;
-      $eva.toolbox.popup = eva_toolbox_popup;
-      $eva.toolbox.version = eva_toolbox_version;
-    }
-  }
-
-  inject_toolbox();
-
-  if (typeof exports === "object") {
-    exports.chart = eva_toolbox_chart;
-    exports.animate = eva_toolbox_animate;
-    exports.popup = eva_toolbox_popup;
-  }
-})();
+}

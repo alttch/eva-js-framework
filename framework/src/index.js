@@ -5,8 +5,6 @@ const eva_framework_version = "0.4.1";
 import jsaltt from "@altertech/jsaltt";
 import cookies from "@altertech/cookies";
 
-import QRious from "qrious";
-
 class EVABulkRequestPartHandler {
   constructor() {}
   then(fn_ok) {
@@ -61,14 +59,15 @@ class EVABulkRequest {
     var me = this;
     framework._debug("call_bulk", `${api_uri}`);
     return new Promise(function(resolve, reject) {
-      me.fetch(api_uri, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        redirect: "error",
-        body: JSON.stringify(me.payload)
-      })
+      me.external
+        .fetch(api_uri, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          redirect: "error",
+          body: JSON.stringify(me.payload)
+        })
         .then(function(response) {
           if (response.ok) {
             response
@@ -461,11 +460,21 @@ class EVA {
     this._clear_watchers();
     this.action = new EVA_ACTION(this);
     this.lvar = new EVA_LVAR(this);
-    if (typeof WebSocket !== "undefined") {
-      this.WebSocket = WebSocket;
-    }
+    this.external = {};
     if (typeof fetch !== "undefined") {
-      this.fetch = fetch;
+      this.external.fetch = fetch;
+    } else {
+      this.external.fetch = null;
+    }
+    if (typeof WebSocket !== "undefined") {
+      this.external.WebSocket = WebSocket;
+    } else {
+      this.external.WebSocket = null;
+    }
+    if (typeof QRious !== "undefined") {
+      this.external.QRious = QRious;
+    } else {
+      this.external.QRious = null;
     }
   }
 
@@ -490,17 +499,6 @@ class EVA {
    * case of WS mode) or schedule AJAXs refresh interval.
    */
   async start() {
-    if (typeof this.fetch === "undefined") {
-      this._debug("start", "loading node-fetch");
-      let fetch = await import("node-fetch").then(
-        ({ default: fetch }) => (this.fetch = fetch)
-      );
-    }
-    if (this.ws_mode && typeof this.WebSocket === "undefined") {
-      this._debug("start", "loading ws");
-      let ws = await import("ws");
-      this.WebSocket = ws.WebSocket;
-    }
     this._cancel_scheduled_restart();
     this._debug("framework", `version: ${this.version}`);
     if (typeof fetch === "undefined") {
@@ -1278,14 +1276,15 @@ class EVA {
           params: params,
           id: id
         };
-        me.fetch(api_uri, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          redirect: "error",
-          body: JSON.stringify(payload)
-        })
+        me.external
+          .fetch(api_uri, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            redirect: "error",
+            body: JSON.stringify(payload)
+          })
           .then(function(response) {
             if (response.ok) {
               me._debug("_api_call", id + " success");
@@ -1650,7 +1649,7 @@ class EVA {
         if (me.client_id != null) {
           ws_uri += `&client_id=${me.client_id}`;
         }
-        me.ws = new me.WebSocket(ws_uri);
+        me.ws = new me.external.WebSocket(ws_uri);
         me.ws.onmessage = function(evt) {
           me._process_ws(evt.data);
         };
@@ -1965,7 +1964,7 @@ class EVA {
    *        user override user (default: $eva.login)
    *        xtr extra parameters (added as-is)
    *
-   * @returns Qrious QR object if QR code is generated
+   * @returns QRious QR object if QR code is generated
    */
   otpQR(ctx, secret, params) {
     if (typeof document !== "object") {
@@ -1995,7 +1994,7 @@ class EVA {
     if (xtr) {
       value += xtr;
     }
-    return new QRious({
+    return new this.external.QRious({
       element: typeof ctx === "object" ? ctx : document.getElementById(ctx),
       value: value,
       size: size
@@ -2017,7 +2016,7 @@ class EVA {
    *                        user - override user (default: authorized_user)
    *                        password - override password
    *
-   * @returns Qrious QR object if QR code is generated
+   * @returns QRious QR object if QR code is generated
    */
   hiQR(ctx, params) {
     if (typeof document !== "object") {
@@ -2069,7 +2068,7 @@ class EVA {
     if (password) {
       value += "|password:" + password;
     }
-    return new QRious({
+    return new this.external.QRious({
       element: typeof ctx === "object" ? ctx : document.getElementById(ctx),
       value: value,
       size: size
@@ -2077,16 +2076,8 @@ class EVA {
   }
 }
 
-if (typeof exports === "object") {
-  exports.EVA = EVA;
-  let $eva = new EVA();
-  exports.$eva = $eva;
-}
-
-if (typeof window === "object") {
-  let $eva = new EVA();
-  window.$eva = $eva;
-  window.eva_framework_version = eva_framework_version;
+if (typeof window !== "undefined") {
+  window.$eva = new EVA();
 }
 
 export default EVA;
