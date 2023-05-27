@@ -402,7 +402,7 @@ import 'chartjs-adapter-date-fns';
       : eva_toolbox_animate(el);
   }
 
-  const eva_toolbox_version = "0.4.0";
+  const eva_toolbox_version = "0.4.1";
 
   function inject_toolbox() {
     var $eva = window.$eva;
