@@ -459,6 +459,7 @@ class EVA {
     this._clear_watchers();
     this.action = new EVA_ACTION(this);
     this.lvar = new EVA_LVAR(this);
+    this.evajw = null;
     this.external = {};
     if (typeof window !== "undefined") {
       if (typeof window.fetch !== "undefined") {
@@ -515,7 +516,7 @@ class EVA {
       this._debug("start", "already logged in");
       return true;
     }
-    if (this.wasm && window.evajw === undefined) {
+    if (this.wasm && !this.evajw) {
       this._start_evajw();
     } else {
       this._start_engine();
@@ -563,8 +564,8 @@ class EVA {
             me.api_version = 3;
           }
         }
-        if (typeof window !== "undefined" && window.evajw) {
-          window.evajw.set_api_version(me.api_version);
+        if (this.evajw) {
+          this.evajw.set_api_version(me.api_version);
         }
         return Promise.all([
           me._load_states(),
@@ -1148,34 +1149,34 @@ class EVA {
   // ***** private functions *****
   _inject_evajw(mod) {
     if (mod) {
-      mod.init().then(() => {
+      mod.init(undefined, this).then(() => {
         mod.init_engine();
-        window.evajw = mod;
+        this.evajw = mod;
         let build = mod.get_build();
         console.log("EVA ICS JavaScript WASM engine loaded. Build: " + build);
         try {
           mod.check_license();
         } catch (err) {
           jsaltt.logger.error("License check failed. WASM engine disabled");
-          window.$eva.wasm = false;
-          window.$eva._start_engine();
+          this.wasm = false;
+          this._start_engine();
           return;
         }
-        window.$eva._clear_watchers = mod.clear_watchers;
-        window.$eva._clear_states = mod.clear_states;
-        window.$eva.watch = mod.watch;
-        window.$eva.get_mode = mod.get_mode;
-        window.$eva._unwatch_func = mod.unwatch_func;
-        window.$eva._unwatch_all = mod.unwatch_all;
-        window.$eva._unwatch_mask_func = mod.unwatch_mask_func;
-        window.$eva._unwatch_mask_all = mod.unwatch_mask_all;
-        window.$eva.status = mod.status;
-        window.$eva.value = mod.value;
-        window.$eva._state = mod.state;
-        window.$eva._states_by_mask = mod.states_by_mask;
-        window.$eva._process_loaded_states = mod.process_loaded_states;
-        window.$eva._process_ws = mod.process_ws;
-        window.$eva._clear_state = mod.clear_state;
+        this._clear_watchers = mod.clear_watchers;
+        this._clear_states = mod.clear_states;
+        this.watch = mod.watch;
+        this.get_mode = mod.get_mode;
+        this._unwatch_func = mod.unwatch_func;
+        this._unwatch_all = mod.unwatch_all;
+        this._unwatch_mask_func = mod.unwatch_mask_func;
+        this._unwatch_mask_all = mod.unwatch_mask_all;
+        this.status = mod.status;
+        this.value = mod.value;
+        this._state = mod.state;
+        this._states_by_mask = mod.states_by_mask;
+        this._process_loaded_states = mod.process_loaded_states;
+        this._process_ws = mod.process_ws;
+        this._clear_state = mod.clear_state;
         // transfer registered watchers to WASM
         function transfer_watchers(src, mod) {
           Object.keys(src).map((oid) => {
@@ -1184,27 +1185,26 @@ class EVA {
             });
           });
         }
-        transfer_watchers(window.$eva._update_state_functions, mod);
-        transfer_watchers(window.$eva._update_state_mask_functions, mod);
-        window.$eva._start_engine();
+        transfer_watchers(this._update_state_functions, mod);
+        transfer_watchers(this._update_state_mask_functions, mod);
+        this._start_engine();
       });
     } else {
-      window.evajw = null;
+      this.evajw = null;
     }
   }
 
   _start_evajw() {
-    window.evajw = undefined;
-    window.eva_framework = window.$eva;
-    eval(`
-      import("./evajw/evajw.js?" + new Date().getTime())
-        .catch(error => {
-          window.$eva._critical("evajs WASM module not found", true)
-        }
-        )
-        .then((mod) => {
-          window.$eva._inject_evajw(mod);
-        });`);
+    this.evajw = undefined;
+    eval(`import("./evajw/evajw.js?" + new Date().getTime())
+      .then((mod) => {
+        this._inject_evajw(mod);
+      })
+      .catch((err) => {
+        this._critical("evajs WASM module load error", true);
+        this._critical(err);
+        return;
+      });`);
   }
 
   _is_ws_handler_registered() {
