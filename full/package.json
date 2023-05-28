@@ -12,10 +12,7 @@
     "@eva-ics/framework": "file:../framework",
     "@eva-ics/toolbox": "file:../toolbox",
     "@altertech/cookies": "^0.0.5",
-    "@altertech/jsaltt": "0.0.11",
-    "chart.js": "^4.3.0",
-    "chartjs-adapter-date-fns": "^3.0.0",
-    "qrious": "^4.0.2"
+    "@altertech/jsaltt": "0.0.11"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {

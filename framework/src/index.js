@@ -18,10 +18,10 @@ class EVABulkRequestPartHandler {
 }
 
 class EVABulkRequest {
-  constructor(framework) {
+  constructor(eva) {
     this.requests = {};
     this.payload = [];
-    this.framework = framework;
+    this.eva = eva;
   }
   /**
    * Prepare API function call for bulk calling
@@ -43,8 +43,8 @@ class EVABulkRequest {
     } else {
       params = p1;
     }
-    var p = this.framework._prepare_call_params(params);
-    var payload = this.framework._api_call(func, p, true);
+    var p = this.eva._prepare_call_params(params);
+    var payload = this.eva._api_call(func, p, true);
     var req = new EVABulkRequestPartHandler();
     this.requests[payload.id] = req;
     this.payload.push(payload);
@@ -54,12 +54,11 @@ class EVABulkRequest {
    * Perform bulk API call
    */
   call() {
-    var api_uri = this.framework.api_uri + "/jrpc";
-    var framework = this.framework;
+    var api_uri = this.eva.api_uri + "/jrpc";
     var me = this;
-    framework._debug("call_bulk", `${api_uri}`);
+    me.eva._debug("call_bulk", `${api_uri}`);
     return new Promise(function(resolve, reject) {
-      me.external
+      me.eva.external
         .fetch(api_uri, {
           method: "POST",
           headers: {
@@ -73,7 +72,7 @@ class EVABulkRequest {
             response
               .json()
               .then(function(data) {
-                framework._debug("call_bulk success");
+                me.eva._debug("call_bulk success");
                 if (Array.isArray(data)) {
                   data.forEach((d) => {
                     if (!"id" in d || (!"result" in d && !"error" in d)) {
@@ -92,7 +91,7 @@ class EVABulkRequest {
                         fn_err = req.fn_err;
                       }
                       if ("error" in d) {
-                        framework._debug(
+                        me.eva._debug(
                           "call_bulk req",
                           `${id} failed: ${d.error.code} (${d.error.message})`
                         );
@@ -104,7 +103,7 @@ class EVABulkRequest {
                           });
                         }
                       } else {
-                        if (framework.debug == 2) {
+                        if (me.eva.debug == 2) {
                           console.log(
                             `call_bulk API ${id} ${func} response`,
                             d.result
@@ -120,7 +119,7 @@ class EVABulkRequest {
                 } else {
                   var code = 9;
                   var message = "Invalid server response (not an array)";
-                  framework._debug("call_bulk", `failed: ${code} (${message})`);
+                  me.eva._debug("call_bulk", `failed: ${code} (${message})`);
                   reject({
                     code: code,
                     message: message,
@@ -131,7 +130,7 @@ class EVABulkRequest {
               .catch(function(err) {
                 var code = 9;
                 var message = "Invalid server response";
-                framework._debug("call_bulk", `failed: ${code} (${message})`);
+                me.eva._debug("call_bulk", `failed: ${code} (${message})`);
                 reject({
                   code: code,
                   message: message,
@@ -141,14 +140,14 @@ class EVABulkRequest {
           } else {
             var code = 7;
             var message = "Server error";
-            framework._debug("call_bulk", `failed: ${code} (${message})`);
+            me.eva._debug("call_bulk", `failed: ${code} (${message})`);
             reject({ code: code, message: message, data: data });
           }
         })
         .catch(function(err) {
           var code = 7;
           var message = "Server error";
-          framework._debug("call_bulk", `failed: ${code} (${message})`);
+          me.eva._debug("call_bulk", `failed: ${code} (${message})`);
           reject({ code: code, message: message, data: null });
         });
     });
@@ -461,7 +460,11 @@ class EVA {
     this.action = new EVA_ACTION(this);
     this.lvar = new EVA_LVAR(this);
     this.external = {};
-    if (typeof fetch !== "undefined") {
+    if (typeof window !== "undefined") {
+      if (typeof window.fetch !== "undefined") {
+        this.external.fetch = window.fetch.bind(window);
+      }
+    } else if (typeof fetch !== "undefined") {
       this.external.fetch = fetch;
     } else {
       this.external.fetch = null;

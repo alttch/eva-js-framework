@@ -4,12 +4,6 @@ require("babel-loader");
 const webpack = require("webpack");
 const path = require("path");
 
-//const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-
-//const TerserJSPlugin = require('terser-webpack-plugin');
-//const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-//const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-
 module.exports = {
   mode: "production",
   devtool: false,
@@ -22,31 +16,12 @@ module.exports = {
     filename: "eva.min.js"
   },
   externals: ["node-fetch", "ws", "chalk"],
-  //optimization: {
-  //minimizer: [new TerserJSPlugin({}), new CssMinimizerPlugin()],
-  //minimizer: [new CssMinimizerPlugin()],
-  //},
-  //optimization: {
-    //minimize: false
-  //},
   module: {
     rules: [
       {
         test: /\.css$/,
         use: [{ loader: "style-loader" }, { loader: "css-loader" }]
       },
-      //{
-      //test: /\.css$/,
-      //use: [
-      //{
-      //loader: MiniCssExtractPlugin.loader,
-      //options: {
-      //hmr: process.env.NODE_ENV === 'development'
-      //}
-      //},
-      //'css-loader'
-      //]
-      //},
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
@@ -60,16 +35,6 @@ module.exports = {
       }
     ]
   },
-  //plugins: [
-    //new webpack.IgnorePlugin({
-      //resourceRegExp: /^\.\/locale$/,
-      //contextRegExp: /moment$/
-    //})
-    //new MiniCssExtractPlugin({
-    //filename: '[name].css',
-    //chunkFilename: '[id].css'
-    //})
-  //],
   performance: {
     hints: false,
     maxEntrypointSize: 350000,

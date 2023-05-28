@@ -1,10 +1,14 @@
-require("@babel/register");
-require("babel-loader");
+import "@babel/register";
+import "babel-loader";
 
-const webpack = require("webpack");
-const path = require("path");
+import "webpack";
+import * as path from "path";
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-module.exports = {
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+export default {
   mode: "production",
   target: "web",
   output: {
