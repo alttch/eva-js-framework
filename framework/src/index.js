@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = "0.4.1";
+const eva_framework_version = "0.5.0";
 
 import jsaltt from "@altertech/jsaltt";
 import cookies from "@altertech/cookies";

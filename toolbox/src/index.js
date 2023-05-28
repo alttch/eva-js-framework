@@ -2,7 +2,7 @@
 
 import jsaltt from "@altertech/jsaltt";
 
-const eva_toolbox_version = "0.4.1";
+const eva_toolbox_version = "0.5.0";
 
 import "./style.css";
 

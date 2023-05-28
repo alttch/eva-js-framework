@@ -1,6 +1,6 @@
 {
   "name": "@eva-ics/framework",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "JavaScript Framework for EVA ICS",
   "type": "module",
   "scripts": {
