@@ -411,5 +411,8 @@ if (typeof window !== "undefined") {
   var $eva = window.$eva;
   if (typeof $eva === "object") {
     $eva.toolbox = new EVA_TOOLBOX($eva);
+    if (typeof Chart !== "undefined") {
+      $eva.external.Chart = Chart;
+    }
   }
 }

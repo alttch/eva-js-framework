@@ -27,7 +27,10 @@ to EVAOBJECT.external.WebSocket.
 
 * QRious is no longer bundled by default. If QR codes are required, consider
 manually importing "QRious" module and setting it to EVAOBJECT.external.QRious
+(for web apps is enough to load QRious before the framework).
 
 * Chart.js is no longer bundled by default. If the toolbox is used and charts
 are required, consider manually importing "Chart.js" module (v2, v3 and v4 are
-tested) and setting it to EVAOBJECT.external.Chart
+tested) and setting it to EVAOBJECT.external.Chart (for web apps is enough to
+load Chart.js before the framework). For dates do not forget to load
+"chartjs-adapter-date-fns" or similar.
