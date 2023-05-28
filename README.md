@@ -21,16 +21,17 @@ CSS styles.
 environments. For older environments consider manually importing a polyfill
 (e.g. "node-fetch") and setting it to EVAOBJECT.external.fetch.
 
-* "WebSocket" is no longer bundled by default. Consider either setting
-"eva.ws\_mode" to false or using an external module (e.g. "ws") and setting it
-to EVAOBJECT.external.WebSocket.
+* "WebSocket" is no longer bundled by default. If working in environment with
+no native websocket support, consider either setting "eva.ws\_mode" to false or
+using an external module (e.g. "ws") and setting it to
+EVAOBJECT.external.WebSocket.
 
 * QRious is no longer bundled by default. If QR codes are required, consider
 manually importing "QRious" module and setting it to EVAOBJECT.external.QRious
 (for web apps is enough to load QRious before the framework).
 
 * Chart.js is no longer bundled by default. If the toolbox is used and charts
-are required, consider manually importing "Chart.js" module (v2, v3 and v4 are
-tested) and setting it to EVAOBJECT.external.Chart (for web apps is enough to
-load Chart.js before the framework). For dates do not forget to load
+are required, consider manually importing "Chart.js" module (v2, v3-umd and
+v4-umd are tested) and setting it to EVAOBJECT.external.Chart (for web apps is
+enough to load Chart.js before the framework). For dates do not forget to load
 "chartjs-adapter-date-fns" or similar.
