@@ -8,12 +8,12 @@ Technical documentation: <https://info.bma.ai/en/actual/eva-js-framework/index.h
 
 ## Migration from 0.4
 
-* EVA JS Framework and Toolbox have become ES modules.
+* EVA JS Framework and Toolbox have become ES modules
 
 * Toolbox module can not be used in environments which do not allow importing
-CSS styles.
+CSS styles
 
-* the default "$eva" object is now available for web browsers only
+* the default "$eva" object is now available in web browsers only
 
 * Web socket mode is now turned on by default
 
@@ -24,11 +24,11 @@ environments. For older environments consider manually importing a polyfill
 * "WebSocket" is no longer bundled by default. If working in environment with
 no native websocket support, consider either setting "EVAOBJECT.ws\_mode" to
 false or using an external module (e.g. "ws") and setting it to
-EVAOBJECT.external.WebSocket.
+EVAOBJECT.external.WebSocket
 
 * QRious is no longer bundled by default. If QR codes are required, consider
 manually importing "QRious" module and setting it to EVAOBJECT.external.QRious
-(for web apps is enough to load QRious before the framework).
+(for web apps is enough to load QRious before the framework)
 
 * Chart.js is no longer bundled by default. If the toolbox is used and charts
 are required, consider manually importing "Chart.js" module (v2, v3-umd and
