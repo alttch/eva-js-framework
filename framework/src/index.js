@@ -128,7 +128,7 @@ const eva_framework_version = "0.4.1";
                     });
                     resolve(true);
                   } else {
-                    var code = 9;
+                    var code = -32009;
                     var message = "Invalid server response (not an array)";
                     framework._debug(
                       "call_bulk",
@@ -142,7 +142,7 @@ const eva_framework_version = "0.4.1";
                   }
                 })
                 .catch(function(err) {
-                  var code = 9;
+                  var code = -32009;
                   var message = "Invalid server response";
                   framework._debug("call_bulk", `failed: ${code} (${message})`);
                   reject({
@@ -152,14 +152,14 @@ const eva_framework_version = "0.4.1";
                   });
                 });
             } else {
-              var code = 7;
+              var code = -32007;
               var message = "Server error";
               framework._debug("call_bulk", `failed: ${code} (${message})`);
               reject({ code: code, message: message, data: data });
             }
           })
           .catch(function(err) {
-            var code = 7;
+            var code = -32007;
             var message = "Server error";
             framework._debug("call_bulk", `failed: ${code} (${message})`);
             reject({ code: code, message: message, data: null });
@@ -608,7 +608,7 @@ const eva_framework_version = "0.4.1";
         .catch(function(err) {
           me.logged_in = false;
           if (err.code === undefined) {
-            err.code = 4;
+            err.code = -32004;
             err.message = "Unknown error";
           }
           me._debug("start", `login failed: ${err.code} (${err.message})`);
@@ -1248,7 +1248,6 @@ const eva_framework_version = "0.4.1";
       throw "critical";
     }
 
-
     _api_call(func, params, prepare_only) {
       if (this._api_call_id == 0xffff_ffff) {
         this._api_call_id = 0;
@@ -1319,7 +1318,7 @@ const eva_framework_version = "0.4.1";
                     }
                   })
                   .catch(function(err) {
-                    var code = 9;
+                    var code = -32009;
                     var message = "Invalid server response";
                     me._debug(
                       "_api_call",
@@ -1332,14 +1331,14 @@ const eva_framework_version = "0.4.1";
                     });
                   });
               } else {
-                var code = 7;
+                var code = -32007;
                 var message = "Server error";
                 me._debug("_api_call", `${id} failed: ${code} (${message})`);
                 reject({ code: code, message: message, data: data });
               }
             })
             .catch(function(err) {
-              var code = 7;
+              var code = -32007;
               var message = "Server error";
               me._debug("_api_call", `${id} failed: ${code} (${message})`);
               reject({ code: code, message: message, data: null });
