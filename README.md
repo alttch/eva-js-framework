@@ -22,8 +22,8 @@ environments. For older environments consider manually importing a polyfill
 (e.g. "node-fetch") and setting it to EVAOBJECT.external.fetch.
 
 * "WebSocket" is no longer bundled by default. If working in environment with
-no native websocket support, consider either setting "eva.ws\_mode" to false or
-using an external module (e.g. "ws") and setting it to
+no native websocket support, consider either setting "EVAOBJECT.ws\_mode" to
+false or using an external module (e.g. "ws") and setting it to
 EVAOBJECT.external.WebSocket.
 
 * QRious is no longer bundled by default. If QR codes are required, consider
