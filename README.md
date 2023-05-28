@@ -19,7 +19,7 @@ CSS styles
 
 * "fetch" is no longer bundled as it is present in the majority of
 environments. For older environments consider manually importing a polyfill
-(e.g. "node-fetch") and setting it to EVAOBJECT.external.fetch.
+(e.g. "node-fetch") and setting it to EVAOBJECT.external.fetch
 
 * "WebSocket" is no longer bundled by default. If working in environment with
 no native websocket support, consider either setting "EVAOBJECT.ws\_mode" to
