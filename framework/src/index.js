@@ -1177,7 +1177,7 @@ const eva_framework_version = "0.4.1";
           function transfer_watchers(src, mod) {
             Object.keys(src).map((oid) => {
               src[oid].map((f) => {
-                mod.watch(oid, f);
+                mod.watch(oid, f, true);
               });
             });
           }
