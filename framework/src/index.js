@@ -564,8 +564,8 @@ class EVA {
             me.api_version = 3;
           }
         }
-        if (this.evajw) {
-          this.evajw.set_api_version(me.api_version);
+        if (me.evajw) {
+          me.evajw.set_api_version(me.api_version);
         }
         return Promise.all([
           me._load_states(),
@@ -1181,7 +1181,7 @@ class EVA {
         function transfer_watchers(src, mod) {
           Object.keys(src).map((oid) => {
             src[oid].map((f) => {
-              mod.watch(oid, f);
+              mod.watch(oid, f, true);
             });
           });
         }
