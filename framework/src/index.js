@@ -117,7 +117,7 @@ class EVABulkRequest {
                   });
                   resolve(true);
                 } else {
-                  var code = 9;
+                  var code = -32009;
                   var message = "Invalid server response (not an array)";
                   me.eva._debug("call_bulk", `failed: ${code} (${message})`);
                   reject({
@@ -128,7 +128,7 @@ class EVABulkRequest {
                 }
               })
               .catch(function(err) {
-                var code = 9;
+                var code = -32009;
                 var message = "Invalid server response";
                 me.eva._debug("call_bulk", `failed: ${code} (${message})`);
                 reject({
@@ -138,14 +138,14 @@ class EVABulkRequest {
                 });
               });
           } else {
-            var code = 7;
+            var code = -32007;
             var message = "Server error";
             me.eva._debug("call_bulk", `failed: ${code} (${message})`);
             reject({ code: code, message: message, data: data });
           }
         })
         .catch(function(err) {
-          var code = 7;
+          var code = -32007;
           var message = "Server error";
           me.eva._debug("call_bulk", `failed: ${code} (${message})`);
           reject({ code: code, message: message, data: null });
@@ -1322,7 +1322,7 @@ class EVA {
                   }
                 })
                 .catch(function(err) {
-                  var code = 9;
+                  var code = -32009;
                   var message = "Invalid server response";
                   me._debug("_api_call", `${id} failed: ${code} (${message})`);
                   reject({
@@ -1332,14 +1332,14 @@ class EVA {
                   });
                 });
             } else {
-              var code = 7;
+              var code = -32007;
               var message = "Server error";
               me._debug("_api_call", `${id} failed: ${code} (${message})`);
               reject({ code: code, message: message, data: data });
             }
           })
           .catch(function(err) {
-            var code = 7;
+            var code = -32007;
             var message = "Server error";
             me._debug("_api_call", `${id} failed: ${code} (${message})`);
             reject({ code: code, message: message, data: null });
