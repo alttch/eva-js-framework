@@ -77,7 +77,7 @@ class EVABulkRequest {
                   data.forEach((d) => {
                     if (!"id" in d || (!"result" in d && !"error" in d)) {
                       reject({
-                        code: 9,
+                        code: -32009,
                         message: "Invalid server response",
                         data: d
                       });
@@ -1300,7 +1300,7 @@ class EVA {
                     (!"result" in data && !"error" in data)
                   ) {
                     reject({
-                      code: 9,
+                      code: -32009,
                       message: "Invalid server response",
                       data: data
                     });
