@@ -963,7 +963,7 @@ const eva_framework_version = "0.4.1";
                 delete me._action_watch_functions[uuid];
                 delete me._action_states[uuid];
               } else {
-                setTimeout(watcher, me._intervals.action_watch);
+                setTimeout(watcher, me._intervals.action_watch * 1000);
               }
             })
             .catch(function(err) {
@@ -972,7 +972,7 @@ const eva_framework_version = "0.4.1";
               delete me._action_states[uuid];
             });
         };
-        setTimeout(watcher, this._intervals.action_watch);
+        setTimeout(watcher, this._intervals.action_watch * 1000);
       }
     }
 
