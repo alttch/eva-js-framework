@@ -543,9 +543,10 @@ const eva_framework_version = "0.4.1";
         if (token) {
           q = { a: token };
           this._debug("start", "logging in with auth token");
-        } else {
-          this._debug("start", "logging in without credentials");
         }
+      }
+      if (Object.keys(q).length === 0) {
+        this._debug("start", "logging in without credentials");
       }
       var me = this;
       var user;
