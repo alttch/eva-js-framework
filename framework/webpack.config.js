@@ -1,10 +1,10 @@
 import "@babel/register";
 import "babel-loader";
 
-import "webpack";
+import webpack from "webpack";
 import * as path from "path";
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

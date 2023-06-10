@@ -1198,7 +1198,7 @@ class EVA {
 
   _start_evajw() {
     this.evajw = undefined;
-    eval(`import("./evajw/evajw.js?" + new Date().getTime())
+    import(/*webpackIgnore: true*/ "./evajw/evajw.js?" + new Date().getTime())
       .then((mod) => {
         this._inject_evajw(mod);
       })
@@ -1206,7 +1206,7 @@ class EVA {
         this._critical("evajs WASM module load error", true);
         this._critical(err);
         return;
-      });`);
+      });
   }
 
   _is_ws_handler_registered() {
@@ -2061,9 +2061,12 @@ class EVA {
   }
 }
 
+let $eva;
+
 if (typeof window !== "undefined") {
+  $eva = new EVA();
   window.$eva = new EVA();
 }
 
 export default EVA;
-export { EVA };
+export { EVA, $eva };
