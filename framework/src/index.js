@@ -410,7 +410,6 @@ class EVA {
     this.apikey = "";
     this.api_uri = "";
     this.set_auth_cookies = true;
-    this.global_cvars = true;
     this.api_token = "";
     this.authorized_user = null;
     this.logged_in = false;
@@ -1395,14 +1394,6 @@ class EVA {
           if (on_login) {
             if (data["cvars"]) {
               me._cvars = data["cvars"];
-              if (me.global_cvars) {
-                Object.keys(data["cvars"]).map(function (k) {
-                  if (typeof global !== "undefined")
-                    eval(`global.${k}="${data["cvars"][k]}"`);
-                  if (typeof window !== "undefined")
-                    eval(`window.${k}="${data["cvars"][k]}"`);
-                });
-              }
             } else {
               me._cvars = {};
             }
@@ -1859,11 +1850,7 @@ class EVA {
           if (oid in this._update_state_functions) {
             this._update_state_functions[oid].map(function (f) {
               try {
-                if (typeof f === "string" || f instanceof String) {
-                  eval(f);
-                } else {
-                  f(state);
-                }
+                f(state);
               } catch (err) {
                 jsaltt.logger.error(
                   `state function processing for ${oid}:`,
@@ -1876,11 +1863,7 @@ class EVA {
             if (this._oid_match(oid, k)) {
               this._update_state_mask_functions[k].map(function (f) {
                 try {
-                  if (typeof f === "string" || f instanceof String) {
-                    eval(f);
-                  } else {
-                    f(state);
-                  }
+                  f(state);
                 } catch (err) {
                   jsaltt.logger.error(
                     `state function processing for ${oid}:`,
@@ -1911,11 +1894,7 @@ class EVA {
     if (f) {
       me._debug("invoke_handler", "invoking for " + handler);
       try {
-        if (typeof f === "string") {
-          return eval(f);
-        } else if (typeof f === "function") {
-          return f.apply(me, [].slice.call(arguments, 1));
-        }
+        return f.apply(me, [].slice.call(arguments, 1));
       } catch (err) {
         jsaltt.logger.error(`handler for ${handler}:`, err);
       }
