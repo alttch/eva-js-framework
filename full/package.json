@@ -11,8 +11,7 @@
   "dependencies": {
     "@eva-ics/framework": "file:../framework",
     "@eva-ics/toolbox": "file:../toolbox",
-    "@altertech/cookies": "^0.0.5",
-    "@altertech/jsaltt": "0.0.11"
+    "@altertech/jsaltt": "0.1.0"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {

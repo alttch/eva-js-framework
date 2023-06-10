@@ -1,24 +1,130 @@
-"use strict";
-
 const eva_framework_version = "0.5.0";
 
-import jsaltt from "@altertech/jsaltt";
-import cookies from "@altertech/cookies";
+import { Logger, cookies } from "@altertech/jsaltt";
+
+enum HandlerId {
+  HeartBeatSuccess = "heartbeat.success",
+  HeartBeatError = "heartbeat.error",
+  LoginSuccess = "login.success",
+  LoginFailed = "login.failed",
+  LoginOTPRequired = "login.otp_required",
+  LoginOTPInvalid = "login.otp_invalid",
+  LoginOTPSetup = "login.otp_setup",
+  WsEvent = "ws.event",
+  ServerReload = "server.reload",
+  ServerRestart = "server.restart",
+  LogRecord = "log.record",
+  LogPostProcess = "log.postprocess"
+}
+
+function to_obj(obj?: object): object {
+  if (typeof obj === "object") {
+    return obj;
+  } else {
+    return {};
+  }
+}
+
+interface LoginPayload {
+  k?: string;
+  u?: string;
+  p?: string;
+  a?: string;
+  xopts?: object;
+}
+
+interface SvcMessage {
+  kind: string;
+  svc: string;
+  message?: string;
+  value?: string;
+}
+
+interface JsonRpcRequest {
+  jsonrpc: string;
+  method: string;
+  params: object;
+  id: number;
+}
+
+interface JsonRpcResponse {
+  jsonrpc: string;
+  result?: object;
+  error?: object;
+  id: number;
+}
+
+interface External {
+  fetch?: any;
+  WebSocket?: any;
+  QRious?: any;
+}
+
+interface ActionResult {
+  elapsed: number;
+  exitcode: number | null;
+  finished: boolean;
+  node: string;
+  oid: string;
+  params: any;
+  priority: number;
+  status: string;
+  svc: string;
+  time: any;
+  uuid: string;
+}
+
+interface LvarIncrDecrResult {
+  result: number;
+}
+
+interface LogCollector {
+  level: number;
+  records: number;
+}
+
+enum IntervalId {
+  AjaxReload = "ajax_reload",
+  AjaxLogReload = "log_reload",
+  ActionWatch = "action_watch",
+  Heartbeat = "heartbeat",
+  Reload = "reload",
+  Restart = "restart",
+  WSBufTTL = "ws_buf_ttl"
+}
+
+class EvaError {
+  code: number;
+  message?: string;
+  data?: any;
+  constructor(code: number, message: string, data?: any) {
+    this.code = code;
+    this.message = message;
+    this.data = data;
+  }
+}
 
 class EVABulkRequestPartHandler {
+  fn_ok?: (result: any) => void;
+  fn_err?: (result: any) => void;
+
   constructor() {}
-  then(fn_ok) {
+  then(fn_ok: (result: any) => void) {
     this.fn_ok = fn_ok;
     return this;
   }
-  catch(fn_err) {
+  catch(fn_err: (err: any) => void) {
     this.fn_err = fn_err;
     return this;
   }
 }
 
 class EVABulkRequest {
-  constructor(eva) {
+  requests: any;
+  payload: Array<any>;
+  eva: EVA;
+
+  constructor(eva: EVA) {
     this.requests = {};
     this.payload = [];
     this.eva = eva;
@@ -33,19 +139,23 @@ class EVABulkRequest {
    * @param fn_ok function which is executed on successfull call
    * @parma fn_err function which is executed on error
    *
-   * @returns Promise object
+   * @returns Part handler object
    */
-  prepare(func, p1, p2) {
-    var params;
+  prepare(
+    method: string,
+    p1: string | object,
+    p2?: object
+  ): EVABulkRequestPartHandler {
+    let params: any;
     if (typeof p1 === "string" || Array.isArray(p1)) {
-      params = jsaltt.extend({}, p2);
+      params = to_obj(p2);
       params["i"] = p1;
     } else {
       params = p1;
     }
-    var p = this.eva._prepare_call_params(params);
-    var payload = this.eva._api_call(func, p, true);
-    var req = new EVABulkRequestPartHandler();
+    let p = this.eva._prepare_call_params(params);
+    let payload: JsonRpcRequest = this.eva._prepare_api_call(method, p);
+    let req = new EVABulkRequestPartHandler();
     this.requests[payload.id] = req;
     this.payload.push(payload);
     return req;
@@ -53,29 +163,32 @@ class EVABulkRequest {
   /**
    * Perform bulk API call
    */
-  call() {
-    var api_uri = this.eva.api_uri + "/jrpc";
-    var me = this;
-    me.eva._debug("call_bulk", `${api_uri}`);
-    return new Promise(function (resolve, reject) {
-      me.eva.external
+  call(): Promise<boolean> {
+    let api_uri = this.eva.api_uri + "/jrpc";
+    this.eva._debug("call_bulk", `${api_uri}`);
+    return new Promise((resolve, reject) => {
+      this.eva.external
         .fetch(api_uri, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
           redirect: "error",
-          body: JSON.stringify(me.payload)
+          body: JSON.stringify(this.payload)
         })
-        .then(function (response) {
+        .then((response: any) => {
           if (response.ok) {
             response
               .json()
-              .then(function (data) {
-                me.eva._debug("call_bulk success");
+              .then((data: JsonRpcResponse) => {
+                this.eva._debug("call_bulk success");
                 if (Array.isArray(data)) {
                   data.forEach((d) => {
-                    if (!"id" in d || (!"result" in d && !"error" in d)) {
+                    if (
+                      typeof d.id === "undefined" ||
+                      (typeof d.result === "undefined" &&
+                        typeof d.error === "undefined")
+                    ) {
                       reject({
                         code: -32009,
                         message: "Invalid server response",
@@ -83,15 +196,15 @@ class EVABulkRequest {
                       });
                     } else {
                       let id = d.id;
-                      let req = me.requests[id];
+                      let req = this.requests[id];
                       let fn_ok;
                       let fn_err;
                       if (req) {
                         fn_ok = req.fn_ok;
                         fn_err = req.fn_err;
                       }
-                      if ("error" in d) {
-                        me.eva._debug(
+                      if (typeof d.error !== "undefined") {
+                        this.eva._debug(
                           "call_bulk req",
                           `${id} failed: ${d.error.code} (${d.error.message})`
                         );
@@ -103,9 +216,9 @@ class EVABulkRequest {
                           });
                         }
                       } else {
-                        if (me.eva.debug == 2) {
-                          console.log(
-                            `call_bulk API ${id} ${func} response`,
+                        if (this.eva.debug == 2) {
+                          this.eva.logger.info(
+                            `call_bulk API ${id} ${req.func} response`,
                             d.result
                           );
                         }
@@ -117,45 +230,39 @@ class EVABulkRequest {
                   });
                   resolve(true);
                 } else {
-                  var code = -32009;
-                  var message = "Invalid server response (not an array)";
-                  me.eva._debug("call_bulk", `failed: ${code} (${message})`);
-                  reject({
-                    code: code,
-                    message: message,
-                    data: data
-                  });
+                  let code = -32009;
+                  let message = "Invalid server response (not an array)";
+                  this.eva._debug("call_bulk", `failed: ${code} (${message})`);
+                  reject(new EvaError(code, message, data));
                 }
               })
-              .catch(function (err) {
-                var code = -32009;
-                var message = "Invalid server response";
-                me.eva._debug("call_bulk", `failed: ${code} (${message})`);
-                reject({
-                  code: code,
-                  message: message,
-                  data: err
-                });
+              .catch((err: any) => {
+                let code = -32009;
+                let message = "Invalid server response";
+                this.eva._debug("call_bulk", `failed: ${code} (${message})`);
+                reject(new EvaError(code, message));
               });
           } else {
-            var code = -32007;
-            var message = "Server error";
-            me.eva._debug("call_bulk", `failed: ${code} (${message})`);
-            reject({ code: code, message: message, data: data });
+            let code = -32007;
+            let message = "Server error";
+            this.eva._debug("call_bulk", `failed: ${code} (${message})`);
+            reject(new EvaError(code, message));
           }
         })
-        .catch(function (err) {
-          var code = -32007;
-          var message = "Server error";
-          me.eva._debug("call_bulk", `failed: ${code} (${message})`);
-          reject({ code: code, message: message, data: null });
+        .catch((err: any) => {
+          let code = -32007;
+          let message = "Server error";
+          this.eva._debug("call_bulk", `failed: ${code} (${message})`);
+          reject(new EvaError(code, message));
         });
     });
   }
 }
 
 class EVA_ACTION {
-  constructor(eva) {
+  eva: EVA;
+
+  constructor(eva: EVA) {
     this.eva = eva;
   }
   /**
@@ -164,7 +271,7 @@ class EVA_ACTION {
    * @param oid {string} unit OID
    * @param wait {boolean} wait until the action is completed (default: true)
    */
-  start(oid, wait) {
+  async start(oid: string, wait = false): Promise<ActionResult> {
     return this.exec(oid, { s: 1 }, wait);
   }
   /**
@@ -173,7 +280,7 @@ class EVA_ACTION {
    * @param oid {string} unit OID
    * @param wait {boolean} wait until the action is completed (default: true)
    */
-  stop(oid, wait) {
+  async stop(oid: string, wait = false): Promise<ActionResult> {
     return this.exec(oid, { s: 0 }, wait);
   }
   /**
@@ -182,12 +289,8 @@ class EVA_ACTION {
    * @param oid {string} unit OID
    * @param wait {boolean} wait until the action is completed (default: true)
    */
-  toggle(oid, wait) {
-    let method = "action.toggle";
-    if (this.eva.api_version == 3) {
-      method = "action_toggle";
-    }
-    return this._act(method, oid, {}, wait);
+  async toggle(oid: string, wait = false): Promise<ActionResult> {
+    return this._act("action.toggle", oid, {}, wait);
   }
   /**
    * Call unit action
@@ -196,7 +299,7 @@ class EVA_ACTION {
    * @param params {object} action params
    * @param wait {boolean} wait until the action is completed (default: true)
    */
-  exec(oid, params, wait) {
+  exec(oid: string, params: object, wait = false) {
     return this._act("action", oid, params, wait);
   }
   /**
@@ -204,23 +307,16 @@ class EVA_ACTION {
    *
    * @param oid {string} unit OID
    */
-  async kill(oid) {
-    let method = "action.kill";
-    if (this.eva.api_version == 3) {
-      method = "kill";
-    }
-    await this.eva.call(method, oid);
+  async kill(oid: string) {
+    await this.eva.call("action.kill", oid);
   }
   /**
    * Terminate a unit action
    *
    * @param uuid {string} action uuid
    */
-  async terminate(uuid) {
+  async terminate(uuid: string) {
     let method = "action.terminate";
-    if (this.eva.api_version == 3) {
-      method = "terminate";
-    }
     await this.eva.call(method, { u: uuid });
   }
   /**
@@ -230,17 +326,21 @@ class EVA_ACTION {
    * @param params {object} call params
    * @param wait {boolean} wait until completed (default: true)
    */
-  run(oid, params, wait) {
+  async run(oid: string, params?: object, wait = false): Promise<ActionResult> {
     return this._act("run", oid, params, wait);
   }
-  async _act(method, oid, params, wait) {
-    let data = await this.eva.call(method, oid, params);
+  async _act(
+    method: string,
+    oid: string,
+    params?: object,
+    wait = false
+  ): Promise<ActionResult> {
+    let data = (await this.eva.call(method, oid, params)) as ActionResult;
     if (wait == false) {
       return data;
     } else {
-      let me = this;
-      return new Promise(function (resolve) {
-        me.eva.watch_action(data.uuid, (action) => {
+      return new Promise((resolve) => {
+        this.eva.watch_action(data.uuid, (action: ActionResult) => {
           if (action.finished) {
             resolve(action);
           }
@@ -251,7 +351,9 @@ class EVA_ACTION {
 }
 
 class EVA_LVAR {
-  constructor(eva) {
+  eva: EVA;
+
+  constructor(eva: EVA) {
     this.eva = eva;
   }
   /**
@@ -259,36 +361,24 @@ class EVA_LVAR {
    *
    * @param oid {string} lvar oid
    */
-  async reset(oid) {
-    let method = "lvar.reset";
-    if (this.eva.api_version == 3) {
-      method = "reset";
-    }
-    await this.eva.call(method, oid);
+  async reset(oid: string) {
+    await this.eva.call("lvar.reset", oid);
   }
   /**
    * Clear lvar (set status to 0)
    *
    * @param oid {string} lvar oid
    */
-  async clear(oid) {
-    let method = "lvar.clear";
-    if (this.eva.api_version == 3) {
-      method = "clear";
-    }
-    await this.eva.call(method, oid);
+  async clear(oid: string) {
+    await this.eva.call("lvar.clear", oid);
   }
   /**
    * Toggle lvar status
    *
    * @param oid {string} lvar oid
    */
-  async toggle(oid) {
-    let method = "lvar.toggle";
-    if (this.eva.api_version == 3) {
-      method = "toggle";
-    }
-    await this.eva.call(method, oid);
+  async toggle(oid: string) {
+    await this.eva.call("lvar.toggle", oid);
   }
   /**
    * Increment lvar value
@@ -297,13 +387,9 @@ class EVA_LVAR {
    *
    * @returns the new value
    */
-  async incr(oid) {
-    let method = "lvar.incr";
-    if (this.eva.api_version == 3) {
-      method = "increment";
-    }
-    let data = await this.eva.call(method, oid);
-    return data["result"];
+  async incr(oid: string): Promise<number> {
+    let data = (await this.eva.call("lvar.incr", oid)) as LvarIncrDecrResult;
+    return data.result;
   }
   /**
    * Decrement lvar value
@@ -312,13 +398,9 @@ class EVA_LVAR {
    *
    * @returns the new value
    */
-  async decr(oid) {
-    let method = "lvar.decr";
-    if (this.eva.api_version == 3) {
-      method = "decrement";
-    }
-    let data = await this.eva.call(method, oid);
-    return data["result"];
+  async decr(oid: string) {
+    let data = (await this.eva.call("lvar.decr", oid)) as LvarIncrDecrResult;
+    return data.result;
   }
   /**
    * Set lvar state
@@ -327,20 +409,17 @@ class EVA_LVAR {
    * @param status {numberr} lvar status
    * @param value lvar value
    */
-  async set(oid, status, value) {
-    let params = {};
+  async set(oid: string, status?: number, value?: any) {
+    let params: any = {};
     if (status !== undefined) {
-      params["status"] = status;
+      params.status = status;
     }
     if (value !== undefined) {
-      params["value"] = value;
+      params.value = value;
     }
     if (params) {
       let method = "lvar.set";
-      if (this.eva.api_version == 3) {
-        method = "set";
-      }
-      await this.eva.call(method, oid, params);
+      await this.eva.call("lvar.set", oid, params);
     }
   }
   /**
@@ -349,7 +428,7 @@ class EVA_LVAR {
    * @param oid {string} lvar oid
    * @param status {number} lvar status
    */
-  async set_status(oid, status) {
+  async set_status(oid: string, status: number) {
     await this.set(oid, status);
   }
   /**
@@ -358,8 +437,8 @@ class EVA_LVAR {
    * @param oid {string} lvar oid
    * @param value lvar value
    */
-  async set_value(oid, value) {
-    await this.set(oid, undefined, value);
+  async set_value(oid: string, value: any) {
+    await this.set(oid, (value = value));
   }
 
   /**
@@ -369,41 +448,83 @@ class EVA_LVAR {
    *
    * @returns seconds to expiration, -1 if expired, -2 if stopped
    */
-  expires(lvar_oid) {
-    // get item
-    var i = this.eva.state(
-      (lvar_oid.startsWith("lvar:") ? "" : "lvar:") + lvar_oid
-    );
+  expires(lvar_oid: string): number | null | undefined {
+    // get item state
+    let state = this.eva.state(lvar_oid);
     // if no such item
-    if (i === undefined) return undefined;
+    if (state === undefined) return undefined;
     // if item has no expiration or expiration is set to zero
-    if (this.eva.api_version == 4) {
-      if (!i.meta || i.meta.expires === undefined || i.meta.expires == 0)
-        return null;
-    } else {
-      if (i.expires === undefined || i.expires == 0) return null;
+    if (
+      !state.meta ||
+      state.meta.expires === undefined ||
+      state.meta.expires == 0
+    ) {
+      return null;
     }
     // if no timestamp diff
     if (this.eva.tsdiff == null) return undefined;
     // if timer is disabled (stopped), return -2
-    if (i.status == 0) return -2;
+    if (state.status == 0) return -2;
     // if timer is expired, return -1
-    if (i.status == -1) return -1;
-    var t;
-    if (this.eva.api_version == 4) {
-      t = i.meta.expires - new Date().getTime() / 1000 + this.eva.tsdiff + i.t;
-    } else {
-      t =
-        i.expires - new Date().getTime() / 1000 + this.eva.tsdiff + i.set_time;
-    }
+    if (state.status == -1) return -1;
+    let t =
+      state.meta.expires -
+      new Date().getTime() / 1000 +
+      this.eva.tsdiff +
+      state.t;
     if (t < 0) t = 0;
     return t;
   }
 }
 
 class EVA {
+  action: EVA_ACTION;
+  lvar: EVA_LVAR;
+  api_uri: string;
+  apikey: string;
+  api_token: string;
+  //api_version: number | null;
+  authorized_user: string | null;
+  clear_unavailable: boolean;
+  client_id: string | null;
+  debug: boolean | number;
+  external: External;
+  evajw: any;
+  in_evaHI: boolean;
+  log: LogCollector;
+  logger: Logger;
+  logged_in: boolean;
+  login: string;
+  login_xopts: object | null;
+  log_level_names: Map<number, string>;
+  password: string;
+  set_auth_cookies: boolean;
+  state_updates: boolean | Array<string>;
+  tsdiff: number;
+  version: string;
+  wasm: boolean;
+  ws_mode: boolean;
+  ws: any;
+  server_info: any;
+  _api_call_id: number;
+  _handlers: Map<HandlerId, (...args: any[]) => void>;
+  _intervals: Map<IntervalId, number>;
+  _ws_handler_registered: boolean;
+  _heartbeat_reloader: any;
+  _ajax_reloader: any;
+  _log_reloader: any;
+  _scheduled_restarter: any;
+  _action_states: Map<string, ActionResult>;
+  _action_watch_functions: Map<String, Array<(result: ActionResult) => void>>;
+  _last_ping: number | null;
+  _last_pong: number | null;
+  _log_started: boolean;
+  _log_first_load: boolean;
+  _log_loaded: boolean;
+
   constructor() {
     this.version = eva_framework_version;
+    this.logger = new Logger();
     this.login = "";
     this.password = "";
     this.login_xopts = null;
@@ -420,46 +541,54 @@ class EVA {
     this._ws_handler_registered = false;
     this.ws_mode = true;
     this.ws = null;
-    this.api_version = null;
+    //this.api_version = null;
     this.client_id = null;
     this._api_call_id = 0;
+    this.tsdiff = 0;
+    this._last_ping = null;
+    this._last_pong = null;
+    this._log_started = false;
+    this._log_first_load = false;
+    this._log_loaded = false;
     this.in_evaHI =
       typeof navigator !== "undefined" &&
-      navigator.userAgent &&
+      typeof navigator.userAgent === "string" &&
       navigator.userAgent.startsWith("evaHI ");
     this.log = {
       level: 20,
       records: 200
     };
-    this._handlers = { "heartbeat.error": this.restart };
-    this._intervals = {
-      ajax_reload: 2,
-      ajax_log_reload: 2,
-      action_watch: 0.5,
-      heartbeat: 5,
-      reload: 5,
-      restart: 1,
-      ws_buf_ttl: 0
-    };
-    this.log_level_names = {
-      10: "DEBUG",
-      20: "INFO",
-      30: "WARNING",
-      40: "ERROR",
-      50: "CRITICAL"
-    };
+    this._handlers = new Map([[HandlerId.HeartBeatError, this.restart]]);
+    this._handlers.set(HandlerId.HeartBeatError, this.restart);
+    this._intervals = new Map([
+      [IntervalId.AjaxReload, 2],
+      [IntervalId.AjaxLogReload, 2],
+      [IntervalId.ActionWatch, 0.5],
+      [IntervalId.Heartbeat, 5],
+      [IntervalId.Reload, 5],
+      [IntervalId.Restart, 1],
+      [IntervalId.WSBufTTL, 0]
+    ]);
+    this.log_level_names = new Map([
+      [10, "DEBUG"],
+      [20, "INFO"],
+      [30, "WARNING"],
+      [40, "ERROR"],
+      [50, "CRITICAL"]
+    ]);
     this._heartbeat_reloader = null;
     this._ajax_reloader = null;
     this._log_reloader = null;
     this._scheduled_restarter = null;
-    this._action_watch_functions = [];
-    this._action_states = {};
+    this._action_watch_functions = new Map();
+    this._action_states = new Map();
     this._clear();
     this._clear_watchers();
     this.action = new EVA_ACTION(this);
     this.lvar = new EVA_LVAR(this);
     this.evajw = null;
     this.external = {};
+    this.server_info = null;
     if (typeof window !== "undefined") {
       if (typeof window.fetch !== "undefined") {
         this.external.fetch = window.fetch.bind(window);
@@ -474,24 +603,27 @@ class EVA {
     } else {
       this.external.WebSocket = null;
     }
-    if (typeof QRious !== "undefined") {
-      this.external.QRious = QRious;
+    if (
+      typeof window !== "undefined" &&
+      typeof (window as any).QRious !== "undefined"
+    ) {
+      this.external.QRious = (window as any).QRious;
     } else {
       this.external.QRious = null;
     }
   }
 
-  bulk_request() {
+  bulk_request(): EVABulkRequest {
     return new EVABulkRequest(this);
   }
 
   // WASM override
   /**
    * Get framework engine mode
-   *
+   
    * @returns "js" or "wasm"
    */
-  get_mode() {
+  get_mode(): string {
     return "js";
   }
 
@@ -501,11 +633,11 @@ class EVA {
    * After calling the function authenticates user, opens a WebSocket (in
    * case of WS mode) or schedule AJAXs refresh interval.
    */
-  async start() {
+  async start(): Promise<boolean> {
     this._cancel_scheduled_restart();
     this._debug("framework", `version: ${this.version}`);
     if (typeof fetch === "undefined") {
-      jsaltt.logger.error(
+      this.logger.error(
         '"fetch" function is unavailable. Upgrade your web browser or ' +
           "connect polyfill"
       );
@@ -516,15 +648,15 @@ class EVA {
       return true;
     }
     if (this.wasm && !this.evajw) {
-      this._start_evajw();
+      return this._start_evajw();
     } else {
-      this._start_engine();
+      return this._start_engine();
     }
   }
-  _start_engine() {
+  _start_engine(): boolean {
     this._last_ping = null;
     this._last_pong = null;
-    var q = {};
+    let q: LoginPayload = {};
     if (this.apikey) {
       q = { k: this.apikey };
       if (this.login_xopts) {
@@ -544,7 +676,7 @@ class EVA {
       q = { a: this.api_token };
       this._debug("start", "logging in with existing auth token");
     } else if (this.set_auth_cookies) {
-      var token = cookies.read("auth");
+      let token = cookies.read("auth");
       if (token) {
         q = { a: token };
         this._debug("start", "logging in with cookie-cached auth token");
@@ -553,76 +685,70 @@ class EVA {
     if (Object.keys(q).length === 0) {
       this._debug("start", "logging in without credentials");
     }
-    var me = this;
-    var user;
+    let user: string;
     this._api_call("login", q)
-      .then(function (data) {
-        me.api_token = data.token;
+      .then((data) => {
+        this.api_token = data.token;
         user = data.user;
-        me._set_token_cookie();
-        if (!me.api_version) {
-          if (data.api_version) {
-            me.api_version = data.api_version;
-          } else {
-            me.api_version = 3;
-          }
-        }
-        if (me.evajw) {
-          me.evajw.set_api_version(me.api_version);
-        }
+        this._set_token_cookie();
+        //if (!this.api_version) {
+        //if (data.api_version) {
+        //this.api_version = data.api_version;
+        //} else {
+        //this.api_version = 4;
+        //}
+        //}
+        //if (this.evajw) {
+        //this.evajw.set_api_version(data.api_version || 4);
+        //}
         return Promise.all([
-          me._load_states(),
-          me._heartbeat(me, true),
-          me._start_ws()
+          this._load_states(),
+          this._heartbeat(true),
+          this._start_ws()
         ]);
       })
-      .then(function () {
-        if (!me.ws_mode) {
-          if (me._ajax_reloader) {
-            clearInterval(me._ajax_reloader);
+      .then(() => {
+        if (!this.ws_mode) {
+          if (this._ajax_reloader) {
+            clearInterval(this._ajax_reloader);
           }
-          me._ajax_reloader = setInterval(function () {
-            me._load_states(me)
-              .then(function () {})
-              .catch(function (err) {});
-          }, me._intervals.ajax_reload * 1000);
+          this._ajax_reloader = setInterval(() => {
+            this._load_states().catch(() => {});
+          }, (this._intervals.get(IntervalId.AjaxReload) as number) * 1000);
         } else {
-          if (me._ajax_reloader) {
-            clearInterval(me._ajax_reloader);
+          if (this._ajax_reloader) {
+            clearInterval(this._ajax_reloader);
           }
-          if (me._intervals.reload) {
-            me._ajax_reloader = setInterval(function () {
-              me._load_states(me)
-                .then(function () {})
-                .catch(function (err) {});
-            }, me._intervals.reload * 1000);
+          let reload = this._intervals.get(IntervalId.Reload) as number;
+          if (reload) {
+            this._ajax_reloader = setInterval(() => {
+              this._load_states().catch(() => {});
+            }, reload * 1000);
           }
         }
-        if (me._heartbeat_reloader) {
-          clearInterval(me._heartbeat_reloader);
+        if (this._heartbeat_reloader) {
+          clearInterval(this._heartbeat_reloader);
         }
-        me._heartbeat_reloader = setInterval(function () {
-          me._heartbeat(me)
-            .then(function () {})
-            .catch(function () {});
-        }, me._intervals.heartbeat * 1000);
-        me._debug("start", `login successful, user: ${user}`);
-        me.logged_in = true;
-        me.authorized_user = user;
-        me._invoke_handler("login.success");
+        this._heartbeat_reloader = setInterval(() => {
+          this._heartbeat(false).catch(() => {});
+        }, (this._intervals.get(IntervalId.Heartbeat) as number) * 1000);
+        this._debug("start", `login successful, user: ${user}`);
+        this.logged_in = true;
+        this.authorized_user = user;
+        this._invoke_handler(HandlerId.LoginSuccess);
       })
-      .catch(function (err) {
-        me._debug("start", err);
-        me.logged_in = false;
+      .catch((err) => {
+        this._debug("start", err);
+        this.logged_in = false;
         if (err.code === undefined) {
           err.code = 4;
           err.message = "Unknown error";
         }
-        me._debug("start", `login failed: ${err.code} (${err.message})`);
-        me._stop_engine();
-        me.error_handler(err, "login");
-        me.erase_token_cookie();
-        me._invoke_handler("login.failed", err);
+        this._debug("start", `login failed: ${err.code} (${err.message})`);
+        this._stop_engine();
+        this.error_handler(err, "login");
+        this.erase_token_cookie();
+        this._invoke_handler(HandlerId.LoginFailed, err);
       });
     return true;
   }
@@ -634,11 +760,7 @@ class EVA {
    */
   system_name() {
     if (this.server_info) {
-      if (this.api_version == 4) {
-        return this.server_info.system_name;
-      } else {
-        return this.server_info.system;
-      }
+      return this.server_info.system_name;
     } else {
       return null;
     }
@@ -648,7 +770,7 @@ class EVA {
    *
    * @param sec {number} seconds to sleep
    */
-  sleep(sec) {
+  async sleep(sec: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, sec * 1000));
   }
 
@@ -659,7 +781,7 @@ class EVA {
    *
    * @param log_level {number} log processing level (optional)
    */
-  log_start(log_level) {
+  log_start(log_level?: number) {
     this._log_started = true;
     if (log_level !== undefined) {
       this.log.level = log_level;
@@ -668,25 +790,11 @@ class EVA {
       this._log_loaded = false;
       this._load_log_entries(true);
       if (!this.ws_mode) {
-        var me = this;
-        this._log_reloader = setInterval(function () {
-          me._load_log_entries(false, me);
-        }, this._intervals.ajax_log_reload * 1000);
+        this._log_reloader = setInterval(() => {
+          this._load_log_entries(false);
+        }, (this._intervals.get(IntervalId.AjaxLogReload) as number) * 1000);
       }
     }
-  }
-
-  /**
-   * Get lvar expiration time left
-   *
-   * DEPRECATED use $eva.lvar.expires
-   *
-   * @param lvar_oid {string} lvar OID
-   *
-   * @returns seconds to expiration, -1 if expired, -2 if stopped
-   */
-  expires_in(lvar_oid) {
-    return this.lvar.expires(lvar_oid);
   }
 
   /**
@@ -694,7 +802,7 @@ class EVA {
    *
    * @param log_level {number} log processing level
    */
-  log_level(log_level) {
+  log_level(log_level: number) {
     this.log.level = log_level;
     this._set_ws_log_level(log_level);
     this._load_log_entries(true);
@@ -708,13 +816,12 @@ class EVA {
   restart() {
     this._cancel_scheduled_restart();
     this._debug("restart", "performing restart");
-    var me = this;
     this.stop(true)
-      .then(function () {
-        me._schedule_restart();
+      .then(() => {
+        this._schedule_restart();
       })
-      .catch(function () {
-        me._schedule_restart();
+      .catch(() => {
+        this._schedule_restart();
       });
   }
 
@@ -739,16 +846,16 @@ class EVA {
    *
    * @returns Promise object
    */
-  call(func, p1, p2) {
-    var params;
+  call(method: string, p1?: object | string, p2?: object): any {
+    let params;
     if (typeof p1 === "string" || Array.isArray(p1)) {
-      params = jsaltt.extend({}, p2);
-      params["i"] = p1;
+      params = to_obj(p2) as any;
+      params.i = p1;
     } else {
       params = p1;
     }
-    var p = this._prepare_call_params(params);
-    return this._api_call(func, p);
+    let p = this._prepare_call_params(params);
+    return this._api_call(method, p);
   }
 
   /**
@@ -758,19 +865,14 @@ class EVA {
    *
    * the current mode can be obtained from $eva.server_info.aci.token_mode
    */
-  set_readonly() {
-    var me = this;
-    var method = "set_token_readonly";
-    if (this.api_version == 4) {
-      method = "session.set_readonly";
-    }
-    return new Promise(function (resolve, reject) {
-      me.call(method)
-        .then(function (data) {
-          me.server_info.aci.token_mode = "readonly";
-          resolve(data);
+  set_readonly(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.call("session.set_readonly")
+        .then((data: any) => {
+          this.server_info.aci.token_mode = "readonly";
+          resolve();
         })
-        .catch(function (err) {
+        .catch((err: any) => {
           reject(err);
         });
     });
@@ -785,18 +887,12 @@ class EVA {
    * @param p {string} password
    * @param xopts {object} extra options (e.g. OTP)
    */
-  set_normal(u, p, xopts) {
-    var q = {};
-    var user;
-    if (u === undefined) {
-      user = "";
-    } else {
-      user = u;
-    }
-    if (p === undefined || p === null) {
+  set_normal(user?: string, password?: string, xopts?: object) {
+    let q: LoginPayload = {};
+    if (typeof password === "undefined" || password === null) {
       q = { k: user };
     } else {
-      q = { u: user, p: p };
+      q = { u: user, p: password };
     }
     q.a = this.api_token;
     if (xopts !== undefined) {
@@ -806,31 +902,31 @@ class EVA {
     me._api_call("login", q)
       .then(function () {
         me.server_info.aci.token_mode = "normal";
-        me._invoke_handler("login.success");
+        me._invoke_handler(HandlerId.LoginSuccess);
       })
       .catch(function (err) {
         me.error_handler(err, "set_normal");
         if (err.code !== -32022) {
-          me._invoke_handler("login.failed", err);
+          me._invoke_handler(HandlerId.LoginFailed, err);
         }
       });
     return true;
   }
 
-  error_handler(err, method) {
+  error_handler(err: EvaError, method: string) {
     if (err.code == -32022) {
-      let msg = this.parse_svc_message(err.message);
+      let msg = this.parse_svc_message(err.message) as any;
       msg.method = method;
       if (msg && msg.kind == "OTP") {
         switch (msg.message) {
           case "REQ":
-            this._invoke_handler("login.otp_required", msg);
+            this._invoke_handler(HandlerId.LoginOTPRequired, msg);
             return;
           case "INVALID":
-            this._invoke_handler("login.otp_invalid", msg);
+            this._invoke_handler(HandlerId.LoginOTPInvalid, msg);
             return;
           case "SETUP":
-            this._invoke_handler("login.otp_setup", msg);
+            this._invoke_handler(HandlerId.LoginOTPSetup, msg);
             return;
         }
       }
@@ -850,10 +946,10 @@ class EVA {
    *
    * @param func {function} function called on event
    */
-  on(event, func) {
-    this._handlers[event] = func;
-    this._debug("on", "setting handler for " + event);
-    if (event == "ws.event") {
+  on(event: HandlerId, func: (...args: any[]) => void) {
+    this._handlers.set(event, func);
+    this._debug("on", `setting handler for ${event}`);
+    if (event == HandlerId.WsEvent) {
       this._ws_handler_registered = true;
     }
   }
@@ -861,27 +957,12 @@ class EVA {
   /**
    * Set intervals
    *
-   * @param i {string} interval, possible values:
-   *            ajax_reload, heartbeat, log_reload, reload, restart
+   * @param interval_id {string} interval, possible values:
+   *            ajax_reload, heartbeat, log_reload, reload, restart, action_watch
    * @param value {number} interval value (in seconds)
    */
-  interval(i, value) {
-    this._intervals[i] = value;
-  }
-
-  /**
-   * Get server CVAR
-   *
-   * (EVA ICS v3)
-   *
-   * All CVARs are also available as globals
-   *
-   * @param name {string} cvar name
-   *
-   * @returns cvar value
-   */
-  cvar(name) {
-    return this._cvars[name];
+  set_interval(interval_id: IntervalId, value: number) {
+    this._intervals.set(interval_id, value);
   }
 
   /**
@@ -1114,7 +1195,7 @@ class EVA {
    *
    * @returns Promise object
    */
-  stop(keep_auth) {
+  stop(keep_auth?: boolean) {
     var me = this;
     return new Promise(function (resolve, reject) {
       me._stop_engine();
@@ -1155,11 +1236,11 @@ class EVA {
         mod.init_engine();
         this.evajw = mod;
         let build = mod.get_build();
-        console.log("EVA ICS JavaScript WASM engine loaded. Build: " + build);
+        log.info("EVA ICS JavaScript WASM engine loaded. Build: " + build);
         try {
           mod.check_license();
         } catch (err) {
-          jsaltt.logger.error("License check failed. WASM engine disabled");
+          log.error("License check failed. WASM engine disabled");
           this.wasm = false;
           this._start_engine();
           return;
@@ -1196,7 +1277,7 @@ class EVA {
     }
   }
 
-  _start_evajw() {
+  _start_evajw(): boolean {
     this.evajw = undefined;
     import(/*webpackIgnore: true*/ "./evajw/evajw.js?" + new Date().getTime())
       .then((mod) => {
@@ -1253,8 +1334,8 @@ class EVA {
     throw "critical";
   }
 
-  _api_call(func, params, prepare_only) {
-    if (this._api_call_id == 0xffff_ffff) {
+  _prepare_api_call(method: string, params: object): JsonRpcRequest {
+    if (this._api_call_id == 4294967295) {
       this._api_call_id = 0;
     }
     this._api_call_id += 1;
@@ -1263,94 +1344,89 @@ class EVA {
     var me = this;
     this._debug("_api_call", `${id}: ${api_uri}: ${func}`);
     if (this.debug == 2) {
-      console.log(func, params);
+      log.debug(func, params);
     }
-    if (prepare_only) {
-      var payload = {
-        jsonrpc: "2.0",
-        method: func,
-        params: params,
-        id: id
-      };
-      return payload;
-    } else {
-      return new Promise(function (resolve, reject) {
-        var payload = {
-          jsonrpc: "2.0",
-          method: func,
-          params: params,
-          id: id
-        };
-        me.external
-          .fetch(api_uri, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            redirect: "error",
-            body: JSON.stringify(payload)
-          })
-          .then(function (response) {
-            if (response.ok) {
-              me._debug("_api_call", id + " success");
-              response
-                .json()
-                .then(function (data) {
-                  if (
-                    !"id" in data ||
-                    data.id != id ||
-                    (!"result" in data && !"error" in data)
-                  ) {
-                    reject({
-                      code: -32009,
-                      message: "Invalid server response",
-                      data: data
-                    });
-                  } else if ("error" in data) {
-                    me._debug(
-                      "_api_call",
-                      `${id} failed: ${data.error.code} (${data.error.message})`
-                    );
-                    reject({
-                      code: data.error.code,
-                      message: data.error.message,
-                      data: data
-                    });
-                  } else {
-                    if (me.debug == 2) {
-                      console.log(`API ${id} ${func} response`, data.result);
-                    }
-                    resolve(data.result);
-                  }
-                })
-                .catch(function (err) {
-                  var code = -32009;
-                  var message = "Invalid server response";
-                  me._debug("_api_call", `${id} failed: ${code} (${message})`);
+    var payload = {
+      jsonrpc: "2.0",
+      method: func,
+      params: params,
+      id: id
+    };
+    return payload;
+  }
+
+  async _api_call(method: string, params?: object): Promise<any> {
+    let payload = this._prepare_api_call(method, params);
+    return new Promise(function (resolve, reject) {
+      me.external
+        .fetch(api_uri, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          redirect: "error",
+          body: JSON.stringify(payload)
+        })
+        .then(function (response) {
+          if (response.ok) {
+            me._debug("_api_call", id + " success");
+            response
+              .json()
+              .then(function (data) {
+                if (
+                  !"id" in data ||
+                  data.id != id ||
+                  (!"result" in data && !"error" in data)
+                ) {
                   reject({
-                    code: code,
-                    message: message,
+                    code: -32009,
+                    message: "Invalid server response",
                     data: data
                   });
+                } else if ("error" in data) {
+                  me._debug(
+                    "_api_call",
+                    `${id} failed: ${data.error.code} (${data.error.message})`
+                  );
+                  reject({
+                    code: data.error.code,
+                    message: data.error.message,
+                    data: data
+                  });
+                } else {
+                  if (me.debug == 2) {
+                    log.debug(`API ${id} ${func} response`, data.result);
+                  }
+                  resolve(data.result);
+                }
+              })
+              .catch(function (err) {
+                var code = -32009;
+                var message = "Invalid server response";
+                me._debug("_api_call", `${id} failed: ${code} (${message})`);
+                reject({
+                  code: code,
+                  message: message,
+                  data: data
                 });
-            } else {
-              var code = -32007;
-              var message = "Server error";
-              me._debug("_api_call", `${id} failed: ${code} (${message})`);
-              reject({ code: code, message: message, data: data });
-            }
-          })
-          .catch(function (err) {
+              });
+          } else {
             var code = -32007;
             var message = "Server error";
             me._debug("_api_call", `${id} failed: ${code} (${message})`);
-            reject({ code: code, message: message, data: null });
-          });
-      });
-    }
+            reject({ code: code, message: message, data: data });
+          }
+        })
+        .catch(function (err) {
+          var code = -32007;
+          var message = "Server error";
+          me._debug("_api_call", `${id} failed: ${code} (${message})`);
+          reject({ code: code, message: message, data: null });
+        });
+    });
   }
 
-  _heartbeat(me, on_login) {
+  _heartbeat(on_login) {
     return new Promise(function (resolve, reject) {
       if (on_login) me._last_ping = null;
       var q = {};
@@ -1409,7 +1485,7 @@ class EVA {
     });
   }
 
-  _load_log_entries(postprocess, me) {
+  _load_log_entries(postprocess) {
     if (!me) var me = this;
     var method = "log_get";
     if (me.api_version == 4) {
@@ -1557,7 +1633,7 @@ class EVA {
     return masks;
   }
 
-  _load_states(me) {
+  _load_states() {
     if (!me) var me = this;
     return new Promise(function (resolve, reject) {
       if (!me.state_updates) {
@@ -1583,7 +1659,7 @@ class EVA {
               masks = me._state_updates_v3_as_v4_list(me);
               params["i"] = masks;
             } catch (err) {
-              console.log(err);
+              log.error(err);
             }
           }
         } else {
@@ -1883,20 +1959,14 @@ class EVA {
     }
   }
 
-  _invoke_handler(handler) {
-    let me;
-    if (this === undefined) {
-      me = window.$eva;
-    } else {
-      me = this;
-    }
-    var f = me._handlers[handler];
+  _invoke_handler(handler: HandlerId, ...args: any[]) {
+    let f = this._handlers.get(handler);
     if (f) {
-      me._debug("invoke_handler", "invoking for " + handler);
+      this._debug("invoke_handler", "invoking for " + handler);
       try {
-        return f.apply(me, [].slice.call(arguments, 1));
+        f.apply(this, args);
       } catch (err) {
-        jsaltt.logger.error(`handler for ${handler}:`, err);
+        this.logger.error(`handler for ${handler}:`, err);
       }
     }
   }
@@ -1905,22 +1975,13 @@ class EVA {
     return new RegExp("^" + mask.split("*").join(".*") + "$").test(oid);
   }
 
-  _debug(method) {
-    let me;
-    if (this === undefined) {
-      me = window.$eva;
-    } else {
-      me = this;
-    }
-    if (me.debug) {
-      jsaltt.logger.debug.apply(
-        jsaltt.logger,
-        ["EVA::" + method].concat([].slice.call(arguments, 1))
-      );
+  _debug(method, ...data: any[]) {
+    if (this.debug) {
+      this.logger.debug.apply([`EVA::${method}`].concat(data));
     }
   }
 
-  parse_svc_message(msg) {
+  parse_svc_message(msg?: string): SvcMessage {
     if (msg && msg.startsWith("|")) {
       let sp = msg.split("|");
       let kind = sp[1];
@@ -2061,12 +2122,10 @@ class EVA {
   }
 }
 
-let $eva;
-
 if (typeof window !== "undefined") {
   $eva = new EVA();
   window.$eva = new EVA();
 }
 
 export default EVA;
-export { EVA, $eva };
+export { EVA, EvaError, ActionResult, HandlerId, IntervalId };
