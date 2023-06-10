@@ -541,14 +541,18 @@ class EVA {
         q.xopts = this.login_xopts;
       }
       this._debug("start", "logging in with password");
+    } else if (this.api_token) {
+      q = { a: this.api_token };
+      this._debug("start", "logging in with existing auth token");
     } else if (this.set_auth_cookies) {
       var token = cookies.read("auth");
       if (token) {
         q = { a: token };
-        this._debug("start", "logging in with auth token");
-      } else {
-        this._debug("start", "logging in without credentials");
+        this._debug("start", "logging in with cookie-cached auth token");
       }
+    }
+    if (Object.keys(q).length === 0) {
+      this._debug("start", "logging in without credentials");
     }
     var me = this;
     var user;
