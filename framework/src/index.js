@@ -57,7 +57,7 @@ class EVABulkRequest {
     var api_uri = this.eva.api_uri + "/jrpc";
     var me = this;
     me.eva._debug("call_bulk", `${api_uri}`);
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       me.eva.external
         .fetch(api_uri, {
           method: "POST",
@@ -67,11 +67,11 @@ class EVABulkRequest {
           redirect: "error",
           body: JSON.stringify(me.payload)
         })
-        .then(function(response) {
+        .then(function (response) {
           if (response.ok) {
             response
               .json()
-              .then(function(data) {
+              .then(function (data) {
                 me.eva._debug("call_bulk success");
                 if (Array.isArray(data)) {
                   data.forEach((d) => {
@@ -127,7 +127,7 @@ class EVABulkRequest {
                   });
                 }
               })
-              .catch(function(err) {
+              .catch(function (err) {
                 var code = -32009;
                 var message = "Invalid server response";
                 me.eva._debug("call_bulk", `failed: ${code} (${message})`);
@@ -144,7 +144,7 @@ class EVABulkRequest {
             reject({ code: code, message: message, data: data });
           }
         })
-        .catch(function(err) {
+        .catch(function (err) {
           var code = -32007;
           var message = "Server error";
           me.eva._debug("call_bulk", `failed: ${code} (${message})`);
@@ -239,7 +239,7 @@ class EVA_ACTION {
       return data;
     } else {
       let me = this;
-      return new Promise(function(resolve) {
+      return new Promise(function (resolve) {
         me.eva.watch_action(data.uuid, (action) => {
           if (action.finished) {
             resolve(action);
@@ -553,7 +553,7 @@ class EVA {
     var me = this;
     var user;
     this._api_call("login", q)
-      .then(function(data) {
+      .then(function (data) {
         me.api_token = data.token;
         user = data.user;
         me._set_token_cookie();
@@ -573,42 +573,42 @@ class EVA {
           me._start_ws()
         ]);
       })
-      .then(function() {
+      .then(function () {
         if (!me.ws_mode) {
           if (me._ajax_reloader) {
             clearInterval(me._ajax_reloader);
           }
-          me._ajax_reloader = setInterval(function() {
+          me._ajax_reloader = setInterval(function () {
             me._load_states(me)
-              .then(function() {})
-              .catch(function(err) {});
+              .then(function () {})
+              .catch(function (err) {});
           }, me._intervals.ajax_reload * 1000);
         } else {
           if (me._ajax_reloader) {
             clearInterval(me._ajax_reloader);
           }
           if (me._intervals.reload) {
-            me._ajax_reloader = setInterval(function() {
+            me._ajax_reloader = setInterval(function () {
               me._load_states(me)
-                .then(function() {})
-                .catch(function(err) {});
+                .then(function () {})
+                .catch(function (err) {});
             }, me._intervals.reload * 1000);
           }
         }
         if (me._heartbeat_reloader) {
           clearInterval(me._heartbeat_reloader);
         }
-        me._heartbeat_reloader = setInterval(function() {
+        me._heartbeat_reloader = setInterval(function () {
           me._heartbeat(me)
-            .then(function() {})
-            .catch(function() {});
+            .then(function () {})
+            .catch(function () {});
         }, me._intervals.heartbeat * 1000);
         me._debug("start", `login successful, user: ${user}`);
         me.logged_in = true;
         me.authorized_user = user;
         me._invoke_handler("login.success");
       })
-      .catch(function(err) {
+      .catch(function (err) {
         me._debug("start", err);
         me.logged_in = false;
         if (err.code === undefined) {
@@ -666,7 +666,7 @@ class EVA {
       this._load_log_entries(true);
       if (!this.ws_mode) {
         var me = this;
-        this._log_reloader = setInterval(function() {
+        this._log_reloader = setInterval(function () {
           me._load_log_entries(false, me);
         }, this._intervals.ajax_log_reload * 1000);
       }
@@ -707,10 +707,10 @@ class EVA {
     this._debug("restart", "performing restart");
     var me = this;
     this.stop(true)
-      .then(function() {
+      .then(function () {
         me._schedule_restart();
       })
-      .catch(function() {
+      .catch(function () {
         me._schedule_restart();
       });
   }
@@ -761,13 +761,13 @@ class EVA {
     if (this.api_version == 4) {
       method = "session.set_readonly";
     }
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       me.call(method)
-        .then(function(data) {
+        .then(function (data) {
           me.server_info.aci.token_mode = "readonly";
           resolve(data);
         })
-        .catch(function(err) {
+        .catch(function (err) {
           reject(err);
         });
     });
@@ -801,11 +801,11 @@ class EVA {
     }
     var me = this;
     me._api_call("login", q)
-      .then(function() {
+      .then(function () {
         me.server_info.aci.token_mode = "normal";
         me._invoke_handler("login.success");
       })
-      .catch(function(err) {
+      .catch(function (err) {
         me.error_handler(err, "set_normal");
         if (err.code !== -32022) {
           me._invoke_handler("login.failed", err);
@@ -953,9 +953,9 @@ class EVA {
       if (this.api_version == 4) {
         method = "action.result";
       }
-      var watcher = function() {
+      var watcher = function () {
         me.call(method, { u: uuid })
-          .then(function(result) {
+          .then(function (result) {
             if (
               !me._action_states[uuid] ||
               me._action_states[uuid].status != result.status
@@ -967,16 +967,16 @@ class EVA {
               delete me._action_watch_functions[uuid];
               delete me._action_states[uuid];
             } else {
-              setTimeout(watcher, me._intervals.action_watch);
+              setTimeout(watcher, me._intervals.action_watch * 1000);
             }
           })
-          .catch(function(err) {
+          .catch(function (err) {
             me._action_watch_functions[uuid].map((f) => f(err));
             delete me._action_watch_functions[uuid];
             delete me._action_states[uuid];
           });
       };
-      setTimeout(watcher, this._intervals.action_watch);
+      setTimeout(watcher, this._intervals.action_watch * 1000);
     }
   }
 
@@ -1024,9 +1024,8 @@ class EVA {
   // WASM override (not supported)
   _unwatch_mask_func(oid, func) {
     if (oid in this._update_state_mask_functions) {
-      this._update_state_mask_functions[
-        oid
-      ] = this._update_state_mask_functions[oid].filter((el) => el !== func);
+      this._update_state_mask_functions[oid] =
+        this._update_state_mask_functions[oid].filter((el) => el !== func);
     }
   }
 
@@ -1094,7 +1093,7 @@ class EVA {
   // WASM override
   _states_by_mask(oid_mask) {
     var result = [];
-    Object.keys(this._states).map(function(k) {
+    Object.keys(this._states).map(function (k) {
       if (this._oid_match(k, oid_mask)) {
         result.push(this._states[k]);
       }
@@ -1114,7 +1113,7 @@ class EVA {
    */
   stop(keep_auth) {
     var me = this;
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       me._stop_engine();
       me.logged_in = false;
       if (keep_auth) {
@@ -1124,21 +1123,21 @@ class EVA {
           let token = me.api_token;
           me.erase_token_cookie();
           me._api_call("logout", { a: token })
-            .then(function() {
+            .then(function () {
               me.api_token = "";
               resolve();
             })
-            .catch(function(err) {
+            .catch(function (err) {
               reject(err);
             });
         }
       } else {
         me.call("logout")
-          .then(function() {
+          .then(function () {
             me.erase_token_cookie();
             resolve();
           })
-          .catch(function(err) {
+          .catch(function (err) {
             me.erase_token_cookie();
             reject(err);
           });
@@ -1272,7 +1271,7 @@ class EVA {
       };
       return payload;
     } else {
-      return new Promise(function(resolve, reject) {
+      return new Promise(function (resolve, reject) {
         var payload = {
           jsonrpc: "2.0",
           method: func,
@@ -1288,12 +1287,12 @@ class EVA {
             redirect: "error",
             body: JSON.stringify(payload)
           })
-          .then(function(response) {
+          .then(function (response) {
             if (response.ok) {
               me._debug("_api_call", id + " success");
               response
                 .json()
-                .then(function(data) {
+                .then(function (data) {
                   if (
                     !"id" in data ||
                     data.id != id ||
@@ -1321,7 +1320,7 @@ class EVA {
                     resolve(data.result);
                   }
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                   var code = -32009;
                   var message = "Invalid server response";
                   me._debug("_api_call", `${id} failed: ${code} (${message})`);
@@ -1338,7 +1337,7 @@ class EVA {
               reject({ code: code, message: message, data: data });
             }
           })
-          .catch(function(err) {
+          .catch(function (err) {
             var code = -32007;
             var message = "Server error";
             me._debug("_api_call", `${id} failed: ${code} (${message})`);
@@ -1349,7 +1348,7 @@ class EVA {
   }
 
   _heartbeat(me, on_login) {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       if (on_login) me._last_ping = null;
       var q = {};
       if (on_login && me.api_version != 4) {
@@ -1386,14 +1385,14 @@ class EVA {
         }
       }
       me.call("test", q)
-        .then(function(data) {
+        .then(function (data) {
           me.server_info = data;
           me.tsdiff = new Date().getTime() / 1000 - data.time;
           if (on_login) {
             if (data["cvars"]) {
               me._cvars = data["cvars"];
               if (me.global_cvars) {
-                Object.keys(data["cvars"]).map(function(k) {
+                Object.keys(data["cvars"]).map(function (k) {
                   if (typeof global !== "undefined")
                     eval(`global.${k}="${data["cvars"][k]}"`);
                   if (typeof window !== "undefined")
@@ -1407,7 +1406,7 @@ class EVA {
           me._invoke_handler("heartbeat.success");
           resolve(true);
         })
-        .catch(function(err) {
+        .catch(function (err) {
           me._debug("heartbeat", "error: unable to send test API call");
           me._invoke_handler("heartbeat.error", err);
         });
@@ -1426,7 +1425,7 @@ class EVA {
       l: me.log.level,
       n: me.log.records
     })
-      .then(function(data) {
+      .then(function (data) {
         if (me.ws_mode && me._log_first_load) {
           me._set_ws_log_level(me.log.level);
         }
@@ -1438,14 +1437,14 @@ class EVA {
         }
         me._log_first_load = false;
       })
-      .catch(function(err) {
+      .catch(function (err) {
         jsaltt.logger.error("unable to load log entries");
       });
   }
 
   _schedule_restart() {
     var me = this;
-    me._scheduled_restarter = setTimeout(function() {
+    me._scheduled_restarter = setTimeout(function () {
       me.start();
     }, me._intervals.restart * 1000);
   }
@@ -1474,13 +1473,13 @@ class EVA {
     if (this.ws) {
       try {
         this.ws.onclose = null;
-        this.ws.onerror = function() {};
+        this.ws.onerror = function () {};
         //this.ws.send(JSON.stringify({s: 'bye'}));
         this.ws.close();
       } catch (err) {
         // web socket may be still open, will close later
         var ws = this.ws;
-        setTimeout(function() {
+        setTimeout(function () {
           try {
             ws.close();
           } catch (err) {}
@@ -1565,7 +1564,7 @@ class EVA {
 
   _load_states(me) {
     if (!me) var me = this;
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       if (!me.state_updates) {
         resolve(true);
       } else {
@@ -1605,11 +1604,11 @@ class EVA {
           }
         }
         me.call(method, params)
-          .then(function(data) {
+          .then(function (data) {
             me._process_loaded_states(data, me.clear_unavailable, me);
             resolve(true);
           })
-          .catch(function(err) {
+          .catch(function (err) {
             reject(err);
           });
       }
@@ -1618,7 +1617,7 @@ class EVA {
 
   _start_ws() {
     var me = this;
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       if (me.ws_mode) {
         var uri;
         if (!me.api_uri) {
@@ -1653,10 +1652,10 @@ class EVA {
           ws_uri += `&client_id=${me.client_id}`;
         }
         me.ws = new me.external.WebSocket(ws_uri);
-        me.ws.onmessage = function(evt) {
+        me.ws.onmessage = function (evt) {
           me._process_ws(evt.data);
         };
-        me.ws.addEventListener("open", function(event) {
+        me.ws.addEventListener("open", function (event) {
           me._debug("_start_ws", "ws connected");
           var st;
           if (me.state_updates) {
@@ -1841,7 +1840,7 @@ class EVA {
               state.set_time >= old_state.set_time))
         ) {
           if (old_state && (is_update || state.ieid == undefined)) {
-            Object.keys(old_state).map(function(k) {
+            Object.keys(old_state).map(function (k) {
               if (!(k in state)) {
                 state[k] = old_state[k];
               }
@@ -1854,7 +1853,7 @@ class EVA {
           );
           this._states[oid] = state;
           if (oid in this._update_state_functions) {
-            this._update_state_functions[oid].map(function(f) {
+            this._update_state_functions[oid].map(function (f) {
               try {
                 if (typeof f === "string" || f instanceof String) {
                   eval(f);
@@ -1869,9 +1868,9 @@ class EVA {
               }
             });
           }
-          Object.keys(this._update_state_mask_functions).map(function(k) {
+          Object.keys(this._update_state_mask_functions).map(function (k) {
             if (this._oid_match(oid, k)) {
-              this._update_state_mask_functions[k].map(function(f) {
+              this._update_state_mask_functions[k].map(function (f) {
                 try {
                   if (typeof f === "string" || f instanceof String) {
                     eval(f);
