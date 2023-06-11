@@ -2,7 +2,6 @@
   "name": "@eva-ics/framework",
   "version": "0.5.0",
   "description": "JavaScript Framework for EVA ICS",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsc src/*.ts --declaration --emitDeclarationOnly --declarationDir dist/",
@@ -13,6 +12,17 @@
     "url": "git+https://github.com/alttch/eva-js-framework.git"
   },
   "main": "./dist/framework.umd.js",
+  "module": "./dist/framework.es.js",
+  "files": [
+    "dist"
+  ],
+  "types": "./dist/lib.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/framework.es.js",
+      "require": "./dist/framework.umd.js"
+    }
+  },
   "keywords": [
     "iot",
     "iiot",
@@ -22,17 +32,6 @@
     "eva-ics"
   ],
   "author": "Altertech",
-  "files": [
-    "dist"
-  ],
-  "types": "./dist/lib.d.ts",
-  "module": "./dist/framework.es.js",
-  "exports": {
-    ".": {
-      "import": "./dist/framework.es.js",
-      "require": "./dist/framework.umd.js"
-    }
-  },
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/alttch/eva-js-framework/issues"
