@@ -1,7 +1,7 @@
 {
   "name": "@eva-ics/framework",
   "version": "0.5.0",
-  "description": "JavaScript Framework for EVA ICS",
+  "description": "JavaScript/TypeScript Framework for EVA ICS",
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsc src/*.ts --declaration --emitDeclarationOnly --declarationDir dist/",
@@ -13,9 +13,7 @@
   },
   "main": "./dist/framework.umd.js",
   "module": "./dist/framework.es.js",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "types": "./dist/lib.d.ts",
   "exports": {
     ".": {
@@ -37,7 +35,7 @@
     "url": "https://github.com/alttch/eva-js-framework/issues"
   },
   "dependencies": {
-    "@altertech/jsaltt": "0.1.5"
+    "@altertech/jsaltt": "0.1.6"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {

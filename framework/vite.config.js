@@ -8,7 +8,7 @@ export default defineConfig({
     lib: {
       entry: path.resolve(__dirname, "src/lib.ts"),
       name: lib_name,
-      fileName: (format) => `eva.${lib_name}.${format}.js`
+      fileName: (format) => `${lib_name}.${format}.js`
     }
   }
 });

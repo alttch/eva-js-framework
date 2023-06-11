@@ -24,7 +24,7 @@ build-framework:
 	cd framework && \
 	 	npm i && npm run build && \
 		echo "// `jq < package.json -r .version`" > ../dist/eva.framework.umd.js && \
-	 	cat dist/eva.framework.umd.js >> ../dist/eva.framework.umd.js
+	 	cat dist/framework.umd.js >> ../dist/eva.framework.umd.js
 
 build-full:
 	mkdir -p dist
