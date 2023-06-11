@@ -212,7 +212,7 @@ class EVABulkRequest {
    * Perform bulk API call
    */
   call(): Promise<boolean> {
-    let api_uri = this.eva.api_uri + "/jrpc";
+    let api_uri = `${this.eva.api_uri}/jrpc`;
     this.eva._debug("call_bulk", `${api_uri}`);
     return new Promise((resolve, reject) => {
       this.eva.external
@@ -705,7 +705,7 @@ class EVA {
       return;
     }
     if (this.wasm && !this.evajw) {
-      this._start_evajw();
+      await this._start_evajw();
     } else {
       this._start_engine();
     }
@@ -1339,17 +1339,17 @@ class EVA {
     }
   }
 
-  _start_evajw() {
+  async _start_evajw() {
     this.evajw = undefined;
-    import(/*webpackIgnore: true*/ "./evajw/evajw.js?" + new Date().getTime())
-      .then((mod) => {
-        return this._inject_evajw(mod);
-      })
-      .catch((err) => {
-        this._critical("evajs WASM module load error", true);
-        this._critical(err);
-      });
-    return true;
+    let mod;
+    try {
+      mod = await import(
+        /*webpackIgnore: true*/ "./evajw/evajw.js?" + new Date().getTime()
+      );
+    } catch (err) {
+      this._critical("evajs WASM module load error", true, false);
+      this._critical(err);
+    }
   }
 
   _is_ws_handler_registered() {
@@ -1381,12 +1381,14 @@ class EVA {
     this._last_pong = null;
   }
 
-  _critical(message: string, write_on_screen = false) {
+  _critical(message: string, write_on_screen = false, throw_err = true) {
     if (write_on_screen) {
-      document.write('<font color="red" size="30">' + message + "</font>");
+      document.write(`<font color="red" size="30">${message}</font>`);
     }
     this.logger.critical(message);
-    throw new Error(`critical: {message}`);
+    if (throw_err) {
+      throw new Error(`critical: ${message}`);
+    }
   }
 
   _prepare_api_call(method: string, params?: object): JsonRpcRequest {
@@ -1394,10 +1396,7 @@ class EVA {
       this._api_call_id = 0;
     }
     this._api_call_id += 1;
-    var id = this._api_call_id;
-    var api_uri = this.api_uri + "/jrpc";
-    var me = this;
-    this._debug("_api_call", `${id}: ${api_uri}: ${method}`);
+    let id = this._api_call_id;
     if (this.debug == 2) {
       this.logger.debug(method, params);
     }
@@ -1412,9 +1411,11 @@ class EVA {
   async _api_call(method: string, params?: object): Promise<any> {
     const req = this._prepare_api_call(method, params);
     const id = req.id;
+    let api_uri = `${this.api_uri}/jrpc`;
+    this._debug("_api_call", `${id}: ${api_uri}: ${method}`);
     return new Promise((resolve, reject) => {
       this.external
-        .fetch(this.api_uri, {
+        .fetch(api_uri, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1879,7 +1880,7 @@ class EVA {
 
   _debug(method: string, ...data: any[]) {
     if (this.debug) {
-      this.logger.debug.apply([`EVA::${method}`].concat(data));
+      this.logger.debug.apply(this.logger, [`EVA::${method}`].concat(data));
     }
   }
 
