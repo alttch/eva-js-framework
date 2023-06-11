@@ -18,11 +18,7 @@ enum HandlerId {
 }
 
 function to_obj(obj?: object): object {
-  if (typeof obj === "object") {
-    return obj;
-  } else {
-    return {};
-  }
+  return typeof obj === "object" ? obj : {};
 }
 
 interface OTPParams {
