@@ -88,6 +88,7 @@ interface External {
   fetch?: any;
   WebSocket?: any;
   QRious?: any;
+  Chart?: any;
 }
 
 interface ActionResult {
