@@ -17,10 +17,6 @@ enum HandlerId {
   LogPostProcess = "log.postprocess"
 }
 
-function to_obj(obj?: object): object {
-  return typeof obj === "object" ? obj : {};
-}
-
 interface OTPParams {
   size?: number;
   issuer?: string;
@@ -193,7 +189,7 @@ class EVABulkRequest {
   ): EVABulkRequestPartHandler {
     let params: any;
     if (typeof p1 === "string" || Array.isArray(p1)) {
-      params = to_obj(p2);
+      params = p2 || {};
       params.i = p1;
     } else {
       params = p1;
@@ -900,10 +896,10 @@ class EVA {
    *
    * @returns Promise object
    */
-  call(method: string, p1?: object | string, p2?: object): any {
+  async call(method: string, p1?: object | string, p2?: object): Promise<any> {
     let params;
     if (typeof p1 === "string" || Array.isArray(p1)) {
-      params = to_obj(p2) as any;
+      params = (p2 as any) || {};
       params.i = p1;
     } else {
       params = p1;
@@ -1588,7 +1584,7 @@ class EVA {
   }
 
   _prepare_call_params(params?: any): object {
-    let p: any = to_obj(params);
+    let p = params || {};
     if (this.api_token) {
       p.k = this.api_token;
     }
