@@ -1291,6 +1291,9 @@ class EVA {
       mod.init(undefined, this).then(() => {
         mod.init_engine(this);
         this.evajw = mod;
+        if (typeof window !== "undefined") {
+          (window as any).evajw = this.evajw;
+        }
         let build = mod.get_build();
         this.logger.info(
           "EVA ICS JavaScript WASM engine loaded. Build: " + build
