@@ -705,7 +705,7 @@ class EVA {
       return;
     }
     if (this.wasm && !this.evajw) {
-      await this._start_evajw();
+      this._start_evajw();
     } else {
       this._start_engine();
     }
@@ -1339,17 +1339,16 @@ class EVA {
     }
   }
 
-  async _start_evajw() {
+  _start_evajw() {
     this.evajw = undefined;
-    let mod;
-    try {
-      mod = await import(
-        /*webpackIgnore: true*/ "./evajw/evajw.js?" + new Date().getTime()
-      );
-    } catch (err) {
-      this._critical("evajs WASM module load error", true, false);
-      this._critical(err);
-    }
+    eval(`import("./evajw/evajw.js?" + new Date().getTime())
+      .catch((err) => {
+        this._critical("evajs WASM module not found", true, false);
+        this._critical(err);
+      })
+      .then((mod) => {
+        this._inject_evajw(mod);
+      });`);
   }
 
   _is_ws_handler_registered() {
