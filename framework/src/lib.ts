@@ -197,7 +197,7 @@ class EVABulkRequest {
     let params: any;
     if (typeof p1 === "string" || Array.isArray(p1)) {
       params = to_obj(p2);
-      params["i"] = p1;
+      params.i = p1;
     } else {
       params = p1;
     }
