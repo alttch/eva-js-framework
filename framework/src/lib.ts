@@ -859,7 +859,7 @@ class EVA {
    *
    * @param log_level {number} log processing level
    */
-  log_level(log_level: number) {
+  set_log_level(log_level: number) {
     this.log.level = log_level;
     this._set_ws_log_level(log_level);
     this._load_log_entries(true);
@@ -1705,7 +1705,7 @@ class EVA {
             this.ws.send("");
           }
           if (this._log_subscribed) {
-            this.log_level(this.log.level);
+            this.set_log_level(this.log.level);
           }
         });
       }

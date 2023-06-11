@@ -19,6 +19,8 @@ CSS styles
 
 * $eva.interval() has been renamed to $eva.set\_interval()
 
+* $eva.log\_level() has been renamed to $eva.set\_log\_level()
+
 * "fetch" is no longer bundled as it is present in the majority of
 environments. For older environments consider manually importing a polyfill
 (e.g. "node-fetch") and setting it to EVAOBJECT.external.fetch
