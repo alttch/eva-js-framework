@@ -1337,14 +1337,7 @@ class EVA {
 
   _start_evajw() {
     this.evajw = undefined;
-    import("./evajw/evajw.js?" + new Date().getTime())
-      .catch((err) => {
-        this._critical("evajs WASM module not found", true, false);
-        this._critical(err);
-      })
-      .then((mod) => {
-        this._inject_evajw(mod);
-      });
+    eval(`import("./evajw/evajw.js?" + new Date().getTime()).catch((e)=>{this._critical("evajs WASM module not found",1,0);this._critical(e);}).then((m)=>{this._inject_evajw(mod);});`);
   }
 
   _is_ws_handler_registered() {
