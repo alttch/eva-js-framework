@@ -21,6 +21,10 @@ CSS styles
 
 * $eva.log\_level() has been renamed to $eva.set\_log\_level()
 
+* $eva.debug turns debug logs however to see messages in the JS console, its
+log level must be additionally set to "Verbose". Despite of that, it is not
+recommended to enable debug mode in production as it causes CPU load.
+
 * "fetch" is no longer bundled as it is present in the majority of
 environments. For older environments consider manually importing a polyfill
 (e.g. "node-fetch") and setting it to EVAOBJECT.external.fetch
