@@ -20,11 +20,19 @@
   },
   "dependencies": {
     "@eva-ics/framework": "file:../framework",
-    "@eva-ics/toolbox": "file:../toolbox",
-    "@vitejs/plugin-legacy": "^4.0.4"
+    "@eva-ics/toolbox": "file:../toolbox"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {
+    "@babel/core": "^7.21.8",
+    "@babel/preset-env": "^7.21.5",
+    "@babel/register": "^7.21.0",
+    "babel-loader": "^9.1.2",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "css-loader": "^6.7.4",
+    "style-loader": "^3.3.3",
+    "webpack": "^5.84.0",
+    "webpack-cli": "^5.1.1",
     "vite": "^4.3.9"
   }
 }

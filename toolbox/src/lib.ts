@@ -116,13 +116,13 @@ class EVA_TOOLBOX {
       work_cfg = cfg || {};
       nchart = new this.eva.external.Chart(canvas, work_cfg);
     }
-    var chartfunc = () => {
+    let chartfunc = () => {
       if (chart && (cc.offsetWidth <= 0 || cc.offsetHeight <= 0)) {
         chart.destroy();
         return;
       }
       if (!chart) this.animate(ctx);
-      var x = "value";
+      let x = "value";
       if (prop !== undefined && prop !== null) {
         x = prop;
       }
@@ -230,7 +230,7 @@ class EVA_TOOLBOX {
    * @param {string|object} ctx DOM element (or id)
    */
   animate(ctx: string | HTMLDivElement) {
-    var el =
+    let el =
       typeof ctx === "object"
         ? ctx
         : (document.getElementById(ctx) as HTMLDivElement);
@@ -413,13 +413,13 @@ class EVA_TOOLBOX {
       document.addEventListener("keydown", popup.key_listener);
       if (ct && ct > 0) {
         popup.ct = ct;
-        var ticker_func = () => {
+        let ticker_func = () => {
           if (popup.ct <= 0) {
             close_popup();
             reject();
           }
-          var obj;
-          var txt = "";
+          let obj;
+          let txt = "";
           if (btn2_o) {
             obj = btn2_o;
             txt = btn2 as string;

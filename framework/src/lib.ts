@@ -1337,7 +1337,9 @@ class EVA {
 
   _start_evajw() {
     this.evajw = undefined;
-    eval(`import("./evajw/evajw.js?" + new Date().getTime()).catch((e)=>{this._critical("evajs WASM module not found",1,0);this._critical(e);}).then((m)=>{this._inject_evajw(mod);});`);
+    eval(
+      `import("./evajw/evajw.js?" + new Date().getTime()).catch((e)=>{this._critical("evajs WASM module not found",1,0);this._critical(e)}).then((m)=>{this._inject_evajw(m)})`
+    );
   }
 
   _is_ws_handler_registered() {
@@ -1371,7 +1373,10 @@ class EVA {
 
   _critical(message: any, write_on_screen = false, throw_err = true) {
     if (write_on_screen) {
-      document.write(`<font color="red" size="30">${message}</font>`);
+      let body = document.getElementsByTagName("body");
+      if (body) {
+        body[0].innerHTML = `<font color="red" size="30">${message}</font>`;
+      }
     }
     this.logger.critical(message);
     if (throw_err) {

@@ -33,9 +33,9 @@ build-full:
 		npm link ../framework && \
 		npm link ../toolbox && \
 		./node_modules/.bin/webpack
-	echo -n "// `jq < ./framework/package.json -r .version`" > ./dist/eva.umd.js
-		echo " | `jq < ./toolbox/package.json -r .version`" >> ./dist/eva.umd.js
-		cat ./full/dist/eva.umd.js >> ./dist/eva.umd.js
+	echo -n "// `jq < ./framework/package.json -r .version`" > ./dist/eva.min.js
+		echo " | `jq < ./toolbox/package.json -r .version`" >> ./dist/eva.min.js
+		tail -n+2 ./full/dist/eva.min.js >> ./dist/eva.min.js
 
 pub-framework:
 	cp README.md ./framework/
