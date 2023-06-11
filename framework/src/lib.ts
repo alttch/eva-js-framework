@@ -1282,7 +1282,7 @@ class EVA {
   _inject_evajw(mod: any) {
     if (mod) {
       mod.init(undefined, this).then(() => {
-        mod.init_engine(this);
+        mod.init_engine();
         this.evajw = mod;
         if (typeof window !== "undefined") {
           (window as any).evajw = this.evajw;
