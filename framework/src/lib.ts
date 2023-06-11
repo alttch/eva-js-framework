@@ -1341,14 +1341,14 @@ class EVA {
 
   _start_evajw() {
     this.evajw = undefined;
-    eval(`import("./evajw/evajw.js?" + new Date().getTime())
+    import("./evajw/evajw.js?" + new Date().getTime())
       .catch((err) => {
         this._critical("evajs WASM module not found", true, false);
         this._critical(err);
       })
       .then((mod) => {
         this._inject_evajw(mod);
-      });`);
+      });
   }
 
   _is_ws_handler_registered() {
@@ -1993,7 +1993,6 @@ if (typeof window !== "undefined") {
   (window as any).$eva = new EVA();
 }
 
-export default EVA;
 export {
   EVA,
   EvaError,

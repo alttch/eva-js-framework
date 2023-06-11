@@ -22,10 +22,9 @@ clean-dist:
 build-framework:
 	mkdir -p dist
 	cd framework && \
-	 	npm install && \
-	 	./node_modules/.bin/webpack && \
-		echo "// `jq < package.json -r .version`" > ../dist/eva.framework.min.js && \
-	 	cat dist/eva.framework.min.js >> ../dist/eva.framework.min.js
+	 	npm i && npm run build && \
+		echo "// `jq < package.json -r .version`" > ../dist/eva.framework.umd.js && \
+	 	cat dist/eva.framework.umd.js >> ../dist/eva.framework.umd.js
 
 build-full:
 	mkdir -p dist
@@ -34,9 +33,9 @@ build-full:
 		npm link ../framework && \
 		npm link ../toolbox && \
 		./node_modules/.bin/webpack
-	echo -n "// `jq < ./framework/package.json -r .version`" > ./dist/eva.min.js
-		echo " | `jq < ./toolbox/package.json -r .version`" >> ./dist/eva.min.js
-		cat ./full/dist/eva.min.js >> ./dist/eva.min.js
+	echo -n "// `jq < ./framework/package.json -r .version`" > ./dist/eva.umd.js
+		echo " | `jq < ./toolbox/package.json -r .version`" >> ./dist/eva.umd.js
+		cat ./full/dist/eva.umd.js >> ./dist/eva.umd.js
 
 pub-framework:
 	cp README.md ./framework/
@@ -60,15 +59,8 @@ ver-pub:
 
 release: all pub-pkg
 
-#pkg:
-	#rm -rf _build
-	#mkdir -p _build/ui
-	#cp dist/eva.min.js dist/eva.framework.min.js _build/ui
-	#sed "s/^VERSION=.*/VERSION='$(VERSION)'/g" setup.py > _build/setup.py
-	#cd _build && tar czf eva-js-framework-$(VERSION).evapkg ui setup.py
-
 pub-pkg:
 	echo "" | gh release create v$(VERSION) -t "v$(VERSION)" \
-	 	dist/eva.min.js dist/eva.framework.min.js
-	gsutil -m cp -a public-read dist/eva.min.js dist/eva.framework.min.js gs://pub.bma.ai/eva-js-framework/$(VERSION)/
+	 	dist/eva.umd.js dist/eva.framework.umd.js
+	gsutil -m cp -a public-read dist/eva.umd.js dist/eva.framework.umd.js gs://pub.bma.ai/eva-js-framework/$(VERSION)/
 	rci job run pub.bma.ai

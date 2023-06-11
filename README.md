@@ -8,7 +8,7 @@ Technical documentation: <https://info.bma.ai/en/actual/eva-js-framework/index.h
 
 ## Migration from 0.4
 
-* EVA JS Framework and Toolbox have become ES modules
+* EVA JS Framework and Toolbox have become typescript ES modules
 
 * Toolbox module can not be used in environments which do not allow importing
 CSS styles
@@ -16,6 +16,8 @@ CSS styles
 * the default "$eva" object is now available in web browsers only
 
 * Web socket mode is now turned on by default
+
+* $eva.interval() has been renamed to $eva.set\_interval()
 
 * "fetch" is no longer bundled as it is present in the majority of
 environments. For older environments consider manually importing a polyfill
