@@ -25,6 +25,36 @@ function to_obj(obj?: object): object {
   }
 }
 
+interface OTPParams {
+  size?: number;
+  issuer?: string;
+  user?: string;
+  xtr?: string;
+}
+
+interface HiQRParams {
+  size?: number;
+  url?: string;
+  user?: string;
+  password?: string;
+}
+
+interface LogRecord {
+  dt: string;
+  h: string;
+  l: number;
+  lvl: string;
+  mod: string;
+  msg: string;
+  t: number;
+  th: string | null;
+}
+
+interface WsCommand {
+  m: string;
+  p?: any;
+}
+
 interface LoginPayload {
   k?: string;
   u?: string;
@@ -43,14 +73,14 @@ interface SvcMessage {
 interface JsonRpcRequest {
   jsonrpc: string;
   method: string;
-  params: object;
+  params?: object;
   id: number;
 }
 
 interface JsonRpcResponse {
   jsonrpc: string;
   result?: object;
-  error?: object;
+  error?: EvaError;
   id: number;
 }
 
@@ -74,6 +104,11 @@ interface ActionResult {
   uuid: string;
 }
 
+interface StatePayload {
+  full?: boolean;
+  i?: string | Array<string>;
+}
+
 interface LvarIncrDecrResult {
   result: number;
 }
@@ -81,6 +116,19 @@ interface LvarIncrDecrResult {
 interface LogCollector {
   level: number;
   records: number;
+}
+
+interface ItemState {
+  act?: number;
+  connected?: boolean;
+  enabled?: boolean;
+  ieid?: Array<number>;
+  meta?: object;
+  node?: string;
+  oid: string;
+  status: number | null;
+  t?: number;
+  value: any;
 }
 
 enum IntervalId {
@@ -97,7 +145,7 @@ class EvaError {
   code: number;
   message?: string;
   data?: any;
-  constructor(code: number, message: string, data?: any) {
+  constructor(code: number, message?: string, data?: any) {
     this.code = code;
     this.message = message;
     this.data = data;
@@ -340,9 +388,9 @@ class EVA_ACTION {
       return data;
     } else {
       return new Promise((resolve) => {
-        this.eva.watch_action(data.uuid, (action: ActionResult) => {
-          if (action.finished) {
-            resolve(action);
+        this.eva.watch_action(data.uuid, (action: ActionResult | EvaError) => {
+          if ((action as ActionResult).finished) {
+            resolve(action as ActionResult);
           }
         });
       });
@@ -450,25 +498,23 @@ class EVA_LVAR {
    */
   expires(lvar_oid: string): number | null | undefined {
     // get item state
-    let state = this.eva.state(lvar_oid);
+    let state = this.eva.state(lvar_oid) as ItemState;
     // if no such item
-    if (state === undefined) return undefined;
+    if (state === undefined || state.t === undefined) return undefined;
     // if item has no expiration or expiration is set to zero
     if (
       !state.meta ||
-      state.meta.expires === undefined ||
-      state.meta.expires == 0
+      (state.meta as any).expires === undefined ||
+      (state.meta as any).expires == 0
     ) {
       return null;
     }
-    // if no timestamp diff
-    if (this.eva.tsdiff == null) return undefined;
     // if timer is disabled (stopped), return -2
     if (state.status == 0) return -2;
     // if timer is expired, return -1
     if (state.status == -1) return -1;
     let t =
-      state.meta.expires -
+      (state.meta as any).expires -
       new Date().getTime() / 1000 +
       this.eva.tsdiff +
       state.t;
@@ -486,7 +532,6 @@ class EVA {
   //api_version: number | null;
   authorized_user: string | null;
   clear_unavailable: boolean;
-  client_id: string | null;
   debug: boolean | number;
   external: External;
   evajw: any;
@@ -507,20 +552,28 @@ class EVA {
   ws: any;
   server_info: any;
   _api_call_id: number;
-  _handlers: Map<HandlerId, (...args: any[]) => void>;
+  _handlers: Map<HandlerId, (...args: any[]) => void | boolean>;
   _intervals: Map<IntervalId, number>;
   _ws_handler_registered: boolean;
   _heartbeat_reloader: any;
   _ajax_reloader: any;
   _log_reloader: any;
   _scheduled_restarter: any;
+  _states: Map<string, ItemState>;
   _action_states: Map<string, ActionResult>;
-  _action_watch_functions: Map<String, Array<(result: ActionResult) => void>>;
+  _action_watch_functions: Map<
+    String,
+    Array<(result: ActionResult | EvaError) => void>
+  >;
   _last_ping: number | null;
   _last_pong: number | null;
+  _log_subscribed: boolean;
   _log_started: boolean;
   _log_first_load: boolean;
   _log_loaded: boolean;
+  _update_state_functions: Map<string, Array<(state: ItemState) => void>>;
+  _update_state_mask_functions: Map<string, Array<(state: ItemState) => void>>;
+  _lr2p: Array<LogRecord>;
 
   constructor() {
     this.version = eva_framework_version;
@@ -542,14 +595,15 @@ class EVA {
     this.ws_mode = true;
     this.ws = null;
     //this.api_version = null;
-    this.client_id = null;
     this._api_call_id = 0;
     this.tsdiff = 0;
     this._last_ping = null;
     this._last_pong = null;
+    this._log_subscribed = false;
     this._log_started = false;
     this._log_first_load = false;
     this._log_loaded = false;
+    this._lr2p = [];
     this.in_evaHI =
       typeof navigator !== "undefined" &&
       typeof navigator.userAgent === "string" &&
@@ -558,8 +612,11 @@ class EVA {
       level: 20,
       records: 200
     };
+    this._update_state_functions = new Map();
+    this._update_state_mask_functions = new Map();
     this._handlers = new Map([[HandlerId.HeartBeatError, this.restart]]);
     this._handlers.set(HandlerId.HeartBeatError, this.restart);
+    this._states = new Map();
     this._intervals = new Map([
       [IntervalId.AjaxReload, 2],
       [IntervalId.AjaxLogReload, 2],
@@ -633,7 +690,7 @@ class EVA {
    * After calling the function authenticates user, opens a WebSocket (in
    * case of WS mode) or schedule AJAXs refresh interval.
    */
-  async start(): Promise<boolean> {
+  async start(): Promise<void> {
     this._cancel_scheduled_restart();
     this._debug("framework", `version: ${this.version}`);
     if (typeof fetch === "undefined") {
@@ -641,19 +698,19 @@ class EVA {
         '"fetch" function is unavailable. Upgrade your web browser or ' +
           "connect polyfill"
       );
-      return false;
+      return;
     }
     if (this.logged_in) {
       this._debug("start", "already logged in");
-      return true;
+      return;
     }
     if (this.wasm && !this.evajw) {
-      return this._start_evajw();
+      this._start_evajw();
     } else {
-      return this._start_engine();
+      this._start_engine();
     }
   }
-  _start_engine(): boolean {
+  _start_engine() {
     this._last_ping = null;
     this._last_pong = null;
     let q: LoginPayload = {};
@@ -898,16 +955,15 @@ class EVA {
     if (xopts !== undefined) {
       q.xopts = xopts;
     }
-    var me = this;
-    me._api_call("login", q)
-      .then(function () {
-        me.server_info.aci.token_mode = "normal";
-        me._invoke_handler(HandlerId.LoginSuccess);
+    this._api_call("login", q)
+      .then(() => {
+        this.server_info.aci.token_mode = "normal";
+        this._invoke_handler(HandlerId.LoginSuccess);
       })
-      .catch(function (err) {
-        me.error_handler(err, "set_normal");
+      .catch((err: EvaError) => {
+        this.error_handler(err, "set_normal");
         if (err.code !== -32022) {
-          me._invoke_handler(HandlerId.LoginFailed, err);
+          this._invoke_handler(HandlerId.LoginFailed, err);
         }
       });
     return true;
@@ -980,28 +1036,32 @@ class EVA {
    *
    */
   // WASM override
-  watch(oid, func, ignore_initial) {
-    if (!oid.includes("*")) {
-      if (!(oid in this._update_state_functions)) {
-        this._update_state_functions[oid] = [];
+  watch(oid: string, func: (state: ItemState) => void, ignore_initial = false) {
+    if (oid.includes("*")) {
+      let fcs = this._update_state_mask_functions.get(oid);
+      if (fcs === undefined) {
+        fcs = [];
+        this._update_state_mask_functions.set(oid, fcs);
       }
-      this._update_state_functions[oid].push(func);
+      fcs.push(func);
       if (!ignore_initial) {
-        var state = this.state(oid);
-        if (state !== undefined) func(state);
-      }
-    } else {
-      if (!(oid in this._update_state_mask_functions)) {
-        this._update_state_mask_functions[oid] = [];
-      }
-      this._update_state_mask_functions[oid].push(func);
-      if (!ignore_initial) {
-        var v = this.state(oid);
+        let v = this.state(oid);
         if (Array.isArray(v)) {
           v.map(func);
-        } else {
+        } else if (v !== undefined) {
           func(v);
         }
+      }
+    } else {
+      let fcs = this._update_state_functions.get(oid);
+      if (fcs === undefined) {
+        fcs = [];
+        this._update_state_functions.set(oid, fcs);
+      }
+      fcs.push(func);
+      if (!ignore_initial) {
+        let state = this.state(oid) as ItemState;
+        if (state !== undefined) func(state);
       }
     }
   }
@@ -1023,44 +1083,52 @@ class EVA {
    * @param func {function} function to be called
    *
    */
-  watch_action(uuid, func) {
-    if (uuid in this._action_watch_functions) {
-      this._action_watch_functions[uuid].push(func);
-      if (uuid in this._action_states) {
-        func(this._action_states[uuid]);
-      }
-    } else {
-      this._action_watch_functions[uuid] = [];
-      this._action_watch_functions[uuid].push(func);
-      var me = this;
-      var method = "result";
-      if (this.api_version == 4) {
-        method = "action.result";
-      }
-      var watcher = function () {
-        me.call(method, { u: uuid })
-          .then(function (result) {
-            if (
-              !me._action_states[uuid] ||
-              me._action_states[uuid].status != result.status
-            ) {
-              me._action_states[uuid] = result;
-              me._action_watch_functions[uuid].map((f) => f(result));
+  watch_action(uuid: string, func: (result: ActionResult | EvaError) => void) {
+    let fcs = this._action_watch_functions.get(uuid);
+    if (fcs === undefined) {
+      fcs = [];
+      this._action_watch_functions.set(uuid, fcs);
+      fcs.push(func);
+      const watcher = () => {
+        this.call("action.result", { u: uuid })
+          .then((result: ActionResult) => {
+            let st = this._action_states.get(uuid);
+            if (st === undefined || st.status != result.status) {
+              this._action_states.set(uuid, result);
+              let fcs = this._action_watch_functions.get(uuid);
+              if (fcs !== undefined) {
+                fcs.map((f) => f(result));
+              }
             }
             if (result.finished) {
-              delete me._action_watch_functions[uuid];
-              delete me._action_states[uuid];
+              this._action_watch_functions.delete(uuid);
+              this._action_states.delete(uuid);
             } else {
-              setTimeout(watcher, me._intervals.action_watch * 1000);
+              setTimeout(
+                watcher,
+                (this._intervals.get(IntervalId.ActionWatch) as number) * 1000
+              );
             }
           })
-          .catch(function (err) {
-            me._action_watch_functions[uuid].map((f) => f(err));
-            delete me._action_watch_functions[uuid];
-            delete me._action_states[uuid];
+          .catch((err: EvaError) => {
+            let fcs = this._action_watch_functions.get(uuid);
+            if (fcs) {
+              fcs.map((f) => f(err));
+            }
+            this._action_watch_functions.delete(uuid);
+            this._action_states.delete(uuid);
           });
       };
-      setTimeout(watcher, this._intervals.action_watch * 1000);
+      setTimeout(
+        watcher,
+        (this._intervals.get(IntervalId.ActionWatch) as number) * 1000
+      );
+    } else {
+      fcs.push(func);
+      let state = this._action_states.get(uuid);
+      if (state !== undefined) {
+        func(state);
+      }
     }
   }
 
@@ -1073,7 +1141,7 @@ class EVA {
    * @param oid {string} item oid (e.g. sensor:env/temp1, or sensor:env/\*)
    * @param func {function} function to be removed
    */
-  unwatch(oid, func) {
+  unwatch(oid?: string, func?: (state: ItemState) => void) {
     if (!oid) {
       this._clear_watchers();
     } else if (!oid.includes("*")) {
@@ -1091,31 +1159,36 @@ class EVA {
     }
   }
 
-  // WASM override (not supported)
-  _unwatch_func(oid, func) {
-    if (oid in this._update_state_functions) {
-      this._update_state_functions[oid] = this._update_state_functions[
-        oid
-      ].filter((el) => el !== func);
+  // WASM override
+  _unwatch_func(oid: string, func?: (state: ItemState) => void) {
+    let fcs = this._update_state_functions.get(oid);
+    if (fcs !== undefined) {
+      this._update_state_functions.set(
+        oid,
+        fcs.filter((el) => el !== func)
+      );
     }
   }
 
   // WASM override
-  _unwatch_all(oid) {
-    delete this._update_state_functions[oid];
+  _unwatch_all(oid: string) {
+    this._update_state_functions.delete(oid);
   }
 
   // WASM override (not supported)
-  _unwatch_mask_func(oid, func) {
-    if (oid in this._update_state_mask_functions) {
-      this._update_state_mask_functions[oid] =
-        this._update_state_mask_functions[oid].filter((el) => el !== func);
+  _unwatch_mask_func(oid: string, func: (state: ItemState) => void) {
+    let fcs = this._update_state_mask_functions.get(oid);
+    if (fcs !== undefined) {
+      this._update_state_mask_functions.set(
+        oid,
+        fcs.filter((el) => el !== func)
+      );
     }
   }
 
   // WASM override
-  _unwatch_mask_all(oid) {
-    delete this._update_state_mask_functions[oid];
+  _unwatch_mask_all(oid: string) {
+    this._update_state_mask_functions.delete(oid);
   }
 
   /**
@@ -1126,8 +1199,8 @@ class EVA {
    * @returns item status(int) or undefined if no object found
    */
   // WASM override
-  status(oid) {
-    var state = this.state(oid);
+  status(oid: string): number | null | undefined {
+    let state = this.state(oid) as ItemState;
     if (state === undefined || state === null) return undefined;
     return state.status;
   }
@@ -1140,8 +1213,8 @@ class EVA {
    * @returns item value or undefined if no item found
    */
   // WASM override
-  value(oid) {
-    var state = this.state(oid);
+  value(oid: string): number | undefined {
+    let state = this.state(oid) as ItemState;
     if (state === undefined || state === null) return undefined;
     if (Number(state.value) == state.value) {
       return Number(state.value);
@@ -1157,7 +1230,7 @@ class EVA {
    *
    * @returns state object or undefined if no item found
    */
-  state(oid) {
+  state(oid: string): ItemState | Array<ItemState> | undefined {
     if (!oid.includes("*")) {
       return this._state(oid);
     } else {
@@ -1166,20 +1239,16 @@ class EVA {
   }
 
   // WASM override
-  _state(oid) {
-    if (oid in this._states) {
-      return this._states[oid];
-    } else {
-      return undefined;
-    }
+  _state(oid: string) {
+    return this._states.get(oid);
   }
 
   // WASM override
-  _states_by_mask(oid_mask) {
-    var result = [];
-    Object.keys(this._states).map(function (k) {
+  _states_by_mask(oid_mask: string): Array<ItemState> {
+    let result: Array<ItemState> = [];
+    Object.keys(this._states).map((k) => {
       if (this._oid_match(k, oid_mask)) {
-        result.push(this._states[k]);
+        result.push(this._states.get(k) as ItemState);
       }
     }, this);
     return result;
@@ -1195,34 +1264,21 @@ class EVA {
    *
    * @returns Promise object
    */
-  stop(keep_auth?: boolean) {
-    var me = this;
-    return new Promise(function (resolve, reject) {
-      me._stop_engine();
-      me.logged_in = false;
+  async stop(keep_auth?: boolean): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this._stop_engine();
+      this.logged_in = false;
       if (keep_auth) {
         resolve();
-      } else if (me.api_version == 4) {
-        if (me.api_token) {
-          let token = me.api_token;
-          me.erase_token_cookie();
-          me._api_call("logout", { a: token })
-            .then(function () {
-              me.api_token = "";
-              resolve();
-            })
-            .catch(function (err) {
-              reject(err);
-            });
-        }
-      } else {
-        me.call("logout")
-          .then(function () {
-            me.erase_token_cookie();
+      } else if (this.api_token) {
+        let token = this.api_token;
+        this.erase_token_cookie();
+        this._api_call("logout", { a: token })
+          .then(() => {
+            this.api_token = "";
             resolve();
           })
           .catch(function (err) {
-            me.erase_token_cookie();
             reject(err);
           });
       }
@@ -1230,17 +1286,19 @@ class EVA {
   }
 
   // ***** private functions *****
-  _inject_evajw(mod) {
+  _inject_evajw(mod: any) {
     if (mod) {
       mod.init(undefined, this).then(() => {
         mod.init_engine();
         this.evajw = mod;
         let build = mod.get_build();
-        log.info("EVA ICS JavaScript WASM engine loaded. Build: " + build);
+        this.logger.info(
+          "EVA ICS JavaScript WASM engine loaded. Build: " + build
+        );
         try {
           mod.check_license();
         } catch (err) {
-          log.error("License check failed. WASM engine disabled");
+          this.logger.error("License check failed. WASM engine disabled");
           this.wasm = false;
           this._start_engine();
           return;
@@ -1261,62 +1319,59 @@ class EVA {
         this._process_ws = mod.process_ws;
         this._clear_state = mod.clear_state;
         // transfer registered watchers to WASM
-        function transfer_watchers(src, mod) {
+        function transfer_watchers(
+          src: Map<string, Array<(state: ItemState) => void>>,
+          mod: any
+        ) {
           Object.keys(src).map((oid) => {
-            src[oid].map((f) => {
+            (src.get(oid) as any).map((f: any) => {
               mod.watch(oid, f, true);
             });
           });
         }
         transfer_watchers(this._update_state_functions, mod);
         transfer_watchers(this._update_state_mask_functions, mod);
-        this._start_engine();
+        return this._start_engine();
       });
     } else {
       this.evajw = null;
+      return false;
     }
   }
 
-  _start_evajw(): boolean {
+  _start_evajw() {
     this.evajw = undefined;
     import(/*webpackIgnore: true*/ "./evajw/evajw.js?" + new Date().getTime())
       .then((mod) => {
-        this._inject_evajw(mod);
+        return this._inject_evajw(mod);
       })
       .catch((err) => {
         this._critical("evajs WASM module load error", true);
         this._critical(err);
-        return;
       });
+    return true;
   }
 
   _is_ws_handler_registered() {
-    let me;
-    if (this === undefined) {
-      me = window.$eva;
-    } else {
-      me = this;
-    }
-    return me._ws_handler_registered;
+    return this._ws_handler_registered;
   }
 
   // WASM override
   _clear_watchers() {
-    this._update_state_functions = [];
-    this._update_state_mask_functions = [];
+    this._update_state_functions.clear();
+    this._update_state_mask_functions.clear();
   }
 
   // WASM override
   _clear_states() {
-    this._states = [];
+    this._states.clear();
   }
 
   _clear() {
     //this._clear_watchers();
     this._clear_states();
     this.server_info = null;
-    this.tsdiff = null;
-    this._cvars = {};
+    this.tsdiff = 0;
     this._log_subscribed = false;
     this._log_first_load = true;
     this._log_loaded = false;
@@ -1326,15 +1381,15 @@ class EVA {
     this._last_pong = null;
   }
 
-  _critical(message, write_on_screen) {
+  _critical(message: string, write_on_screen = false) {
     if (write_on_screen) {
       document.write('<font color="red" size="30">' + message + "</font>");
     }
-    jsaltt.logger.error(message);
-    throw "critical";
+    this.logger.critical(message);
+    throw new Error(`critical: {message}`);
   }
 
-  _prepare_api_call(method: string, params: object): JsonRpcRequest {
+  _prepare_api_call(method: string, params?: object): JsonRpcRequest {
     if (this._api_call_id == 4294967295) {
       this._api_call_id = 0;
     }
@@ -1342,182 +1397,156 @@ class EVA {
     var id = this._api_call_id;
     var api_uri = this.api_uri + "/jrpc";
     var me = this;
-    this._debug("_api_call", `${id}: ${api_uri}: ${func}`);
+    this._debug("_api_call", `${id}: ${api_uri}: ${method}`);
     if (this.debug == 2) {
-      log.debug(func, params);
+      this.logger.debug(method, params);
     }
-    var payload = {
+    return {
       jsonrpc: "2.0",
-      method: func,
+      method: method,
       params: params,
       id: id
     };
-    return payload;
   }
 
   async _api_call(method: string, params?: object): Promise<any> {
-    let payload = this._prepare_api_call(method, params);
-    return new Promise(function (resolve, reject) {
-      me.external
-        .fetch(api_uri, {
+    const req = this._prepare_api_call(method, params);
+    const id = req.id;
+    return new Promise((resolve, reject) => {
+      this.external
+        .fetch(this.api_uri, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
           redirect: "error",
-          body: JSON.stringify(payload)
+          body: JSON.stringify(req)
         })
-        .then(function (response) {
+        .then((response: any) => {
           if (response.ok) {
-            me._debug("_api_call", id + " success");
+            this._debug(method, `api call ${id}  success`);
             response
               .json()
-              .then(function (data) {
+              .then((data: JsonRpcResponse) => {
                 if (
-                  !"id" in data ||
                   data.id != id ||
-                  (!"result" in data && !"error" in data)
+                  (data.result === undefined && data.error === undefined)
                 ) {
-                  reject({
-                    code: -32009,
-                    message: "Invalid server response",
-                    data: data
-                  });
-                } else if ("error" in data) {
-                  me._debug(
-                    "_api_call",
-                    `${id} failed: ${data.error.code} (${data.error.message})`
+                  reject(new EvaError(-32009, "Invalid server response", data));
+                } else if (data.error) {
+                  this._debug(
+                    method,
+                    `api call ${id} failed: ${data.error.code} (${data.error.message})`
                   );
-                  reject({
-                    code: data.error.code,
-                    message: data.error.message,
-                    data: data
-                  });
+                  reject(
+                    new EvaError(data.error.code, data.error.message, data)
+                  );
                 } else {
-                  if (me.debug == 2) {
-                    log.debug(`API ${id} ${func} response`, data.result);
+                  if (this.debug == 2) {
+                    this.logger.debug(
+                      `API ${id} ${method} response`,
+                      data.result
+                    );
                   }
                   resolve(data.result);
                 }
               })
-              .catch(function (err) {
-                var code = -32009;
-                var message = "Invalid server response";
-                me._debug("_api_call", `${id} failed: ${code} (${message})`);
-                reject({
-                  code: code,
-                  message: message,
-                  data: data
-                });
+              .catch((err: any) => {
+                let code = -32009;
+                let message = "Invalid server response";
+                this._debug(
+                  method,
+                  `api call ${id} failed: ${code} (${message})`
+                );
+                reject(new EvaError(code, message));
               });
           } else {
-            var code = -32007;
-            var message = "Server error";
-            me._debug("_api_call", `${id} failed: ${code} (${message})`);
-            reject({ code: code, message: message, data: data });
+            let code = -32007;
+            let message = "Server error";
+            this._debug(method, `api call ${id} failed: ${code} (${message})`);
+            reject(new EvaError(code, message));
           }
         })
-        .catch(function (err) {
-          var code = -32007;
-          var message = "Server error";
-          me._debug("_api_call", `${id} failed: ${code} (${message})`);
+        .catch((err: any) => {
+          let code = -32007;
+          let message = "Server error";
+          this._debug(method, `api call ${id} failed: ${code} (${message})`);
           reject({ code: code, message: message, data: null });
         });
     });
   }
 
-  _heartbeat(on_login) {
-    return new Promise(function (resolve, reject) {
-      if (on_login) me._last_ping = null;
-      var q = {};
-      if (on_login && me.api_version != 4) {
-        q["icvars"] = 1;
-      }
-      if (me.ws_mode) {
-        if (me._last_ping !== null) {
+  async _heartbeat(on_login: boolean): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (on_login) this._last_ping = null;
+      if (this.ws_mode) {
+        if (this._last_ping !== null) {
           if (
-            me._last_pong === null ||
-            me._last_ping - me._last_pong > me._intervals.heartbeat
+            this._last_pong === null ||
+            this._last_ping - this._last_pong >
+              (this._intervals.get(IntervalId.Heartbeat) as number)
           ) {
-            me._debug("heartbeat", "error: ws ping timeout");
-            me._invoke_handler("heartbeat.error");
+            this._debug("heartbeat", "error: ws ping timeout");
+            this._invoke_handler(HandlerId.HeartBeatError);
           }
         }
-        if (!on_login && me.ws) {
-          me._last_ping = Date.now() / 1000;
+        if (!on_login && this.ws) {
+          this._last_ping = Date.now() / 1000;
           try {
-            me._debug("heartbeat", "ws ping");
-            var payload;
-            if (me.api_version == 4) {
-              payload = { m: "ping" };
-            } else {
-              payload = { s: "ping" };
-            }
-            me.ws.send(JSON.stringify(payload));
-            me.ws.send("");
+            this._debug("heartbeat", "ws ping");
+            let payload = { m: "ping" };
+            this.ws.send(JSON.stringify(payload));
+            this.ws.send("");
           } catch (err) {
-            me._debug("heartbeat", "error: unable to send ws ping");
-            me._invoke_handler("heartbeat_error", err);
+            this._debug("heartbeat", "error: unable to send ws ping");
+            this._invoke_handler(HandlerId.HeartBeatError, err);
             reject();
             return;
           }
         }
       }
-      me.call("test", q)
-        .then(function (data) {
-          me.server_info = data;
-          me.tsdiff = new Date().getTime() / 1000 - data.time;
-          if (on_login) {
-            if (data["cvars"]) {
-              me._cvars = data["cvars"];
-            } else {
-              me._cvars = {};
-            }
-          }
-          me._invoke_handler("heartbeat.success");
-          resolve(true);
+      this.call("test")
+        .then((data: any) => {
+          this.server_info = data;
+          this.tsdiff = new Date().getTime() / 1000 - data.time;
+          this._invoke_handler(HandlerId.HeartBeatSuccess);
+          resolve();
         })
-        .catch(function (err) {
-          me._debug("heartbeat", "error: unable to send test API call");
-          me._invoke_handler("heartbeat.error", err);
+        .catch((err: EvaError) => {
+          this._debug("heartbeat", "error: unable to send test API call");
+          this._invoke_handler(HandlerId.HeartBeatError, err);
         });
-      me._debug("heartbeat", "ok");
+      this._debug("heartbeat", "ok");
     });
   }
 
-  _load_log_entries(postprocess) {
-    if (!me) var me = this;
-    var method = "log_get";
-    if (me.api_version == 4) {
-      method = "log.get";
-    }
-    if (me.ws_mode) me._lr2p = [];
-    me.call(method, {
-      l: me.log.level,
-      n: me.log.records
+  _load_log_entries(postprocess: boolean) {
+    if (this.ws_mode) this._lr2p = [];
+    this.call("log.get", {
+      l: this.log.level,
+      n: this.log.records
     })
-      .then(function (data) {
-        if (me.ws_mode && me._log_first_load) {
-          me._set_ws_log_level(me.log.level);
+      .then((data: Array<LogRecord>) => {
+        if (this.ws_mode && this._log_first_load) {
+          this._set_ws_log_level(this.log.level);
         }
-        data.map((l) => me._invoke_handler("log.record", l));
-        me._log_loaded = true;
-        me._lr2p.map((l) => me._invoke_handler("log.record", l));
+        data.map((l) => this._invoke_handler(HandlerId.LogRecord, l));
+        this._log_loaded = true;
+        this._lr2p.map((l) => this._invoke_handler(HandlerId.LogRecord, l));
         if (postprocess) {
-          me._invoke_handler("log.postprocess");
+          this._invoke_handler(HandlerId.LogPostProcess);
         }
-        me._log_first_load = false;
+        this._log_first_load = false;
       })
-      .catch(function (err) {
-        jsaltt.logger.error("unable to load log entries");
+      .catch((err: EvaError) => {
+        this.logger.error(`unable to load log entries: ${err.message}`);
       });
   }
 
   _schedule_restart() {
-    var me = this;
-    me._scheduled_restarter = setTimeout(function () {
-      me.start();
-    }, me._intervals.restart * 1000);
+    this._scheduled_restarter = setTimeout(() => {
+      this.start();
+    }, (this._intervals.get(IntervalId.Restart) as number) * 1000);
   }
 
   _cancel_scheduled_restart() {
@@ -1549,20 +1578,19 @@ class EVA {
         this.ws.close();
       } catch (err) {
         // web socket may be still open, will close later
-        var ws = this.ws;
-        setTimeout(function () {
+        setTimeout(() => {
           try {
-            ws.close();
+            this.ws.close();
           } catch (err) {}
         }, 1000);
       }
     }
   }
 
-  _prepare_call_params(params) {
-    var p = params ? params : {};
+  _prepare_call_params(params?: any): object {
+    let p: any = to_obj(params);
     if (this.api_token) {
-      p["k"] = this.api_token;
+      p.k = this.api_token;
     }
     return p;
   }
@@ -1582,117 +1610,55 @@ class EVA {
   }
 
   // WASM override
-  _process_loaded_states(data, clear_unavailable, me) {
-    if (!me) var me = this;
-    let received_oids = [];
+  _process_loaded_states(data: Array<ItemState>, clear_unavailable: boolean) {
+    let received_oids: string[] = [];
     if (clear_unavailable) {
       data.map((s) => received_oids.push(s.oid));
     }
-    data.map((s) => me._process_state(s));
+    data.map((s) => this._process_state(s));
     if (clear_unavailable) {
-      for (let oid in me._states) {
+      this._states.forEach((state, oid) => {
         if (
-          me._states[oid].status !== undefined &&
-          me._states[oid].status !== null &&
+          state.status !== undefined &&
+          state.status !== null &&
           !received_oids.includes(oid)
         ) {
-          me._debug("clearing unavailable item " + oid);
-          me._clear_state(oid);
+          this._debug(`clearing unavailable item ${oid}`);
+          this._clear_state(oid);
         }
-      }
+      });
     }
   }
 
-  _state_updates_v3_as_v4_list(me) {
-    var groups = me.state_updates["g"];
-    var tp = me.state_updates["p"];
-    var masks = [];
-    if (groups && tp) {
-      groups.map((g) => {
-        tp.map((t) => {
-          let mask = t + ":" + g;
-          if (!g.endsWith("#") && !g.endsWith("*")) {
-            mask += "/+";
-          }
-          masks.push(mask);
-        });
-      });
-    } else if (groups) {
-      groups.map((g) => {
-        let mask = "+:" + g;
-        if (!g.endsWith("#") && !g.endsWith("*")) {
-          mask += "/+";
-        }
-        masks.push(mask);
-      });
-    } else if (tp) {
-      tp.map((t) => {
-        masks.push(t + ":#");
-      });
-    }
-    return masks;
-  }
-
-  _load_states() {
-    if (!me) var me = this;
-    return new Promise(function (resolve, reject) {
-      if (!me.state_updates) {
-        resolve(true);
+  async _load_states(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.state_updates) {
+        resolve();
       } else {
-        var params = {};
-        var method = "state_all";
-        if (me.api_version == 4) {
-          method = "item.state";
-        }
-        if (me.api_version == 4) {
-          params["full"] = true;
-          if (me.state_updates == true) {
-            params["i"] = "#";
-          } else if (Array.isArray(me.state_updates)) {
-            params["i"] = me.state_updates;
-          } else {
-            jsaltt.logger.warning(
-              "deprecated state_updates format, consider switching to OID mask array"
-            );
-            var masks;
-            try {
-              masks = me._state_updates_v3_as_v4_list(me);
-              params["i"] = masks;
-            } catch (err) {
-              log.error(err);
-            }
-          }
+        let params: StatePayload = { full: true };
+        if (this.state_updates == true) {
+          params.i = "#";
         } else {
-          if (me.state_updates !== true) {
-            var groups = me.state_updates["g"];
-            var tp = me.state_updates["p"];
-            if (groups) {
-              params["g"] = groups;
-            }
-            if (tp) {
-              params["p"] = tp;
-            }
-          }
+          params.i = this.state_updates;
         }
-        me.call(method, params)
-          .then(function (data) {
-            me._process_loaded_states(data, me.clear_unavailable, me);
-            resolve(true);
+        this.call("item.state", params)
+          .then((data: Array<ItemState>) => {
+            this._process_loaded_states(data, this.clear_unavailable);
+            resolve();
           })
-          .catch(function (err) {
+          .catch((err: EvaError) => {
             reject(err);
           });
       }
     });
   }
 
-  _start_ws() {
-    var me = this;
-    return new Promise(function (resolve, reject) {
-      if (me.ws_mode) {
-        var uri;
-        if (!me.api_uri) {
-          var loc = window.location;
+  async _start_ws(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.ws_mode) {
+        let uri;
+        if (!this.api_uri) {
+          let loc = window.location;
           if (loc.protocol === "https:") {
             uri = "wss:";
           } else {
@@ -1700,123 +1666,81 @@ class EVA {
           }
           uri += "//" + loc.host;
         } else {
-          uri = me.api_uri;
+          uri = this.api_uri;
           if (uri.startsWith("http://")) {
             uri = uri.replace("http://", "ws://");
           } else if (uri.startsWith("https://")) {
             uri = uri.replace("https://", "wss://");
           } else {
-            var loc = window.location;
+            let loc = window.location;
             if (loc.protocol === "https:") {
               uri = "wss:";
             } else {
               uri = "ws:";
             }
-            uri += "//" + loc.host + me.api_uri;
+            uri += "//" + loc.host + this.api_uri;
           }
         }
-        let ws_uri = `${uri}/ws?k=${me.api_token}`;
-        if (me._intervals.ws_buf_ttl > 0) {
-          ws_uri += `&buf_ttl=${me._intervals.ws_buf_ttl}`;
+        let ws_uri = `${uri}/ws?k=${this.api_token}`;
+        let ws_buf_ttl = this._intervals.get(IntervalId.WSBufTTL) as number;
+        if (ws_buf_ttl > 0) {
+          ws_uri += `&buf_ttl=${ws_buf_ttl}`;
         }
-        if (me.client_id != null) {
-          ws_uri += `&client_id=${me.client_id}`;
-        }
-        me.ws = new me.external.WebSocket(ws_uri);
-        me.ws.onmessage = function (evt) {
-          me._process_ws(evt.data);
+        this.ws = new this.external.WebSocket(ws_uri);
+        this.ws.onmessage = (evt: any) => {
+          this._process_ws(evt.data);
         };
-        me.ws.addEventListener("open", function (event) {
-          me._debug("_start_ws", "ws connected");
-          var st;
-          if (me.state_updates) {
-            if (me.api_version == 4) {
-              st = { m: "subscribe.state" };
-              var masks;
-              if (me.state_updates == true) {
-                masks = ["#"];
-              } else if (Array.isArray(me.state_updates)) {
-                masks = me.state_updates;
-              } else {
-                masks = me._state_updates_v3_as_v4_list(me);
-              }
-              st["p"] = masks;
+        this.ws.addEventListener("open", (event: any) => {
+          this._debug("_start_ws", "ws connected");
+          if (this.state_updates) {
+            let st: WsCommand = { m: "subscribe.state" };
+            var masks;
+            if (this.state_updates == true) {
+              masks = ["#"];
             } else {
-              st = { s: "state" };
-              if (me.state_updates !== true) {
-                var groups = me.state_updates["g"];
-                if (!groups) {
-                  groups = "#";
-                }
-                var tp = me.state_updates["p"];
-                if (!tp) {
-                  tp = "#";
-                }
-                st["g"] = groups;
-                st["tp"] = tp;
-                st["i"] = [];
-              }
+              masks = this.state_updates;
             }
+            st.p = masks;
+            this.ws.send(JSON.stringify(st));
+            this.ws.send("");
           }
-          if (st) {
-            me.ws.send(JSON.stringify(st));
-            me.ws.send("");
-          }
-          if (me._log_subscribed) {
-            me.log_level(me.log.level);
+          if (this._log_subscribed) {
+            this.log_level(this.log.level);
           }
         });
       }
-      resolve(true);
+      resolve();
     });
   }
 
-  _set_ws_log_level(l) {
+  _set_ws_log_level(level: number) {
     this._log_subscribed = true;
     try {
       if (this.ws) {
-        var payload;
-        if (this.api_version == 4) {
-          payload = { m: "subscribe.log", p: l };
-        } else {
-          payload = { s: "log", l: l };
-        }
+        let payload: WsCommand = { m: "subscribe.log", p: level };
         this.ws.send(JSON.stringify(payload));
         this.ws.send("");
       }
     } catch (err) {
-      this._debug("log_level", "warning: unable to send ws packet");
+      this._debug("log_level", "warning: unable to send ws packet", err);
     }
   }
 
   _process_ws_frame_pong() {
-    let me;
-    if (this === undefined) {
-      me = window.$eva;
-    } else {
-      me = this;
-    }
-    me._last_pong = Date.now() / 1000;
+    this._last_pong = Date.now() / 1000;
   }
 
-  _process_ws_frame_log(d) {
-    let me;
-    if (this === undefined) {
-      me = window.$eva;
+  _process_ws_frame_log(data: Array<LogRecord> | LogRecord) {
+    if (Array.isArray(data)) {
+      data.map((record) => this._preprocess_log_record(record));
     } else {
-      me = this;
+      this._preprocess_log_record(data);
     }
-    if (Array.isArray(d)) {
-      d.map((l) => me._preprocess_log_record(l), me);
-    } else {
-      me._preprocess_log_record(d);
-    }
-    me._invoke_handler("log.postprocess");
-    return;
+    this._invoke_handler(HandlerId.LogPostProcess);
   }
 
   // WASM override
-  _process_ws(payload) {
+  _process_ws(payload: string) {
     var data = JSON.parse(payload);
     if (data.s == "pong") {
       this._debug("ws", "pong");
@@ -1825,13 +1749,13 @@ class EVA {
     }
     if (data.s == "reload") {
       this._debug("ws", "reload");
-      this._invoke_handler("server.reload");
+      this._invoke_handler(HandlerId.ServerReload);
       return;
     }
     if (data.s == "server") {
       let ev = "server." + data.d;
       this._debug("ws", ev);
-      this._invoke_handler(ev);
+      this._invoke_handler(ev as HandlerId);
       return;
     }
     if (data.s.substring(0, 11) == "supervisor.") {
@@ -1839,11 +1763,14 @@ class EVA {
       this._invoke_handler(data.s, data.d);
       return;
     }
-    if (this._invoke_handler("ws.event", data) === false) return;
+    if (this._invoke_handler(HandlerId.WsEvent, data) === false) return;
     if (data.s == "state") {
       this._debug("ws", "state");
       if (Array.isArray(data.d)) {
-        data.d.map((s) => this._process_state(s, true), this);
+        data.d.map(
+          (state: ItemState) => this._process_state(state, true),
+          this
+        );
       } else {
         this._process_state(data.d, true);
       }
@@ -1856,15 +1783,15 @@ class EVA {
     }
   }
 
-  _preprocess_log_record(l) {
+  _preprocess_log_record(record: LogRecord) {
     this._log_loaded
-      ? this._invoke_handler("log.record", l)
-      : this._lr2p.push(l);
+      ? this._invoke_handler(HandlerId.LogRecord, record)
+      : this._lr2p.push(record);
   }
 
   // WASM override
-  _clear_state(oid) {
-    delete this._states[oid];
+  _clear_state(oid: string) {
+    this._states.delete(oid);
     this._process_state({
       oid: oid,
       status: null,
@@ -1872,94 +1799,69 @@ class EVA {
     });
   }
 
-  _process_state(state, is_update) {
-    var old_state;
+  _process_state(state: ItemState, is_update = false) {
     try {
-      var oid = state.oid;
-      // copy missing fields from old state
-      if (oid in this._states) {
-        old_state = this._states[oid];
-      }
+      let oid = state.oid;
+      let old_state = this._states.get(oid);
       if (!old_state && is_update) {
         return;
       }
-      if (!jsaltt.cmp(state, old_state)) {
-        if (this.api_version != 4) {
-          if (state.set_time === true) {
-            old_state = undefined;
-            state.set_time = 0;
-          }
+      if (
+        // no old state
+        old_state === undefined ||
+        // node
+        state.node != old_state.node ||
+        // use ieid
+        (state.ieid !== undefined &&
+          (old_state.ieid === undefined ||
+            state.ieid[0] == 0 ||
+            old_state.ieid[0] < state.ieid[0] ||
+            (old_state.ieid[0] == state.ieid[0] &&
+              old_state.ieid[1] < state.ieid[1])))
+      ) {
+        if (old_state && (is_update || state.ieid == undefined)) {
+          Object.keys(old_state).map(function (k) {
+            if (!(k in state)) {
+              // copy fields as-is
+              (state as any)[k] = (old_state as any)[k];
+            }
+          });
         }
-        if (
-          // no old state
-          old_state === undefined ||
-          // controller changed
-          state.controller_id != old_state.controller_id ||
-          // node changed (v4)
-          state.node != old_state.node ||
-          // use ieid
-          (state.ieid !== undefined &&
-            (old_state.ieid === undefined ||
-              state.ieid[0] == 0 ||
-              old_state.ieid[0] < state.ieid[0] ||
-              (old_state.ieid[0] == state.ieid[0] &&
-                old_state.ieid[1] < state.ieid[1]))) ||
-          // use set_time
-          (state.ieid === undefined &&
-            (state.set_time === undefined ||
-              old_state.set_time === undefined ||
-              state.set_time >= old_state.set_time))
-        ) {
-          if (old_state && (is_update || state.ieid == undefined)) {
-            Object.keys(old_state).map(function (k) {
-              if (!(k in state)) {
-                state[k] = old_state[k];
-              }
-            });
-          }
-          this._debug(
-            "process_state",
-            `${oid} s: ${state.status} v: "${state.value}"`,
-            `act: ${state.act} t: "${state.t}"`
-          );
-          this._states[oid] = state;
-          if (oid in this._update_state_functions) {
-            this._update_state_functions[oid].map(function (f) {
+        this._debug(
+          "process_state",
+          `${oid} s: ${state.status} v: "${state.value}"`,
+          `act: ${state.act} t: "${state.t}"`
+        );
+        this._states.set(oid, state);
+        let fcs = this._update_state_functions.get(oid);
+        if (fcs) {
+          fcs.map((f) => {
+            try {
+              f(state);
+            } catch (err) {
+              this.logger.error(`state function processing for ${oid}:`, err);
+            }
+          });
+        }
+        this._update_state_mask_functions.forEach((fcs, k) => {
+          if (this._oid_match(oid, k)) {
+            fcs.map((f) => {
               try {
                 f(state);
               } catch (err) {
-                jsaltt.logger.error(
-                  `state function processing for ${oid}:`,
-                  err
-                );
+                this.logger.error(`state function processing for ${oid}:`, err);
               }
             });
           }
-          Object.keys(this._update_state_mask_functions).map(function (k) {
-            if (this._oid_match(oid, k)) {
-              this._update_state_mask_functions[k].map(function (f) {
-                try {
-                  f(state);
-                } catch (err) {
-                  jsaltt.logger.error(
-                    `state function processing for ${oid}:`,
-                    err
-                  );
-                }
-              });
-            }
-          }, this);
-        }
+        });
+        Object.keys(this._update_state_mask_functions).map((k) => {}, this);
       }
     } catch (err) {
-      jsaltt.logger.error(
-        "State processing error, invalid object received",
-        err
-      );
+      this.logger.error("State processing error, invalid object received", err);
     }
   }
 
-  _invoke_handler(handler: HandlerId, ...args: any[]) {
+  _invoke_handler(handler: HandlerId, ...args: any[]): void | boolean {
     let f = this._handlers.get(handler);
     if (f) {
       this._debug("invoke_handler", "invoking for " + handler);
@@ -1971,22 +1873,22 @@ class EVA {
     }
   }
 
-  _oid_match(oid, mask) {
+  _oid_match(oid: string, mask: string): boolean {
     return new RegExp("^" + mask.split("*").join(".*") + "$").test(oid);
   }
 
-  _debug(method, ...data: any[]) {
+  _debug(method: string, ...data: any[]) {
     if (this.debug) {
       this.logger.debug.apply([`EVA::${method}`].concat(data));
     }
   }
 
-  parse_svc_message(msg?: string): SvcMessage {
+  parse_svc_message(msg?: string): SvcMessage | null {
     if (msg && msg.startsWith("|")) {
       let sp = msg.split("|");
       let kind = sp[1];
       if (kind) {
-        let result = { kind: kind, svc: sp[2] };
+        let result: SvcMessage = { kind: kind, svc: sp[2] };
         let svc_msg = sp[3];
         if (svc_msg) {
           let sp_msg = svc_msg.split("=");
@@ -2012,33 +1914,22 @@ class EVA {
    *
    * @returns QRious QR object if QR code is generated
    */
-  otpQR(ctx, secret, params) {
+  otpQR(ctx: object | string, secret: string, params?: OTPParams) {
     if (typeof document !== "object") {
-      jsaltt.logger.error("document object not found");
+      this.logger.error("document object not found");
       return;
     }
-    var params = params;
     if (!params) params = {};
-    let size = params["size"];
-    if (!size) {
-      size = 200;
-    }
-    let issuer = params["issuer"];
-    if (!issuer) {
-      issuer = "HMI " + document.location.hostname;
-    }
-    let user = params["user"];
-    if (!user) {
-      user = this.login;
-    }
+    let size = params.size || 200;
+    let issuer = params.issuer || `HMI ${document.location.hostname}`;
+    let user = params.user || this.login;
     let value =
       "otpauth://totp/" +
       encodeURIComponent(user) +
       `?secret=${secret}&issuer=` +
       encodeURIComponent(issuer);
-    let xtr = params["xtr"];
-    if (xtr) {
-      value += xtr;
+    if (params.xtr) {
+      value += params.xtr;
     }
     return new this.external.QRious({
       element: typeof ctx === "object" ? ctx : document.getElementById(ctx),
@@ -2059,60 +1950,35 @@ class EVA {
    * @param params {object} object with additional parameters
    *                        size - QR code size in px (default: 200)
    *                        url - override UI url (default: document.location)
-   *                        user - override user (default: authorized_user)
-   *                        password - override password
+   *                        user - override user (default: authorized_user),
+   *                        password - override password, null to clear
    *
    * @returns QRious QR object if QR code is generated
    */
-  hiQR(ctx, params) {
+  hiQR(ctx: object | string, params?: HiQRParams) {
     if (typeof document !== "object") {
-      jsaltt.logger.error("document object not found");
+      this.logger.error("document object not found");
       return;
     }
-    var params = params;
     if (!params) params = {};
-    var url = params["url"];
-    if (!url) {
-      url = document.location;
+    let url = params.url || document.location.href;
+    let user = params.user || this.authorized_user || "";
+    if (!url || !user || user.startsWith(".")) {
+      return;
     }
-    var user = params["user"];
-    if (user === undefined) {
-      user = this.authorized_user;
-    }
-    var password = params["password"];
+    let password = params.password;
     if (password === undefined) {
       password = this.password;
     }
-    var size = params["size"];
-    if (!size) {
-      size = 200;
-    }
-    if (!url || !user) {
-      return;
-    }
-    var l = document.createElement("a");
-    l.href = url;
-    var protocol = l.protocol.substring(0, l.protocol.length - 1);
-    var host = l.hostname;
-    var port = l.port;
-    if (!port) {
-      if (protocol == "http") {
-        port = 80;
-      } else {
-        port = 443;
-      }
-    }
-    var value =
-      "scheme:" +
-      protocol +
-      "|address:" +
-      host +
-      "|port:" +
-      port +
-      "|user:" +
-      user;
+    let size = params.size || 200;
+    let link = document.createElement("a");
+    link.href = url;
+    let protocol = link.protocol.substring(0, link.protocol.length - 1);
+    let host = link.hostname;
+    let port = link.port || (protocol == "http" ? "80" : "443");
+    let value = `scheme:${protocol}|address:${host}|port:${port}|user:${user}`;
     if (password) {
-      value += "|password:" + password;
+      value += `|password:${password}`;
     }
     return new this.external.QRious({
       element: typeof ctx === "object" ? ctx : document.getElementById(ctx),
@@ -2123,9 +1989,19 @@ class EVA {
 }
 
 if (typeof window !== "undefined") {
-  $eva = new EVA();
-  window.$eva = new EVA();
+  let $eva = new EVA();
+  (window as any).$eva = new EVA();
 }
 
 export default EVA;
-export { EVA, EvaError, ActionResult, HandlerId, IntervalId };
+export {
+  EVA,
+  EvaError,
+  ActionResult,
+  ItemState,
+  LogRecord,
+  HandlerId,
+  IntervalId,
+  OTPParams,
+  HiQRParams
+};
