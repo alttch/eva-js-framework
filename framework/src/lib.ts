@@ -1289,7 +1289,7 @@ class EVA {
   _inject_evajw(mod: any) {
     if (mod) {
       mod.init(undefined, this).then(() => {
-        mod.init_engine();
+        mod.init_engine(this);
         this.evajw = mod;
         let build = mod.get_build();
         this.logger.info(
@@ -1323,9 +1323,9 @@ class EVA {
           src: Map<string, Array<(state: ItemState) => void>>,
           mod: any
         ) {
-          Object.keys(src).map((oid) => {
-            (src.get(oid) as any).map((f: any) => {
-              mod.watch(oid, f, true);
+          src.forEach((fcs, oid) => {
+            fcs.forEach((f) => {
+              mod.watch(oid, f, false);
             });
           });
         }
