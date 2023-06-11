@@ -1381,7 +1381,7 @@ class EVA {
     this._last_pong = null;
   }
 
-  _critical(message: string, write_on_screen = false, throw_err = true) {
+  _critical(message: any, write_on_screen = false, throw_err = true) {
     if (write_on_screen) {
       document.write(`<font color="red" size="30">${message}</font>`);
     }
