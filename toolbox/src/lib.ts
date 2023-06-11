@@ -1,18 +1,43 @@
-"use strict";
-
 const eva_toolbox_version = "0.5.0";
 
-import jsaltt from "@altertech/jsaltt";
-
 import "./style.css";
+import { EVA } from "@eva-ics/framework";
+
+interface ChartParams {
+  timeframe?: string | Array<string>;
+  animate?: (ctx: string | HTMLDivElement) => void;
+  fill?: string;
+  update?: number;
+  prop?: string;
+  units?: string;
+  args: any;
+}
+
+interface PopupParams {
+  ct?: number;
+  btn1?: string;
+  btn2?: string;
+  va?: () => boolean;
+}
+
+enum PopupKind {
+  Info = "info",
+  Warning = "warning",
+  Error = "error",
+  InfoLarge = "!info",
+  WarningLarge = "!warning",
+  ErrorLarge = "error"
+}
 
 class EVA_TOOLBOX {
+  eva: EVA;
+  version: string;
   /**
    * Constructs a toolbox object
    *
    * @param eva {obect} EVA object instance
    */
-  constructor(eva) {
+  constructor(eva: EVA) {
     this.eva = eva;
     this.version = eva_toolbox_version;
   }
@@ -55,34 +80,30 @@ class EVA_TOOLBOX {
    *
    * @returns chart object
    */
-  chart(ctx, cfg, oid, params, _chart) {
-    var params = jsaltt.extend({}, params);
-    var _oid;
-    if (typeof oid === "object") {
-      _oid = oid;
-    } else {
-      _oid = oid.split(",");
-    }
-    var timeframe = params["timeframe"];
-    if (!timeframe) {
-      timeframe = "1D";
-    }
-    var fill = params["fill"];
-    if (!fill) {
-      fill = "30T:2";
-    }
-    var update = params["update"];
-    var prop = params["prop"];
-    var cc = typeof ctx === "object" ? ctx : document.getElementById(ctx);
-    var data_units = params["units"];
-    var chart;
-    var nchart;
-    var canvas;
-    var work_cfg;
-    var animate = params["animate"];
-    var api_opts = params["args"];
-    if (!api_opts) api_opts = {};
-    if (!animate) animate = this.animate;
+  chart(
+    ctx: string | HTMLDivElement,
+    cfg: any,
+    oid: string | Array<string>,
+    params?: ChartParams,
+    _chart?: any
+  ) {
+    let _params = params || ({} as ChartParams);
+    let _oid: Array<string> = Array.isArray(oid) ? oid : oid.split(",");
+    let timeframe = _params.timeframe || "1D";
+    let fill = _params.fill || "30T:2";
+    let update = _params.update;
+    let prop = _params.prop;
+    let cc: HTMLDivElement =
+      typeof ctx === "object"
+        ? ctx
+        : (document.getElementById(ctx) as HTMLDivElement);
+    let data_units = _params.units;
+    let chart: any;
+    let nchart: any;
+    let canvas: HTMLCanvasElement;
+    let work_cfg: any;
+    let animate = _params.animate || this.animate;
+    let api_opts = _params.args || {};
     if (_chart) {
       chart = _chart;
     } else {
@@ -92,25 +113,23 @@ class EVA_TOOLBOX {
       canvas.className = "eva_toolbox_chart";
       cc.innerHTML = "";
       cc.appendChild(canvas);
-      work_cfg = jsaltt.extend({}, cfg);
+      work_cfg = cfg || {};
       nchart = new this.eva.external.Chart(canvas, work_cfg);
     }
-    let me = this;
-    var chartfunc = function() {
+    var chartfunc = () => {
       if (chart && (cc.offsetWidth <= 0 || cc.offsetHeight <= 0)) {
         chart.destroy();
         return;
       }
-      if (!chart) animate(ctx);
+      if (!chart) this.animate(ctx);
       var x = "value";
       if (prop !== undefined && prop !== null) {
         x = prop;
       }
-      let tframes = timeframe;
-      if (!Array.isArray(tframes)) {
-        tframes = [tframes];
-      }
-      let calls = [];
+      let tframes: Array<string> = Array.isArray(timeframe)
+        ? timeframe
+        : [timeframe];
+      let calls: Promise<any>[] = [];
       let primary_tf_idx = 0;
       tframes.map((tf, idx) => {
         let t = tf.split(":");
@@ -119,31 +138,25 @@ class EVA_TOOLBOX {
           t_start = t_start.substr(1);
           primary_tf_idx = idx;
         }
-        let t_end = t[1];
-        if (!t_end) t_end = null;
-        let _api_opts = jsaltt.extend(
-          {
+        let t_end = t[1] || null;
+        let _api_opts = {
+          ...{
             s: t_start,
             e: t_end,
             x: x,
             w: fill
           },
-          api_opts
-        );
+          ...api_opts
+        };
         let method;
-        if (me.eva.api_version == 4) {
-          method = "item.state_history";
-        } else {
-          method = "state_history";
-        }
-        calls.push(me.eva.call(method, _oid, _api_opts));
+        calls.push(this.eva.call("item.state_history", _oid, _api_opts));
       });
       Promise.all(calls)
-        .then(function(result) {
+        .then(function (result) {
           let index = 0;
           let wtf = 0;
           result.map((data) => {
-            data.t.forEach((t, index) => {
+            data.t.forEach((t: number, index: number) => {
               if (t) {
                 data.t[index] = new Date(t * 1000);
               }
@@ -174,11 +187,13 @@ class EVA_TOOLBOX {
                     callbacks: {}
                   }
                 };
-                work_cfg.options.plugins = jsaltt.extend(
-                  p,
-                  work_cfg.options.plugins
-                );
-                work_cfg.options.plugins.tooltip.callbacks.label = (ctx) => {
+                work_cfg.options.plugins = {
+                  ...p,
+                  ...work_cfg.options.plugins
+                };
+                work_cfg.options.plugins.tooltip.callbacks.label = (
+                  ctx: any
+                ) => {
                   return ctx.formattedValue + data_units;
                 };
               }
@@ -187,8 +202,8 @@ class EVA_TOOLBOX {
             wtf++;
           });
         })
-        .catch(function(err) {
-          var d_error = document.createElement("div");
+        .catch((err) => {
+          let d_error = document.createElement("div");
           d_error.className = "eva_toolbox_chart";
           d_error.style.cssText =
             "width: 100%; height: 100%; " +
@@ -214,8 +229,11 @@ class EVA_TOOLBOX {
    *
    * @param {string|object} ctx DOM element (or id)
    */
-  animate(ctx) {
-    var el = typeof ctx === "object" ? ctx : document.getElementById(ctx);
+  animate(ctx: string | HTMLDivElement) {
+    var el =
+      typeof ctx === "object"
+        ? ctx
+        : (document.getElementById(ctx) as HTMLDivElement);
     el.innerHTML =
       '<div class="eva-toolbox-cssload-square"><div \
       class="eva-toolbox-cssload-square-part \
@@ -236,7 +254,7 @@ class EVA_TOOLBOX {
    *
    * @param ctx {string|object} html element to use as popup (any empty <div />
    *                            is fine)
-   * @param pclass {string} popup class: info, warning or error. opens a large
+   * @param kind {string} popup kind: info, warning or error. opens a large
    *                        popup window if '!' is put before the class (e.g.
    *                        !info)
    * @param title {string} popup window title
@@ -253,74 +271,86 @@ class EVA_TOOLBOX {
    *                        Promise resolves. If the function returns true, the
    *                        popup is closed and resolve function is executed.
    *                        The function is commonly used to validate input if
-   *                        popup contains input fields.
+   *                        the popup contains input fields.
    *
    * @returns Promise object. Resolve and reject functions are called with
    *                         "true" parameter if button is pressed by user.
    *
    */
-  popup(ctx, pclass, title, msg, params) {
-    var params = params;
-    if (!params) params = {};
-    return new Promise(function(resolve, reject) {
-      if (document === "undfined") throw Error("DOM is required");
-      var popup = typeof ctx === "object" ? ctx : document.getElementById(ctx);
+  async popup(
+    ctx: string | HTMLDivElement,
+    kind: PopupKind,
+    title: string,
+    msg: string,
+    params?: PopupParams
+  ): Promise<boolean> {
+    let _params = params || ({} as PopupParams);
+    if (typeof window === "undefined") throw Error("DOM is required");
+    return new Promise(function (resolve, reject) {
+      let popup: any =
+        typeof ctx === "object" ? ctx : document.getElementById(ctx);
       if (popup === undefined || popup === null)
         throw Error(`DOM context ${ctx} not found`);
-      var ct = params["ct"];
-      var btn1 = params["btn1"];
-      var btn2 = params["btn2"];
-      var va = params["va"];
-      var _pclass = pclass;
-      if (pclass[0] == "!") {
-        _pclass = pclass.substr(1);
+      let ct = _params.ct;
+      let btn1 = _params.btn1;
+      let btn2 = _params.btn2;
+      let va = _params.va;
+      let _pkind = kind as string;
+      if (_pkind[0] == "!") {
+        _pkind = _pkind.substr(1);
       }
-      var popup_priority = function(pclass) {
-        if (pclass == "info") return 20;
-        if (pclass == "warning") return 30;
-        if (pclass == "error") return 40;
-        return 0;
+      let popup_priority = (p: string) => {
+        switch (p) {
+          case "info":
+            return 20;
+          case "warning":
+            return 30;
+          case "error":
+            return 40;
+          default:
+            return 0;
+        }
       };
-      if (popup && popup_priority(popup.priority) > popup_priority(_pclass)) {
-        throw Error("popup with higher priority is already active");
+      if (popup && popup_priority(popup.priority) > popup_priority(_pkind)) {
+        throw Error("a popup with higher priority is already active");
       }
       if (popup) {
-        clearInterval(popup.ticker);
+        clearInterval((popup as any).ticker);
         document.removeEventListener("keydown", popup.key_listener);
       }
       popup.innerHTML = "";
-      popup.priority = _pclass;
+      popup.priority = _pkind;
       popup.className = "eva_toolbox_popup";
-      var popup_window = document.createElement("div");
+      let popup_window = document.createElement("div");
       popup.appendChild(popup_window);
-      if (pclass[0] == "!") {
+      if (kind[0] == "!") {
         popup_window.className = "eva_toolbox_popup_window_big";
       } else {
         popup_window.className = "eva_toolbox_popup_window";
       }
-      var popup_header = document.createElement("div");
+      let popup_header = document.createElement("div");
       popup_header.className =
-        "eva_toolbox_popup_header eva_toolbox_popup_header_" + _pclass;
+        "eva_toolbox_popup_header eva_toolbox_popup_header_" + _pkind;
       if (title !== undefined && title !== null) {
         popup_header.innerHTML = title;
       } else {
         popup_header.innerHTML =
-          _pclass.charAt(0).toUpperCase() + _pclass.slice(1);
+          _pkind.charAt(0).toUpperCase() + _pkind.slice(1);
       }
       popup_window.append(popup_header);
-      var popup_content = document.createElement("div");
+      let popup_content = document.createElement("div");
       popup_content.className = "eva_toolbox_popup_content";
       popup_content.innerHTML = msg;
       popup_window.appendChild(popup_content);
-      var popup_footer = document.createElement("div");
+      let popup_footer = document.createElement("div");
       popup_footer.className = "eva_toolbox_popup_footer";
       popup_window.appendChild(popup_footer);
-      var popup_buttons = document.createElement("div");
+      let popup_buttons = document.createElement("div");
       popup_buttons.className = "row";
       popup_window.appendChild(popup_buttons);
-      var popup_btn1 = document.createElement("div");
-      var popup_btn2 = document.createElement("div");
-      var spacer = document.createElement("div");
+      let popup_btn1 = document.createElement("div");
+      let popup_btn2 = document.createElement("div");
+      let spacer = document.createElement("div");
       spacer.className = "col-xs-1 col-sm-2";
       popup_buttons.appendChild(spacer);
       popup_buttons.appendChild(popup_btn1);
@@ -328,22 +358,22 @@ class EVA_TOOLBOX {
       spacer = document.createElement("div");
       spacer.className = "col-xs-1 col-sm-2";
       popup_buttons.appendChild(spacer);
-      var btn1text = "OK";
+      let btn1text = "OK";
       if (btn1) {
         btn1text = btn1;
       }
-      var btn1_o = document.createElement("div");
+      let btn1_o = document.createElement("div");
       btn1_o.className =
-        "eva_toolbox_popup_btn eva_toolbox_popup_btn_" + _pclass;
+        "eva_toolbox_popup_btn eva_toolbox_popup_btn_" + _pkind;
       btn1_o.innerHTML = btn1text;
-      var close_popup = function() {
+      let close_popup = () => {
         clearInterval(popup.ticker);
-        document.getElementById(ctx).style.display = "none";
-        document.getElementById(ctx).innerHTML = "";
+        popup.style.display = "none";
+        popup.innerHTML = "";
         document.removeEventListener("keydown", popup.key_listener);
         popup.priority = null;
       };
-      var f_validate_run_and_close = function() {
+      let f_validate_run_and_close = function () {
         if (va === undefined || va == null || va()) {
           close_popup();
           resolve(true);
@@ -351,13 +381,13 @@ class EVA_TOOLBOX {
       };
       btn1_o.addEventListener("click", f_validate_run_and_close);
       popup_btn1.appendChild(btn1_o);
-      var btn2_o;
+      let btn2_o: HTMLDivElement;
       if (btn2) {
         btn2_o = document.createElement("div");
         btn2_o.className =
-          "eva_toolbox_popup_btn eva_toolbox_popup_btn_" + _pclass;
+          "eva_toolbox_popup_btn eva_toolbox_popup_btn_" + _pkind;
         btn2_o.innerHTML = btn2;
-        btn2_o.addEventListener("click", function() {
+        btn2_o.addEventListener("click", function () {
           close_popup();
           reject(true);
         });
@@ -369,7 +399,7 @@ class EVA_TOOLBOX {
         popup_btn2.style.display = "none";
       }
       popup.style.display = "block";
-      popup.key_listener = function(e) {
+      popup.key_listener = (e: KeyboardEvent) => {
         if (e.which == 27) {
           close_popup();
           reject();
@@ -383,7 +413,7 @@ class EVA_TOOLBOX {
       document.addEventListener("keydown", popup.key_listener);
       if (ct && ct > 0) {
         popup.ct = ct;
-        var ticker_func = function() {
+        var ticker_func = () => {
           if (popup.ct <= 0) {
             close_popup();
             reject();
@@ -392,7 +422,7 @@ class EVA_TOOLBOX {
           var txt = "";
           if (btn2_o) {
             obj = btn2_o;
-            txt = btn2;
+            txt = btn2 as string;
           } else {
             obj = btn1_o;
             txt = btn1text;
@@ -408,11 +438,13 @@ class EVA_TOOLBOX {
 }
 
 if (typeof window !== "undefined") {
-  var $eva = window.$eva;
+  let $eva = (window as any).$eva;
   if (typeof $eva === "object") {
     $eva.toolbox = new EVA_TOOLBOX($eva);
-    if (typeof Chart !== "undefined") {
-      $eva.external.Chart = Chart;
+    if (typeof (window as any).Chart !== "undefined") {
+      $eva.external.Chart = (window as any).Chart;
     }
   }
 }
+
+export { EVA_TOOLBOX, ChartParams, PopupParams, PopupKind };

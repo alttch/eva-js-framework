@@ -1,21 +1,31 @@
 {
   "name": "@eva-ics/toolbox",
   "version": "0.5.0",
-  "description": "UI Toolbox for EVA ICS",
+  "description": "Toolbox for EVA ICS JS Framework" ,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build && tsc src/*.ts --declaration --emitDeclarationOnly --declarationDir dist/ -t es2015 --moduleResolution node",
+    "preview": "vite preview"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alttch/eva-js-framework.git"
   },
-  "type": "module",
-  "main": "src/index.js",
+  "main": "./dist/toolbox.umd.js",
+  "module": "./dist/toolbox.es.js",
+  "files": ["dist"],
+  "types": "./dist/lib.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/toolbox.es.js",
+      "require": "./dist/toolbox.umd.js"
+    }
+  },
   "keywords": [
     "iot",
     "iiot",
     "browser",
-    "toolbox",
+    "framework",
     "evaics",
     "eva-ics"
   ],
@@ -25,17 +35,13 @@
     "url": "https://github.com/alttch/eva-js-framework/issues"
   },
   "dependencies": {
-    "@altertech/jsaltt": "^0.1.0",
-    "@eva-ics/framework": "^0.3.24"
+    "@eva-ics/framework": "file:/tdata/src/w/ehmi_ec/eva-ics-framework-0.5.0.tgz",
+    "chart.js": "^4.3.0",
+    "chartjs-adapter-date-fns": "^3.0.0"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {
-    "@babel/core": "^7.21.8",
-    "@babel/preset-env": "^7.21.5",
-    "@babel/register": "^7.21.0",
-    "babel-loader": "^9.1.2",
-    "cssmin-cli": "0.0.5",
-    "webpack": "^5.84.0",
-    "webpack-cli": "^5.1.1"
+    "typescript": "^5.1.3",
+    "vite": "^4.3.9"
   }
 }
