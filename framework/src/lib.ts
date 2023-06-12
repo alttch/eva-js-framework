@@ -106,7 +106,7 @@ interface LvarIncrDecrResult {
   result: number;
 }
 
-interface LogCollector {
+interface LogParams {
   level: number;
   records: number;
 }
@@ -258,7 +258,7 @@ class EVABulkRequest {
                         }
                       } else {
                         if (this.eva.debug == 2) {
-                          this.eva.logger.info(
+                          this.eva.log.info(
                             `call_bulk API ${id} ${req.func} response`,
                             d.result
                           );
@@ -528,8 +528,8 @@ class EVA {
   external: External;
   evajw: any;
   in_evaHI: boolean;
-  log: LogCollector;
-  logger: Logger;
+  log_params: LogParams;
+  log: Logger;
   logged_in: boolean;
   login: string;
   login_xopts: object | null;
@@ -569,7 +569,7 @@ class EVA {
 
   constructor() {
     this.version = eva_framework_version;
-    this.logger = new Logger();
+    this.log = new Logger();
     this.login = "";
     this.password = "";
     this.login_xopts = null;
@@ -600,7 +600,7 @@ class EVA {
       typeof navigator !== "undefined" &&
       typeof navigator.userAgent === "string" &&
       navigator.userAgent.startsWith("evaHI ");
-    this.log = {
+    this.log_params = {
       level: 20,
       records: 200
     };
@@ -686,7 +686,7 @@ class EVA {
     this._cancel_scheduled_restart();
     this._debug("framework", `version: ${this.version}`);
     if (typeof fetch === "undefined") {
-      this.logger.error(
+      this.log.error(
         '"fetch" function is unavailable. Upgrade your web browser or ' +
           "connect polyfill"
       );
@@ -833,7 +833,7 @@ class EVA {
   log_start(log_level?: number) {
     this._log_started = true;
     if (log_level !== undefined) {
-      this.log.level = log_level;
+      this.log_params.level = log_level;
     }
     if (!this.ws_mode || this._log_first_load) {
       this._log_loaded = false;
@@ -852,7 +852,7 @@ class EVA {
    * @param log_level {number} log processing level
    */
   set_log_level(log_level: number) {
-    this.log.level = log_level;
+    this.log_params.level = log_level;
     this._set_ws_log_level(log_level);
     this._load_log_entries(true);
   }
@@ -1287,13 +1287,11 @@ class EVA {
           (window as any).evajw = this.evajw;
         }
         let build = mod.get_build();
-        this.logger.info(
-          "EVA ICS JavaScript WASM engine loaded. Build: " + build
-        );
+        this.log.info("EVA ICS JavaScript WASM engine loaded. Build: " + build);
         try {
           mod.check_license();
         } catch (err) {
-          this.logger.error("License check failed. WASM engine disabled");
+          this.log.error("License check failed. WASM engine disabled");
           this.wasm = false;
           this._start_engine();
           return;
@@ -1377,7 +1375,7 @@ class EVA {
         body[0].innerHTML = `<font color="red" size="30">${message}</font>`;
       }
     }
-    this.logger.critical(message);
+    this.log.critical(message);
     if (throw_err) {
       throw new Error(`critical: ${message}`);
     }
@@ -1390,7 +1388,7 @@ class EVA {
     this._api_call_id += 1;
     let id = this._api_call_id;
     if (this.debug == 2) {
-      this.logger.debug(method, params);
+      this.log.debug(method, params);
     }
     return {
       jsonrpc: "2.0",
@@ -1436,10 +1434,7 @@ class EVA {
                   );
                 } else {
                   if (this.debug == 2) {
-                    this.logger.debug(
-                      `API ${id} ${method} response`,
-                      data.result
-                    );
+                    this.log.debug(`API ${id} ${method} response`, data.result);
                   }
                   resolve(data.result);
                 }
@@ -1516,12 +1511,12 @@ class EVA {
   _load_log_entries(postprocess: boolean) {
     if (this.ws_mode) this._lr2p = [];
     this.call("log.get", {
-      l: this.log.level,
-      n: this.log.records
+      l: this.log_params.level,
+      n: this.log_params.records
     })
       .then((data: Array<LogRecord>) => {
         if (this.ws_mode && this._log_first_load) {
-          this._set_ws_log_level(this.log.level);
+          this._set_ws_log_level(this.log_params.level);
         }
         data.map((l) => this._invoke_handler(HandlerId.LogRecord, l));
         this._log_loaded = true;
@@ -1532,7 +1527,7 @@ class EVA {
         this._log_first_load = false;
       })
       .catch((err: EvaError) => {
-        this.logger.error(`unable to load log entries: ${err.message}`);
+        this.log.error(`unable to load log entries: ${err.message}`);
       });
   }
 
@@ -1698,7 +1693,7 @@ class EVA {
             this.ws.send("");
           }
           if (this._log_subscribed) {
-            this.set_log_level(this.log.level);
+            this.set_log_level(this.log_params.level);
           }
         });
       }
@@ -1832,7 +1827,7 @@ class EVA {
             try {
               f(state);
             } catch (err) {
-              this.logger.error(`state function processing for ${oid}:`, err);
+              this.log.error(`state function processing for ${oid}:`, err);
             }
           });
         }
@@ -1842,14 +1837,14 @@ class EVA {
               try {
                 f(state);
               } catch (err) {
-                this.logger.error(`state function processing for ${oid}:`, err);
+                this.log.error(`state function processing for ${oid}:`, err);
               }
             });
           }
         });
       }
     } catch (err) {
-      this.logger.error("State processing error, invalid object received", err);
+      this.log.error("State processing error, invalid object received", err);
     }
   }
 
@@ -1860,7 +1855,7 @@ class EVA {
       try {
         f.apply(this, args);
       } catch (err) {
-        this.logger.error(`handler for ${handler}:`, err);
+        this.log.error(`handler for ${handler}:`, err);
       }
     }
   }
@@ -1871,7 +1866,7 @@ class EVA {
 
   _debug(method: string, ...data: any[]) {
     if (this.debug) {
-      this.logger.debug.apply(this.logger, [`EVA::${method}`].concat(data));
+      this.log.debug.apply(this.log, [`EVA::${method}`].concat(data));
     }
   }
 
@@ -1908,7 +1903,7 @@ class EVA {
    */
   otpQR(ctx: object | string, secret: string, params?: OTPParams) {
     if (typeof document !== "object") {
-      this.logger.error("document object not found");
+      this.log.error("document object not found");
       return;
     }
     if (!params) params = {};
@@ -1949,7 +1944,7 @@ class EVA {
    */
   hiQR(ctx: object | string, params?: HiQRParams) {
     if (typeof document !== "object") {
-      this.logger.error("document object not found");
+      this.log.error("document object not found");
       return;
     }
     if (!params) params = {};
@@ -1989,6 +1984,7 @@ export {
   EvaError,
   ActionResult,
   ItemState,
+  LogParams,
   LogRecord,
   HandlerId,
   IntervalId,
