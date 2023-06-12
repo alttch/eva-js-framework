@@ -166,7 +166,7 @@ class EVABulkRequest {
   eva: EVA;
 
   constructor(eva: EVA) {
-    this.requests = {};
+    this.requests = Map<number, EVABulkRequestPartHandler>;
     this.payload = [];
     this.eva = eva;
   }
@@ -197,7 +197,7 @@ class EVABulkRequest {
     let p = this.eva._prepare_call_params(params);
     let payload: JsonRpcRequest = this.eva._prepare_api_call(method, p);
     let req = new EVABulkRequestPartHandler();
-    this.requests[payload.id] = req;
+    this.requests.set(payload.id, req);
     this.payload.push(payload);
     return req;
   }
@@ -237,14 +237,14 @@ class EVABulkRequest {
                       });
                     } else {
                       let id = d.id;
-                      let req = this.requests[id];
+                      let req = this.requests.get(id);
                       let fn_ok;
                       let fn_err;
-                      if (req) {
+                      if (req !== undefined) {
                         fn_ok = req.fn_ok;
                         fn_err = req.fn_err;
                       }
-                      if (typeof d.error !== "undefined") {
+                      if (d.error !== undefined) {
                         this.eva._debug(
                           "call_bulk req",
                           `${id} failed: ${d.error.code} (${d.error.message})`
@@ -281,7 +281,7 @@ class EVABulkRequest {
                 let code = -32009;
                 let message = "Invalid server response";
                 this.eva._debug("call_bulk", `failed: ${code} (${message})`);
-                reject(new EvaError(code, message));
+                reject(new EvaError(code, message, err));
               });
           } else {
             let code = -32007;
@@ -294,7 +294,7 @@ class EVABulkRequest {
           let code = -32007;
           let message = "Server error";
           this.eva._debug("call_bulk", `failed: ${code} (${message})`);
-          reject(new EvaError(code, message));
+          reject(new EvaError(code, message, err));
         });
     });
   }
@@ -377,7 +377,7 @@ class EVA_ACTION {
     wait = false
   ): Promise<ActionResult> {
     let data = (await this.eva.call(method, oid, params)) as ActionResult;
-    if (wait == false) {
+    if (wait === false) {
       return data;
     } else {
       return new Promise((resolve) => {
@@ -458,8 +458,7 @@ class EVA_LVAR {
     if (value !== undefined) {
       params.value = value;
     }
-    if (params) {
-      let method = "lvar.set";
+    if (Object.keys(params).length) {
       await this.eva.call("lvar.set", oid, params);
     }
   }
@@ -918,7 +917,7 @@ class EVA {
   set_readonly(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.call("session.set_readonly")
-        .then((data: any) => {
+        .then(() => {
           this.server_info.aci.token_mode = "readonly";
           resolve();
         })
@@ -1452,7 +1451,7 @@ class EVA {
                   method,
                   `api call ${id} failed: ${code} (${message})`
                 );
-                reject(new EvaError(code, message));
+                reject(new EvaError(code, message, err));
               });
           } else {
             let code = -32007;
@@ -1465,7 +1464,7 @@ class EVA {
           let code = -32007;
           let message = "Server error";
           this._debug(method, `api call ${id} failed: ${code} (${message})`);
-          reject({ code: code, message: message, data: null });
+          reject(new EvaError(code, message, err));
         });
     });
   }
@@ -1648,7 +1647,7 @@ class EVA {
   }
 
   async _start_ws(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (this.ws_mode) {
         let uri;
         if (!this.api_uri) {
@@ -1684,7 +1683,7 @@ class EVA {
         this.ws.onmessage = (evt: any) => {
           this._process_ws(evt.data);
         };
-        this.ws.addEventListener("open", (event: any) => {
+        this.ws.addEventListener("open", () => {
           this._debug("_start_ws", "ws connected");
           if (this.state_updates) {
             let st: WsCommand = { m: "subscribe.state" };
@@ -1848,7 +1847,6 @@ class EVA {
             });
           }
         });
-        Object.keys(this._update_state_mask_functions).map((k) => {}, this);
       }
     } catch (err) {
       this.logger.error("State processing error, invalid object received", err);
@@ -1983,7 +1981,6 @@ class EVA {
 }
 
 if (typeof window !== "undefined") {
-  let $eva = new EVA();
   (window as any).$eva = new EVA();
 }
 

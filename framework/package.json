@@ -35,7 +35,7 @@
     "url": "https://github.com/alttch/eva-js-framework/issues"
   },
   "dependencies": {
-    "@altertech/jsaltt": "0.1.9"
+    "@altertech/jsaltt": "0.1.11"
   },
   "homepage": "https://www.eva-ics.com/",
   "devDependencies": {
