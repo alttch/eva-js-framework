@@ -2,7 +2,7 @@ const eva_framework_version = "0.5.0";
 
 import { Logger, cookies } from "@altertech/jsaltt";
 
-enum HandlerId {
+enum EventKind {
   HeartBeatSuccess = "heartbeat.success",
   HeartBeatError = "heartbeat.error",
   LoginSuccess = "login.success",
@@ -124,7 +124,7 @@ interface ItemState {
   value: any;
 }
 
-enum IntervalId {
+enum IntervalKind {
   AjaxReload = "ajax_reload",
   AjaxLogReload = "log_reload",
   ActionWatch = "action_watch",
@@ -544,8 +544,8 @@ class EVA {
   ws: any;
   server_info: any;
   _api_call_id: number;
-  _handlers: Map<HandlerId, (...args: any[]) => void | boolean>;
-  _intervals: Map<IntervalId, number>;
+  _handlers: Map<EventKind, (...args: any[]) => void | boolean>;
+  _intervals: Map<IntervalKind, number>;
   _ws_handler_registered: boolean;
   _heartbeat_reloader: any;
   _ajax_reloader: any;
@@ -606,17 +606,17 @@ class EVA {
     };
     this._update_state_functions = new Map();
     this._update_state_mask_functions = new Map();
-    this._handlers = new Map([[HandlerId.HeartBeatError, this.restart]]);
-    this._handlers.set(HandlerId.HeartBeatError, this.restart);
+    this._handlers = new Map([[EventKind.HeartBeatError, this.restart]]);
+    this._handlers.set(EventKind.HeartBeatError, this.restart);
     this._states = new Map();
     this._intervals = new Map([
-      [IntervalId.AjaxReload, 2],
-      [IntervalId.AjaxLogReload, 2],
-      [IntervalId.ActionWatch, 0.5],
-      [IntervalId.Heartbeat, 5],
-      [IntervalId.Reload, 5],
-      [IntervalId.Restart, 1],
-      [IntervalId.WSBufTTL, 0]
+      [IntervalKind.AjaxReload, 2],
+      [IntervalKind.AjaxLogReload, 2],
+      [IntervalKind.ActionWatch, 0.5],
+      [IntervalKind.Heartbeat, 5],
+      [IntervalKind.Reload, 5],
+      [IntervalKind.Restart, 1],
+      [IntervalKind.WSBufTTL, 0]
     ]);
     this.log_level_names = new Map([
       [10, "DEBUG"],
@@ -763,12 +763,12 @@ class EVA {
           }
           this._ajax_reloader = setInterval(() => {
             this._load_states().catch(() => {});
-          }, (this._intervals.get(IntervalId.AjaxReload) as number) * 1000);
+          }, (this._intervals.get(IntervalKind.AjaxReload) as number) * 1000);
         } else {
           if (this._ajax_reloader) {
             clearInterval(this._ajax_reloader);
           }
-          let reload = this._intervals.get(IntervalId.Reload) as number;
+          let reload = this._intervals.get(IntervalKind.Reload) as number;
           if (reload) {
             this._ajax_reloader = setInterval(() => {
               this._load_states().catch(() => {});
@@ -780,11 +780,11 @@ class EVA {
         }
         this._heartbeat_reloader = setInterval(() => {
           this._heartbeat(false).catch(() => {});
-        }, (this._intervals.get(IntervalId.Heartbeat) as number) * 1000);
+        }, (this._intervals.get(IntervalKind.Heartbeat) as number) * 1000);
         this._debug("start", `login successful, user: ${user}`);
         this.logged_in = true;
         this.authorized_user = user;
-        this._invoke_handler(HandlerId.LoginSuccess);
+        this._invoke_handler(EventKind.LoginSuccess);
       })
       .catch((err) => {
         this._debug("start", err);
@@ -797,7 +797,7 @@ class EVA {
         this._stop_engine();
         this.error_handler(err, "login");
         this.erase_token_cookie();
-        this._invoke_handler(HandlerId.LoginFailed, err);
+        this._invoke_handler(EventKind.LoginFailed, err);
       });
     return true;
   }
@@ -841,7 +841,7 @@ class EVA {
       if (!this.ws_mode) {
         this._log_reloader = setInterval(() => {
           this._load_log_entries(false);
-        }, (this._intervals.get(IntervalId.AjaxLogReload) as number) * 1000);
+        }, (this._intervals.get(IntervalKind.AjaxLogReload) as number) * 1000);
       }
     }
   }
@@ -950,12 +950,12 @@ class EVA {
     this._api_call("login", q)
       .then(() => {
         this.server_info.aci.token_mode = "normal";
-        this._invoke_handler(HandlerId.LoginSuccess);
+        this._invoke_handler(EventKind.LoginSuccess);
       })
       .catch((err: EvaError) => {
         this.error_handler(err, "set_normal");
         if (err.code !== -32022) {
-          this._invoke_handler(HandlerId.LoginFailed, err);
+          this._invoke_handler(EventKind.LoginFailed, err);
         }
       });
     return true;
@@ -968,13 +968,13 @@ class EVA {
       if (msg && msg.kind == "OTP") {
         switch (msg.message) {
           case "REQ":
-            this._invoke_handler(HandlerId.LoginOTPRequired, msg);
+            this._invoke_handler(EventKind.LoginOTPRequired, msg);
             return;
           case "INVALID":
-            this._invoke_handler(HandlerId.LoginOTPInvalid, msg);
+            this._invoke_handler(EventKind.LoginOTPInvalid, msg);
             return;
           case "SETUP":
-            this._invoke_handler(HandlerId.LoginOTPSetup, msg);
+            this._invoke_handler(EventKind.LoginOTPSetup, msg);
             return;
         }
       }
@@ -994,10 +994,10 @@ class EVA {
    *
    * @param func {function} function called on event
    */
-  on(event: HandlerId, func: (...args: any[]) => void) {
+  on(event: EventKind, func: (...args: any[]) => void) {
     this._handlers.set(event, func);
     this._debug("on", `setting handler for ${event}`);
-    if (event == HandlerId.WsEvent) {
+    if (event == EventKind.WsEvent) {
       this._ws_handler_registered = true;
     }
   }
@@ -1009,7 +1009,7 @@ class EVA {
    *            ajax_reload, heartbeat, log_reload, reload, restart, action_watch
    * @param value {number} interval value (in seconds)
    */
-  set_interval(interval_id: IntervalId, value: number) {
+  set_interval(interval_id: IntervalKind, value: number) {
     this._intervals.set(interval_id, value);
   }
 
@@ -1098,7 +1098,7 @@ class EVA {
             } else {
               setTimeout(
                 watcher,
-                (this._intervals.get(IntervalId.ActionWatch) as number) * 1000
+                (this._intervals.get(IntervalKind.ActionWatch) as number) * 1000
               );
             }
           })
@@ -1113,7 +1113,7 @@ class EVA {
       };
       setTimeout(
         watcher,
-        (this._intervals.get(IntervalId.ActionWatch) as number) * 1000
+        (this._intervals.get(IntervalKind.ActionWatch) as number) * 1000
       );
     } else {
       fcs.push(func);
@@ -1472,10 +1472,10 @@ class EVA {
           if (
             this._last_pong === null ||
             this._last_ping - this._last_pong >
-              (this._intervals.get(IntervalId.Heartbeat) as number)
+              (this._intervals.get(IntervalKind.Heartbeat) as number)
           ) {
             this._debug("heartbeat", "error: ws ping timeout");
-            this._invoke_handler(HandlerId.HeartBeatError);
+            this._invoke_handler(EventKind.HeartBeatError);
           }
         }
         if (!on_login && this.ws) {
@@ -1487,7 +1487,7 @@ class EVA {
             this.ws.send("");
           } catch (err) {
             this._debug("heartbeat", "error: unable to send ws ping");
-            this._invoke_handler(HandlerId.HeartBeatError, err);
+            this._invoke_handler(EventKind.HeartBeatError, err);
             reject();
             return;
           }
@@ -1497,12 +1497,12 @@ class EVA {
         .then((data: any) => {
           this.server_info = data;
           this.tsdiff = new Date().getTime() / 1000 - data.time;
-          this._invoke_handler(HandlerId.HeartBeatSuccess);
+          this._invoke_handler(EventKind.HeartBeatSuccess);
           resolve();
         })
         .catch((err: EvaError) => {
           this._debug("heartbeat", "error: unable to send test API call");
-          this._invoke_handler(HandlerId.HeartBeatError, err);
+          this._invoke_handler(EventKind.HeartBeatError, err);
         });
       this._debug("heartbeat", "ok");
     });
@@ -1518,11 +1518,11 @@ class EVA {
         if (this.ws_mode && this._log_first_load) {
           this._set_ws_log_level(this.log_params.level);
         }
-        data.map((l) => this._invoke_handler(HandlerId.LogRecord, l));
+        data.map((l) => this._invoke_handler(EventKind.LogRecord, l));
         this._log_loaded = true;
-        this._lr2p.map((l) => this._invoke_handler(HandlerId.LogRecord, l));
+        this._lr2p.map((l) => this._invoke_handler(EventKind.LogRecord, l));
         if (postprocess) {
-          this._invoke_handler(HandlerId.LogPostProcess);
+          this._invoke_handler(EventKind.LogPostProcess);
         }
         this._log_first_load = false;
       })
@@ -1534,7 +1534,7 @@ class EVA {
   _schedule_restart() {
     this._scheduled_restarter = setTimeout(() => {
       this.start();
-    }, (this._intervals.get(IntervalId.Restart) as number) * 1000);
+    }, (this._intervals.get(IntervalKind.Restart) as number) * 1000);
   }
 
   _cancel_scheduled_restart() {
@@ -1670,7 +1670,7 @@ class EVA {
           }
         }
         let ws_uri = `${uri}/ws?k=${this.api_token}`;
-        let ws_buf_ttl = this._intervals.get(IntervalId.WSBufTTL) as number;
+        let ws_buf_ttl = this._intervals.get(IntervalKind.WSBufTTL) as number;
         if (ws_buf_ttl > 0) {
           ws_uri += `&buf_ttl=${ws_buf_ttl}`;
         }
@@ -1724,7 +1724,7 @@ class EVA {
     } else {
       this._preprocess_log_record(data);
     }
-    this._invoke_handler(HandlerId.LogPostProcess);
+    this._invoke_handler(EventKind.LogPostProcess);
   }
 
   // WASM override
@@ -1737,13 +1737,13 @@ class EVA {
     }
     if (data.s == "reload") {
       this._debug("ws", "reload");
-      this._invoke_handler(HandlerId.ServerReload);
+      this._invoke_handler(EventKind.ServerReload);
       return;
     }
     if (data.s == "server") {
       let ev = "server." + data.d;
       this._debug("ws", ev);
-      this._invoke_handler(ev as HandlerId);
+      this._invoke_handler(ev as EventKind);
       return;
     }
     if (data.s.substring(0, 11) == "supervisor.") {
@@ -1751,7 +1751,7 @@ class EVA {
       this._invoke_handler(data.s, data.d);
       return;
     }
-    if (this._invoke_handler(HandlerId.WsEvent, data) === false) return;
+    if (this._invoke_handler(EventKind.WsEvent, data) === false) return;
     if (data.s == "state") {
       this._debug("ws", "state");
       if (Array.isArray(data.d)) {
@@ -1773,7 +1773,7 @@ class EVA {
 
   _preprocess_log_record(record: LogRecord) {
     this._log_loaded
-      ? this._invoke_handler(HandlerId.LogRecord, record)
+      ? this._invoke_handler(EventKind.LogRecord, record)
       : this._lr2p.push(record);
   }
 
@@ -1848,7 +1848,7 @@ class EVA {
     }
   }
 
-  _invoke_handler(handler: HandlerId, ...args: any[]): void | boolean {
+  _invoke_handler(handler: EventKind, ...args: any[]): void | boolean {
     let f = this._handlers.get(handler);
     if (f) {
       this._debug("invoke_handler", "invoking for " + handler);
@@ -1982,12 +1982,12 @@ if (typeof window !== "undefined") {
 export {
   EVA,
   EvaError,
+  EventKind,
+  IntervalKind,
   ActionResult,
   ItemState,
   LogParams,
   LogRecord,
-  HandlerId,
-  IntervalId,
   OTPParams,
   HiQRParams
 };
