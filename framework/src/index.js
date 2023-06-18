@@ -1,6 +1,6 @@
 "use strict";
 
-const eva_framework_version = "0.4.2";
+const eva_framework_version = "0.4.3";
 
 (() => {
   if (typeof window !== "undefined") {
@@ -173,22 +173,22 @@ const eva_framework_version = "0.4.2";
       this.eva = eva;
     }
     /**
-     * Call unit action with status=1
+     * Call unit action with value=1
      *
      * @param oid {string} unit OID
      * @param wait {boolean} wait until the action is completed (default: true)
      */
     start(oid, wait) {
-      return this.exec(oid, { s: 1 }, wait);
+      return this.exec(oid, { v: 1 }, wait);
     }
     /**
-     * Call unit action with status=0
+     * Call unit action with value=0
      *
      * @param oid {string} unit OID
      * @param wait {boolean} wait until the action is completed (default: true)
      */
     stop(oid, wait) {
-      return this.exec(oid, { s: 0 }, wait);
+      return this.exec(oid, { v: 0 }, wait);
     }
     /**
      * Call unit action to toggle its status
